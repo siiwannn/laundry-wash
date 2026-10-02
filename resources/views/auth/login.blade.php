@@ -49,12 +49,22 @@
                     Ingat saya di perangkat ini
                 </label>
             </div>
+            <a href="{{ route('password.request') }}" class="small text-decoration-none">Lupa password?</a>
         </div>
 
         <button type="submit" class="btn btn-primary w-100 py-2">
             <i class="bi bi-box-arrow-in-right me-1"></i> Masuk Sekarang
         </button>
     </form>
+
+    <div class="position-relative my-4 text-center">
+        <hr>
+        <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 small text-muted">atau</span>
+    </div>
+
+    <a href="{{ route('auth.google') }}" class="btn btn-outline-secondary w-100 py-2">
+        <i class="bi bi-google me-2"></i>Masuk dengan Google
+    </a>
 
     <div class="mt-4 pt-3 border-top text-center">
         <p class="small text-muted mb-3">Belum punya akun pelanggan?</p>

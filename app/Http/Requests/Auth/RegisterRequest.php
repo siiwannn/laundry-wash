@@ -21,7 +21,7 @@ class RegisterRequest extends FormRequest
             'address' => ['required', 'string', 'max:500'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-            'password' => ['required', 'confirmed', Password::min(6)],
+            'password' => ['required', 'confirmed', Password::min(8)],
         ];
     }
 
@@ -35,7 +35,7 @@ class RegisterRequest extends FormRequest
             'address.required' => 'Alamat lengkap wajib diisi.',
             'password.required' => 'Password wajib diisi.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
-            'password.min' => 'Password minimal terdiri dari 6 karakter.',
+            'password.min' => 'Password minimal terdiri dari 8 karakter.',
         ];
     }
 }

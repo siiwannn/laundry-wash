@@ -14,6 +14,7 @@ class AdminServiceController extends Controller
     public function index(): View
     {
         $services = Service::latest()->paginate(10);
+
         return view('admin.services.index', compact('services'));
     }
 
@@ -61,10 +62,12 @@ class AdminServiceController extends Controller
         if ($service->orderItems()->exists()) {
             $service->update(['is_active' => ! $service->is_active]);
             $statusStr = $service->is_active ? 'diaktifkan kembali' : 'dinonaktifkan';
+
             return back()->with('info', "Layanan {$service->name} {$statusStr} (karena memiliki riwayat pesanan).");
         }
 
         $service->delete();
+
         return back()->with('success', 'Paket layanan berhasil dihapus.');
     }
 }

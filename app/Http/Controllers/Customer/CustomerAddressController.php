@@ -14,6 +14,7 @@ class CustomerAddressController extends Controller
     public function index(): View
     {
         $addresses = auth()->user()->addresses()->latest()->get();
+
         return view('customer.addresses.index', compact('addresses'));
     }
 
@@ -46,6 +47,7 @@ class CustomerAddressController extends Controller
     public function edit(CustomerAddress $address): View
     {
         Gate::authorize('update', $address);
+
         return view('customer.addresses.edit', compact('address'));
     }
 
@@ -79,6 +81,7 @@ class CustomerAddressController extends Controller
         }
 
         $address->delete();
+
         return back()->with('success', 'Alamat berhasil dihapus.');
     }
 

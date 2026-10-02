@@ -44,10 +44,10 @@ class AdminOrderController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
-                  ->orWhereHas('customer', function ($cq) use ($search) {
-                      $cq->where('name', 'like', "%{$search}%")
-                         ->orWhere('phone', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('customer', function ($cq) use ($search) {
+                        $cq->where('name', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -84,6 +84,7 @@ class AdminOrderController extends Controller
     {
         try {
             $this->orderService->confirmOrder($order, auth()->user());
+
             return back()->with('success', "Pesanan {$order->order_number} berhasil dikonfirmasi.");
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -127,6 +128,7 @@ class AdminOrderController extends Controller
     {
         try {
             $this->assignmentService->receiveAtLaundry($order, auth()->user());
+
             return back()->with('success', 'Status pesanan diubah: Pakaian telah diterima di workshop laundry.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -154,7 +156,8 @@ class AdminOrderController extends Controller
     {
         try {
             $this->paymentService->confirmPayment($payment, auth()->user());
-            return back()->with('success', 'Pembayaran sebesar Rp ' . number_format($payment->amount, 0, ',', '.') . ' berhasil dikonfirmasi LUNAS.');
+
+            return back()->with('success', 'Pembayaran sebesar Rp '.number_format($payment->amount, 0, ',', '.').' berhasil dikonfirmasi LUNAS.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }

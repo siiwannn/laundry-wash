@@ -41,6 +41,7 @@ class CourierTaskController extends Controller
 
         try {
             $this->assignmentService->startTrip($assignment, auth()->user());
+
             return back()->with('success', 'Perjalanan dimulai! Transmisi GPS otomatis aktif.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
