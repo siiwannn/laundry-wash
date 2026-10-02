@@ -18,7 +18,7 @@ class CourierTrackingService
     /**
      * Ingest courier GPS location update.
      */
-    public function recordLocation(User $courier, int $assignmentId, float $latitude, float $longitude, ?float $accuracy): CourierLocation
+    public function recordLocation(User $courier, int $assignmentId, float $latitude, float $longitude, ?float $accuracy, ?float $speed = null, ?float $heading = null): CourierLocation
     {
         $assignment = CourierAssignment::where('id', $assignmentId)
             ->where('courier_id', $courier->id)
@@ -46,8 +46,11 @@ class CourierTrackingService
             'latitude' => $latitude,
             'longitude' => $longitude,
             'accuracy' => $accuracy,
+            'speed' => $speed,
+            'heading' => $heading,
             'recorded_at' => now(),
         ]);
+        $courier->courierProfile?->update(['current_latitude' => $latitude, 'current_longitude' => $longitude]);
         $this->activityLog->record($courier, "Update GPS assignment {$assignment->id}");
 
         return $location;

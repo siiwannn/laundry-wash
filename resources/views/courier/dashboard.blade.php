@@ -24,21 +24,35 @@
 
 <!-- Courier Stats Overview -->
 <div class="row g-3 mb-4">
-    <div class="col-md-6 col-lg-4">
+    <div class="col-md-6 col-xl-3">
         <div class="card p-3 border-start border-warning border-4 shadow-sm">
             <span class="text-muted small text-uppercase fw-semibold">Tugas Aktif Saat Ini</span>
             <h3 class="fw-bold text-warning mb-0 mt-1">{{ $activeTasks->count() }} Tugas</h3>
             <small class="text-muted mt-1 d-block">Segera selesaikan penjemputan / pengantaran</small>
         </div>
     </div>
-    <div class="col-md-6 col-lg-4">
+    <div class="col-md-6 col-xl-3">
         <div class="card p-3 border-start border-success border-4 shadow-sm">
             <span class="text-muted small text-uppercase fw-semibold">Tugas Selesai Hari Ini</span>
             <h3 class="fw-bold text-success mb-0 mt-1">{{ $todayCompletedCount }} Selesai</h3>
             <small class="text-muted mt-1 d-block">Rekap performa operasional kurir harian</small>
         </div>
     </div>
-    <div class="col-md-12 col-lg-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="card p-3 border-start border-primary border-4 shadow-sm">
+            <span class="text-muted small text-uppercase fw-semibold">Pickup Hari Ini</span>
+            <h3 class="fw-bold text-primary mb-0 mt-1">{{ $pickupTodayCount }}</h3>
+            <small class="text-muted mt-1 d-block">Tugas penjemputan terjadwal</small>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card p-3 border-start border-info border-4 shadow-sm">
+            <span class="text-muted small text-uppercase fw-semibold">Delivery Hari Ini</span>
+            <h3 class="fw-bold text-info mb-0 mt-1">{{ $deliveryTodayCount }}</h3>
+            <small class="text-muted mt-1 d-block">Tugas pengantaran terjadwal</small>
+        </div>
+    </div>
+    <div class="col-12">
         <div class="card p-3 border-start border-primary border-4 shadow-sm">
             <span class="text-muted small text-uppercase fw-semibold">Armada & Pelat Nomor</span>
             <h5 class="fw-bold text-primary mb-0 mt-1">{{ $profile->vehicle_plate ?? 'B 1234 ABC' }}</h5>

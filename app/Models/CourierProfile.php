@@ -16,12 +16,16 @@ class CourierProfile extends Model
         'vehicle_type',
         'vehicle_plate',
         'status',
+        'current_latitude',
+        'current_longitude',
     ];
 
     protected function casts(): array
     {
         return [
             'status' => CourierStatus::class,
+            'current_latitude' => 'float',
+            'current_longitude' => 'float',
         ];
     }
 

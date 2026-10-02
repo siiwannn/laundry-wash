@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Courier;
 use App\Enums\AssignmentStatus;
 use App\Enums\CourierStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Courier\UpdateAvailabilityRequest;
 use App\Models\CourierAssignment;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class CourierDashboardController extends Controller
@@ -29,16 +29,14 @@ class CourierDashboardController extends Controller
             ->where('status', AssignmentStatus::COMPLETED)
             ->whereDate('completed_at', today())
             ->count();
+        $pickupTodayCount = CourierAssignment::where('courier_id', $courier->id)->where('type', 'pickup')->whereDate('assigned_at', today())->count();
+        $deliveryTodayCount = CourierAssignment::where('courier_id', $courier->id)->where('type', 'delivery')->whereDate('assigned_at', today())->count();
 
-        return view('courier.dashboard', compact('courier', 'profile', 'activeTasks', 'todayCompletedCount'));
+        return view('courier.dashboard', compact('courier', 'profile', 'activeTasks', 'todayCompletedCount', 'pickupTodayCount', 'deliveryTodayCount'));
     }
 
-    public function updateProfileStatus(Request $request): RedirectResponse
+    public function updateProfileStatus(UpdateAvailabilityRequest $request): RedirectResponse
     {
-        $request->validate([
-            'status' => ['required', 'in:available,offline'],
-        ]);
-
         $profile = auth()->user()->courierProfile;
         if ($profile) {
             $profile->update([

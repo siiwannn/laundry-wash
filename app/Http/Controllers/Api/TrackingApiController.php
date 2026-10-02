@@ -28,7 +28,9 @@ class TrackingApiController extends Controller
                 (float) $request->validated('longitude'),
                 $request->validated('accuracy') !== null
                     ? (float) $request->validated('accuracy')
-                    : null
+                    : null,
+                $request->validated('speed') !== null ? (float) $request->validated('speed') : null,
+                $request->validated('heading') !== null ? (float) $request->validated('heading') : null,
             );
 
             return response()->json([

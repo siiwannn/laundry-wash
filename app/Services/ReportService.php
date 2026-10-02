@@ -9,7 +9,6 @@ use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class ReportService
 {
@@ -22,10 +21,7 @@ class ReportService
         $totalCouriers = User::where('role', UserRole::COURIER)->count();
 
         // Orders breakdown by status
-        $statusCounts = Order::select('status', DB::raw('count(*) as count'))
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
+        $statusCounts = Order::pluck('status')->map(fn (OrderStatus $status) => $status->value)->countBy()->all();
 
         return [
             'total_revenue' => $totalRevenue,

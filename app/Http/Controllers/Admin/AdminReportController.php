@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ReportFilterRequest;
 use App\Services\ReportService;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AdminReportController extends Controller
@@ -13,10 +13,10 @@ class AdminReportController extends Controller
         protected ReportService $reportService
     ) {}
 
-    public function index(Request $request): View
+    public function index(ReportFilterRequest $request): View
     {
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        $startDate = $request->validated('start_date');
+        $endDate = $request->validated('end_date');
 
         $revenueReport = $this->reportService->getRevenueReport($startDate, $endDate);
         $courierStats = $this->reportService->getCourierPerformance();

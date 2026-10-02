@@ -84,6 +84,7 @@ class PaymentService
             $payment->update([
                 'status' => PaymentStatus::PAID,
                 'paid_at' => now(),
+                'verified_by' => $admin->id,
             ]);
 
             $order = $payment->order;

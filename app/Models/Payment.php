@@ -20,6 +20,7 @@ class Payment extends Model
         'proof_file',
         'reference',
         'paid_at',
+        'verified_by',
     ];
 
     protected function casts(): array
@@ -35,6 +36,11 @@ class Payment extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function verifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verified_by');
     }
 
     public function isPaid(): bool

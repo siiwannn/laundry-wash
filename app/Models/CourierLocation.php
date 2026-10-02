@@ -16,6 +16,8 @@ class CourierLocation extends Model
         'latitude',
         'longitude',
         'accuracy',
+        'speed',
+        'heading',
         'recorded_at',
     ];
 
@@ -25,6 +27,8 @@ class CourierLocation extends Model
             'latitude' => 'float',
             'longitude' => 'float',
             'accuracy' => 'float',
+            'speed' => 'float',
+            'heading' => 'float',
             'recorded_at' => 'datetime',
         ];
     }

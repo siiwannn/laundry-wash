@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         isSending = true;
-        const { latitude, longitude, accuracy } = latestPosition;
+        const { latitude, longitude, accuracy, speed, heading } = latestPosition;
 
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -240,7 +240,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     assignment_id: assignmentId,
                     latitude,
                     longitude,
-                    accuracy
+                    accuracy,
+                    speed,
+                    heading
                 })
             });
             const data = await response.json();
@@ -289,7 +291,9 @@ document.addEventListener('DOMContentLoaded', function () {
             latestPosition = {
                 latitude: position.coords.latitude,
                 longitude: position.coords.longitude,
-                accuracy: position.coords.accuracy
+                accuracy: position.coords.accuracy,
+                speed: position.coords.speed,
+                heading: position.coords.heading
             };
 
             if (!courierMarker) {
