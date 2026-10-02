@@ -34,6 +34,8 @@ class CustomerAddressController extends Controller
 
         $user->addresses()->create([
             'label' => $request->validated('label'),
+            'recipient_name' => $request->validated('recipient_name'),
+            'recipient_phone' => $request->validated('recipient_phone'),
             'address' => $request->validated('address'),
             'latitude' => $request->validated('latitude') ?: -6.2088,
             'longitude' => $request->validated('longitude') ?: 106.8456,
@@ -62,6 +64,8 @@ class CustomerAddressController extends Controller
 
         $address->update([
             'label' => $request->validated('label'),
+            'recipient_name' => $request->validated('recipient_name'),
+            'recipient_phone' => $request->validated('recipient_phone'),
             'address' => $request->validated('address'),
             'latitude' => $request->validated('latitude') ?: $address->latitude,
             'longitude' => $request->validated('longitude') ?: $address->longitude,

@@ -13,6 +13,8 @@ class CustomerAddress extends Model
     protected $fillable = [
         'user_id',
         'label',
+        'recipient_name',
+        'recipient_phone',
         'address',
         'latitude',
         'longitude',

@@ -17,6 +17,17 @@
                         <input type="text" name="label" id="label" class="form-control" value="{{ old('label', 'Rumah') }}" required placeholder="Contoh: Rumah, Kost, Apartemen, Kantor">
                     </div>
 
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="recipient_name" class="form-label fw-semibold small">Nama Penerima</label>
+                            <input type="text" name="recipient_name" id="recipient_name" class="form-control" value="{{ old('recipient_name', auth()->user()->name) }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="recipient_phone" class="form-label fw-semibold small">Nomor Telepon Penerima</label>
+                            <input type="tel" name="recipient_phone" id="recipient_phone" class="form-control" value="{{ old('recipient_phone', auth()->user()->phone) }}" required>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label for="address" class="form-label fw-semibold small">Alamat Lengkap</label>
                         <textarea name="address" id="address" class="form-control @error('address') is-invalid @enderror" rows="2" required placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan, patokan">{{ old('address') }}</textarea>

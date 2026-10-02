@@ -170,6 +170,11 @@
                                     <i class="bi bi-geo-alt me-1"></i> Buku Alamat
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('customer.profile.*') ? 'active text-info fw-semibold' : '' }}" href="{{ route('customer.profile.edit') }}">
+                                    <i class="bi bi-person me-1"></i> Profil
+                                </a>
+                            </li>
                         @endif
                     @endauth
                 </ul>

@@ -14,6 +14,7 @@ use App\Http\Controllers\Courier\CourierTaskController;
 use App\Http\Controllers\Customer\CustomerAddressController;
 use App\Http\Controllers\Customer\CustomerDashboardController;
 use App\Http\Controllers\Customer\CustomerOrderController;
+use App\Http\Controllers\Customer\CustomerProfileController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -59,6 +60,9 @@ Route::middleware(['auth', 'role:customer'])->prefix('customer')->name('customer
     Route::get('/history', [CustomerOrderController::class, 'history'])->name('orders.history');
     Route::post('/orders/{order}/pay', [CustomerOrderController::class, 'pay'])->name('orders.pay');
     Route::patch('/orders/{order}/cancel', [CustomerOrderController::class, 'cancel'])->name('orders.cancel');
+    Route::get('/profile', [CustomerProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [CustomerProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [CustomerProfileController::class, 'updatePassword'])->name('profile.password');
 
     // Customer Address Book
     Route::resource('addresses', CustomerAddressController::class);

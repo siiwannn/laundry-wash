@@ -19,6 +19,17 @@
                         <input type="text" name="label" id="label" class="form-control" value="{{ old('label', $address->label) }}" required>
                     </div>
 
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="recipient_name" class="form-label fw-semibold small">Nama Penerima</label>
+                            <input type="text" name="recipient_name" id="recipient_name" class="form-control" value="{{ old('recipient_name', $address->recipient_name ?: auth()->user()->name) }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="recipient_phone" class="form-label fw-semibold small">Nomor Telepon Penerima</label>
+                            <input type="tel" name="recipient_phone" id="recipient_phone" class="form-control" value="{{ old('recipient_phone', $address->recipient_phone ?: auth()->user()->phone) }}" required>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label for="address" class="form-label fw-semibold small">Alamat Lengkap</label>
                         <textarea name="address" id="address" class="form-control" rows="2" required>{{ old('address', $address->address) }}</textarea>
