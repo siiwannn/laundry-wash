@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    public function __construct(private readonly SettingService $settings) {}
+    public function __construct(private readonly SettingService $settings, private readonly ActivityLogService $activityLog) {}
 
     /**
      * Create a new laundry order for a customer.
@@ -94,6 +94,7 @@ class OrderService
                 'changed_by' => $customer->id,
                 'created_at' => now(),
             ]);
+            $this->activityLog->record($customer, "Membuat order {$order->order_number}");
 
             return $order;
         });
@@ -118,6 +119,7 @@ class OrderService
                 'changed_by' => $admin->id,
                 'created_at' => now(),
             ]);
+            $this->activityLog->record($admin, "Mengonfirmasi order {$order->order_number}");
 
             return $order;
         });
@@ -161,6 +163,7 @@ class OrderService
                 'changed_by' => $admin->id,
                 'created_at' => now(),
             ]);
+            $this->activityLog->record($admin, "Input berat aktual order {$order->order_number}: {$actualWeight} kg");
 
             return $order;
         });
@@ -206,6 +209,7 @@ class OrderService
                 'changed_by' => $actor->id,
                 'created_at' => now(),
             ]);
+            $this->activityLog->record($actor, "Mengubah status order {$order->order_number} menjadi {$newStage->value}");
 
             return $order;
         });
@@ -230,6 +234,7 @@ class OrderService
                 'changed_by' => $actor->id,
                 'created_at' => now(),
             ]);
+            $this->activityLog->record($actor, "Membatalkan order {$order->order_number}");
 
             return $order;
         });

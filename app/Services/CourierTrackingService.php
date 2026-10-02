@@ -13,6 +13,8 @@ use Exception;
 
 class CourierTrackingService
 {
+    public function __construct(private readonly ActivityLogService $activityLog) {}
+
     /**
      * Ingest courier GPS location update.
      */
@@ -38,7 +40,7 @@ class CourierTrackingService
             throw new Exception('Status order tidak sesuai dengan perjalanan kurir yang aktif.');
         }
 
-        return CourierLocation::create([
+        $location = CourierLocation::create([
             'courier_id' => $courier->id,
             'assignment_id' => $assignment->id,
             'latitude' => $latitude,
@@ -46,6 +48,9 @@ class CourierTrackingService
             'accuracy' => $accuracy,
             'recorded_at' => now(),
         ]);
+        $this->activityLog->record($courier, "Update GPS assignment {$assignment->id}");
+
+        return $location;
     }
 
     /**

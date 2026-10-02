@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\DB;
 
 class CourierAssignmentService
 {
+    public function __construct(private readonly ActivityLogService $activityLog) {}
+
     /**
      * Admin assigns a courier for pickup or delivery.
      */
@@ -78,6 +80,7 @@ class CourierAssignmentService
                 'changed_by' => $admin->id,
                 'created_at' => now(),
             ]);
+            $this->activityLog->record($admin, "Assign courier {$courier->name} untuk {$type->value} order {$order->order_number}");
 
             return $assignment;
         });
@@ -133,6 +136,7 @@ class CourierAssignmentService
                 'changed_by' => $courier->id,
                 'created_at' => now(),
             ]);
+            $this->activityLog->record($courier, "Memulai {$assignment->type->value} order {$order->order_number}");
 
             return $assignment;
         });
@@ -173,6 +177,7 @@ class CourierAssignmentService
                 'changed_by' => $courier->id,
                 'created_at' => now(),
             ]);
+            $this->activityLog->record($courier, "Menyelesaikan pickup order {$order->order_number}");
 
             return $assignment;
         });
@@ -201,6 +206,7 @@ class CourierAssignmentService
                 'changed_by' => $admin->id,
                 'created_at' => now(),
             ]);
+            $this->activityLog->record($admin, "Menerima laundry order {$order->order_number}");
 
             return $order;
         });
@@ -250,6 +256,7 @@ class CourierAssignmentService
                 'changed_by' => $courier->id,
                 'created_at' => now(),
             ]);
+            $this->activityLog->record($courier, "Menyelesaikan delivery order {$order->order_number}");
 
             return $assignment;
         });

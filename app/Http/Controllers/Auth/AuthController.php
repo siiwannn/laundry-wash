@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\CustomerAddress;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +18,8 @@ use Illuminate\View\View;
 
 class AuthController extends Controller
 {
+    public function __construct(private readonly ActivityLogService $activityLog) {}
+
     public function showLoginForm(): View|RedirectResponse
     {
         if (Auth::check()) {
@@ -45,6 +48,7 @@ class AuthController extends Controller
             }
 
             $request->session()->regenerate();
+            $this->activityLog->record($user, 'Login berhasil');
 
             return $this->redirectBasedOnRole($user)
                 ->with('success', 'Selamat datang kembali, '.$user->name.'!');
@@ -90,6 +94,7 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        $this->activityLog->record($user, 'Registrasi dan login berhasil');
 
         return redirect()->route('customer.dashboard')
             ->with('success', 'Pendaftaran berhasil! Selamat datang di Laundry Wash.');
@@ -97,6 +102,8 @@ class AuthController extends Controller
 
     public function logout(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        $this->activityLog->record($user, 'Logout');
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

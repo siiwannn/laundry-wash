@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\DB;
 
 class PaymentService
 {
+    public function __construct(private readonly ActivityLogService $activityLog) {}
+
     /**
      * Submit payment by customer or record payment by admin.
      */
@@ -59,6 +61,7 @@ class PaymentService
                 'changed_by' => $customer->id,
                 'created_at' => now(),
             ]);
+            $this->activityLog->record($customer, "Mengirim pembayaran order {$order->order_number} via {$method->value}");
 
             return $payment;
         });
@@ -96,6 +99,7 @@ class PaymentService
                 'changed_by' => $admin->id,
                 'created_at' => now(),
             ]);
+            $this->activityLog->record($admin, "Memverifikasi pembayaran order {$order->order_number}");
 
             return $payment;
         });

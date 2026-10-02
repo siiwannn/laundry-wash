@@ -28,8 +28,10 @@ class AuthenticationTest extends TestCase
         ])->assertRedirect(route('customer.dashboard'));
 
         $this->assertAuthenticatedAs($user);
+        $this->assertDatabaseHas('activity_logs', ['user_id' => $user->id, 'activity' => 'Login berhasil']);
         $this->post(route('logout'))->assertRedirect(route('login'));
         $this->assertGuest();
+        $this->assertDatabaseHas('activity_logs', ['user_id' => $user->id, 'activity' => 'Logout']);
     }
 
     public function test_inactive_user_cannot_login(): void
