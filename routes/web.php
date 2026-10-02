@@ -94,6 +94,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/orders/{order}/assign-courier', [AdminOrderController::class, 'assignCourier'])->name('orders.assign-courier');
     Route::patch('/orders/{order}/receive', [AdminOrderController::class, 'receiveAtLaundry'])->name('orders.receive');
     Route::patch('/orders/{order}/stage', [AdminOrderController::class, 'updateStage'])->name('orders.stage');
+    Route::patch('/orders/{order}/complete-self-pickup', [AdminOrderController::class, 'completeSelfPickup'])->name('orders.complete-self-pickup');
     Route::patch('/payments/{payment}/confirm', [AdminOrderController::class, 'confirmPayment'])->name('payments.confirm');
     Route::get('/payments', [AdminPaymentController::class, 'index'])->name('payments.index');
     Route::patch('/payments/{payment}/verify', [AdminPaymentController::class, 'verify'])->name('payments.verify');

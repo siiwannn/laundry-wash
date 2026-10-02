@@ -120,6 +120,19 @@ class OrderWorkflowTest extends TestCase
         $this->assertTrue($order->canAcceptPayment());
     }
 
+    public function test_admin_can_complete_paid_self_pickup_order(): void
+    {
+        $customer = $this->createUser(UserRole::CUSTOMER);
+        $admin = $this->createUser(UserRole::ADMIN);
+        $order = $this->createOrder($customer, OrderStatus::PAID, PaymentStatus::PAID);
+        $order->update(['delivery_method' => 'self_pickup']);
+
+        app(OrderService::class)->completeSelfPickup($order, $admin);
+
+        $this->assertSame(OrderStatus::COMPLETED, $order->refresh()->status);
+        $this->assertDatabaseHas('order_status_histories', ['order_id' => $order->id, 'status' => 'completed']);
+    }
+
     public function test_paid_order_can_receive_delivery_assignment(): void
     {
         $customer = $this->createUser(UserRole::CUSTOMER);

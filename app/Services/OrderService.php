@@ -240,6 +240,27 @@ class OrderService
         });
     }
 
+    public function completeSelfPickup(Order $order, User $admin): Order
+    {
+        if ($order->status !== OrderStatus::PAID || $order->payment_status !== PaymentStatus::PAID || $order->delivery_method !== 'self_pickup') {
+            throw new Exception('Pengambilan mandiri hanya dapat diselesaikan untuk order lunas dengan metode ambil di outlet.');
+        }
+
+        return DB::transaction(function () use ($order, $admin) {
+            $order->update(['status' => OrderStatus::COMPLETED]);
+            OrderStatusHistory::create([
+                'order_id' => $order->id,
+                'status' => OrderStatus::COMPLETED,
+                'note' => 'Laundry telah diambil customer di outlet. Pesanan selesai.',
+                'changed_by' => $admin->id,
+                'created_at' => now(),
+            ]);
+            $this->activityLog->record($admin, "Menyelesaikan pengambilan mandiri order {$order->order_number}");
+
+            return $order;
+        });
+    }
+
     /**
      * Generate unique sequential order number formatted ORD-YYYYMMDD-XXXX
      */

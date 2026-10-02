@@ -162,4 +162,15 @@ class AdminOrderController extends Controller
             return back()->with('error', $e->getMessage());
         }
     }
+
+    public function completeSelfPickup(Order $order): RedirectResponse
+    {
+        try {
+            $this->orderService->completeSelfPickup($order, auth()->user());
+
+            return back()->with('success', 'Pesanan selesai dan telah diserahkan kepada customer di outlet.');
+        } catch (\Exception $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+    }
 }

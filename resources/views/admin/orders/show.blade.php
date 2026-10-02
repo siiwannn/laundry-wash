@@ -3,6 +3,9 @@
 @section('title', 'Kelola Pesanan ' . $order->order_number . ' - Admin')
 
 @section('content')
+@if($order->status === \App\Enums\OrderStatus::PAID && $order->delivery_method === 'self_pickup')
+<div class="alert alert-info d-flex justify-content-between align-items-center mb-4"><div><strong>Siap diambil di outlet.</strong><div class="small">Konfirmasi setelah laundry diserahkan kepada customer.</div></div><form method="POST" action="{{ route('admin.orders.complete-self-pickup', $order) }}">@csrf @method('PATCH')<button class="btn btn-primary" onclick="return confirm('Laundry sudah diterima customer?')">Selesaikan Order</button></form></div>
+@endif
 <div class="row align-items-center mb-4">
     <div class="col-md-7">
         <div class="d-flex align-items-center gap-2 mb-1">
