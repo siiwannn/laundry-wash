@@ -133,6 +133,7 @@
                                     <i class="bi bi-bicycle me-1"></i> Kurir
                                 </a>
                             </li>
+                            <li class="nav-item"><a class="nav-link {{ request()->routeIs('admin.customers.*') ? 'active text-info fw-semibold' : '' }}" href="{{ route('admin.customers.index') }}"><i class="bi bi-people me-1"></i> Customer</a></li>
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active text-info fw-semibold' : '' }}" href="{{ route('admin.reports.index') }}">
                                     <i class="bi bi-file-earmark-bar-graph me-1"></i> Laporan

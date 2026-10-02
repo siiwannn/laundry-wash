@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminCourierController;
+use App\Http\Controllers\Admin\AdminCustomerController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminReportController;
@@ -102,6 +103,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/couriers/create', [AdminCourierController::class, 'create'])->name('couriers.create');
     Route::post('/couriers', [AdminCourierController::class, 'store'])->name('couriers.store');
     Route::patch('/couriers/{courier}/toggle', [AdminCourierController::class, 'toggleStatus'])->name('couriers.toggle');
+    Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
+    Route::get('/customers/{customer}', [AdminCustomerController::class, 'show'])->name('customers.show');
+    Route::get('/customers/{customer}/edit', [AdminCustomerController::class, 'edit'])->name('customers.edit');
+    Route::put('/customers/{customer}', [AdminCustomerController::class, 'update'])->name('customers.update');
+    Route::patch('/customers/{customer}/toggle', [AdminCustomerController::class, 'toggle'])->name('customers.toggle');
 
     // Business Reports & Analytics
     Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
