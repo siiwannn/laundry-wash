@@ -138,6 +138,7 @@
                                     <i class="bi bi-file-earmark-bar-graph me-1"></i> Laporan
                                 </a>
                             </li>
+                            <li class="nav-item"><a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active text-info fw-semibold' : '' }}" href="{{ route('admin.settings.edit') }}"><i class="bi bi-gear me-1"></i> Pengaturan</a></li>
                         @elseif(auth()->user()->isCourier())
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('courier.dashboard') ? 'active text-info fw-semibold' : '' }}" href="{{ route('courier.dashboard') }}">

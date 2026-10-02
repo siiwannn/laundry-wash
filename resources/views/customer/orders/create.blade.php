@@ -98,7 +98,12 @@
                                 Anda belum memiliki alamat tersimpan. Silakan <a href="{{ route('customer.addresses.create') }}" class="alert-link">tambahkan alamat penjemputan</a> terlebih dahulu.
                             </div>
                         @endif
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6"><label for="pickup_date" class="form-label fw-semibold small">Tanggal Pickup</label><input id="pickup_date" name="pickup_date" type="date" min="{{ now()->toDateString() }}" value="{{ old('pickup_date', now()->addDay()->toDateString()) }}" class="form-control"></div>
+                            <div class="col-md-6"><label for="pickup_time" class="form-label fw-semibold small">Jam Pickup</label><input id="pickup_time" name="pickup_time" type="time" value="{{ old('pickup_time', '09:00') }}" class="form-control"></div>
+                        </div>
                     </div>
+                    <div class="mt-3"><label for="delivery_method" class="form-label fw-semibold small">Metode Pengambilan Setelah Selesai</label><select id="delivery_method" name="delivery_method" class="form-select"><option value="delivery">Diantar kurir</option><option value="self_pickup">Ambil sendiri di outlet</option></select></div>
                 </div>
             </div>
 

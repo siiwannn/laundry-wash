@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
+    public function __construct(private readonly SettingService $settings) {}
+
     /**
      * Create a new laundry order for a customer.
      */
@@ -25,8 +27,9 @@ class OrderService
             $orderNumber = $this->generateOrderNumber();
             $estimatedWeight = isset($data['estimated_weight']) ? (float) $data['estimated_weight'] : null;
 
-            // Delivery fee: Rp 10.000 for pickup & delivery, Rp 0 for self drop-off
-            $deliveryFee = $serviceType === ServiceType::PICKUP_AND_DELIVERY ? 10000.00 : 0.00;
+            $setting = $this->settings->current();
+            $pickupFee = $serviceType === ServiceType::PICKUP_AND_DELIVERY ? (float) $setting->pickup_fee : 0.00;
+            $deliveryFee = $data['delivery_method'] === 'delivery' ? (float) $setting->delivery_fee : 0.00;
             $additionalFee = 0.00;
 
             // Compute estimated subtotal
@@ -49,7 +52,9 @@ class OrderService
                 $subtotal = $estimatedWeight * (float) $service->price_per_kg;
             }
 
-            $total = $subtotal + $deliveryFee + $additionalFee;
+            $pricePerKg = (float) $setting->laundry_price_per_kg;
+            $subtotal = $estimatedWeight ? $estimatedWeight * $pricePerKg : 0.00;
+            $total = $subtotal + $pickupFee + $deliveryFee + $additionalFee;
 
             $order = Order::create([
                 'order_number' => $orderNumber,
@@ -57,11 +62,17 @@ class OrderService
                 'pickup_address_id' => $serviceType === ServiceType::PICKUP_AND_DELIVERY ? $pickupAddressId : null,
                 'delivery_address_id' => $serviceType === ServiceType::PICKUP_AND_DELIVERY ? $pickupAddressId : null,
                 'service_type' => $serviceType,
+                'pickup_method' => $serviceType === ServiceType::PICKUP_AND_DELIVERY ? 'pickup' : 'drop_off',
+                'delivery_method' => $data['delivery_method'],
+                'pickup_date' => $data['pickup_date'] ?? null,
+                'pickup_time' => $data['pickup_time'] ?? null,
                 'status' => OrderStatus::PENDING,
                 'payment_status' => PaymentStatus::PENDING,
                 'estimated_weight' => $estimatedWeight,
                 'actual_weight' => null,
+                'price_per_kg' => $pricePerKg,
                 'subtotal' => $subtotal,
+                'pickup_fee' => $pickupFee,
                 'delivery_fee' => $deliveryFee,
                 'additional_fee' => $additionalFee,
                 'total' => $total,
@@ -72,7 +83,7 @@ class OrderService
                 'order_id' => $order->id,
                 'service_id' => $service->id,
                 'quantity' => $estimatedWeight ?: 1.0,
-                'unit_price' => $service->price_per_kg,
+                'unit_price' => $pricePerKg,
                 'subtotal' => $subtotal,
             ]);
 
@@ -123,11 +134,11 @@ class OrderService
 
         return DB::transaction(function () use ($order, $actualWeight, $additionalFee, $admin) {
             $orderItem = $order->items()->first();
-            $unitPrice = $orderItem ? (float) $orderItem->unit_price : 8000.0;
+            $unitPrice = (float) $order->price_per_kg;
 
             $subtotal = round($actualWeight * $unitPrice, 2);
             $addFee = $additionalFee !== null ? (float) $additionalFee : (float) $order->additional_fee;
-            $total = $subtotal + (float) $order->delivery_fee + $addFee;
+            $total = $subtotal + (float) $order->pickup_fee + (float) $order->delivery_fee + $addFee;
 
             if ($orderItem) {
                 $orderItem->update([

@@ -31,6 +31,9 @@ class StoreOrderRequest extends FormRequest
                 ),
             ],
             'notes' => ['nullable', 'string', 'max:500'],
+            'pickup_date' => ['required_if:service_type,pickup_and_delivery', 'nullable', 'date', 'after_or_equal:today'],
+            'pickup_time' => ['required_if:service_type,pickup_and_delivery', 'nullable', 'date_format:H:i'],
+            'delivery_method' => ['required', Rule::in(['delivery', 'self_pickup'])],
         ];
     }
 
