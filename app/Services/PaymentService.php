@@ -105,4 +105,27 @@ class PaymentService
             return $payment;
         });
     }
+
+    public function rejectPayment(Payment $payment, User $admin): Payment
+    {
+        if ($payment->status !== PaymentStatus::PENDING || $payment->order->status !== OrderStatus::WAITING_PAYMENT) {
+            throw new Exception('Pembayaran ini tidak dapat ditolak pada status sekarang.');
+        }
+
+        return DB::transaction(function () use ($payment, $admin) {
+            $payment->update(['status' => PaymentStatus::FAILED, 'verified_by' => $admin->id]);
+            $order = $payment->order;
+            $order->update(['status' => OrderStatus::READY, 'payment_status' => PaymentStatus::PENDING]);
+            OrderStatusHistory::create([
+                'order_id' => $order->id,
+                'status' => OrderStatus::READY,
+                'note' => 'Pembayaran ditolak Admin. Customer dapat mengirim pembayaran ulang.',
+                'changed_by' => $admin->id,
+                'created_at' => now(),
+            ]);
+            $this->activityLog->record($admin, "Menolak pembayaran order {$order->order_number}");
+
+            return $payment;
+        });
+    }
 }

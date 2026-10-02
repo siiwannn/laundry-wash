@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminCourierController;
 use App\Http\Controllers\Admin\AdminCustomerController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminOrderController;
+use App\Http\Controllers\Admin\AdminPaymentController;
 use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminServiceController;
 use App\Http\Controllers\Admin\AdminSettingController;
@@ -94,6 +95,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('/orders/{order}/receive', [AdminOrderController::class, 'receiveAtLaundry'])->name('orders.receive');
     Route::patch('/orders/{order}/stage', [AdminOrderController::class, 'updateStage'])->name('orders.stage');
     Route::patch('/payments/{payment}/confirm', [AdminOrderController::class, 'confirmPayment'])->name('payments.confirm');
+    Route::get('/payments', [AdminPaymentController::class, 'index'])->name('payments.index');
+    Route::patch('/payments/{payment}/verify', [AdminPaymentController::class, 'verify'])->name('payments.verify');
 
     // Services Catalog CRUD
     Route::resource('services', AdminServiceController::class);

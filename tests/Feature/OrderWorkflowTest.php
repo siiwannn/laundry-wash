@@ -105,6 +105,21 @@ class OrderWorkflowTest extends TestCase
         );
     }
 
+    public function test_admin_can_reject_payment_and_customer_can_resubmit(): void
+    {
+        $customer = $this->createUser(UserRole::CUSTOMER);
+        $admin = $this->createUser(UserRole::ADMIN);
+        $order = $this->createOrder($customer, OrderStatus::READY);
+        $service = app(PaymentService::class);
+        $payment = $service->submitPayment($order, $customer, ['method' => PaymentMethod::QRIS->value]);
+
+        $this->actingAs($admin)->patch(route('admin.payments.verify', $payment), ['status' => 'failed'])->assertRedirect();
+
+        $this->assertSame(PaymentStatus::FAILED, $payment->refresh()->status);
+        $this->assertSame(OrderStatus::READY, $order->refresh()->status);
+        $this->assertTrue($order->canAcceptPayment());
+    }
+
     public function test_paid_order_can_receive_delivery_assignment(): void
     {
         $customer = $this->createUser(UserRole::CUSTOMER);
