@@ -9,6 +9,7 @@
     <!-- Bootstrap 5 CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Leaflet CSS for map picker -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -20,7 +21,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: "Poppins", sans-serif;
             padding: 2rem 1rem;
         }
 
@@ -47,7 +48,7 @@
         .brand-icon {
             width: 56px;
             height: 56px;
-            background: #0284c7;
+            background: #3B82F6;
             color: #ffffff;
             border-radius: 14px;
             display: inline-flex;
@@ -59,14 +60,14 @@
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: #0284c7;
+            border-color: #3B82F6;
             box-shadow: 0 0 0 0.25rem rgba(2, 132, 199, 0.2);
         }
 
         .btn-primary {
-            background-color: #0284c7;
-            border-color: #0284c7;
-            border-radius: 8px;
+            background-color: #3B82F6;
+            border-color: #3B82F6;
+            border-radius: 12px;
             font-weight: 600;
         }
 

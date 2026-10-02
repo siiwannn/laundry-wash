@@ -9,14 +9,15 @@
     <!-- Bootstrap 5 CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
         :root {
-            --lw-primary: #0d6efd;
-            --lw-secondary: #0dcaf0;
+            --lw-primary: #3B82F6;
+            --lw-secondary: #0EA5E9;
             --lw-dark: #1e293b;
             --lw-light: #f8fafc;
             --lw-surface: #ffffff;
@@ -24,7 +25,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: "Poppins", sans-serif;
             background-color: var(--lw-light);
             color: #334155;
             min-height: 100vh;
@@ -42,13 +43,13 @@
         }
 
         .card {
-            border-radius: 12px;
+            border-radius: 16px;
             border: 1px solid var(--lw-border);
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
         }
 
         .btn {
-            border-radius: 8px;
+            border-radius: 12px;
             font-weight: 500;
         }
 
@@ -92,6 +93,22 @@
             margin-top: auto;
             border-top: 1px solid var(--lw-border);
             background: #ffffff;
+        }
+        .app-sidebar { width: 250px; position: fixed; inset: 57px auto 0 0; background: #fff; border-right: 1px solid var(--lw-border); padding: 1.25rem 1rem; overflow-y: auto; z-index: 1010; }
+        .app-sidebar .nav-link { color: #64748b; border-radius: 12px; padding: .75rem .875rem; margin-bottom: .25rem; }
+        .app-sidebar .nav-link:hover, .app-sidebar .nav-link.active { color: var(--lw-primary); background: #eff6ff; font-weight: 600; }
+        .app-content { margin-left: 250px; }
+        .mobile-bottom-nav { display: none; }
+        :focus-visible { outline: 3px solid rgba(59, 130, 246, .35); outline-offset: 2px; }
+        @media (min-width: 992px) { #navbarMain .navbar-nav.me-auto { display: none; } }
+        @media (max-width: 991.98px) {
+            .app-sidebar { display: none; }
+            .app-content { margin-left: 0; padding-bottom: 72px; }
+            footer { margin-bottom: 64px; }
+            .mobile-bottom-nav { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; inset: auto 0 0; z-index: 1040; background: #fff; border-top: 1px solid var(--lw-border); box-shadow: 0 -4px 18px rgba(15, 23, 42, .08); }
+            .mobile-bottom-nav a { min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .2rem; color: #64748b; text-decoration: none; font-size: .7rem; }
+            .mobile-bottom-nav a.active { color: var(--lw-primary); font-weight: 600; }
+            .mobile-bottom-nav i { font-size: 1.2rem; }
         }
     </style>
     @stack('styles')
@@ -216,10 +233,37 @@
                 </ul>
             </div>
         </div>
+</nav>
+
+@auth
+<aside class="app-sidebar" aria-label="Navigasi utama">
+    <div class="small text-uppercase text-muted fw-semibold px-2 mb-3">Menu {{ auth()->user()->role->label() }}</div>
+    <nav class="nav flex-column">
+        @if(auth()->user()->isAdmin())
+            <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}"><i class="bi bi-grid me-2"></i>Dashboard</a>
+            <a class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" href="{{ route('admin.orders.index') }}"><i class="bi bi-bag-check me-2"></i>Orders</a>
+            <a class="nav-link {{ request()->routeIs('admin.customers.*') ? 'active' : '' }}" href="{{ route('admin.customers.index') }}"><i class="bi bi-people me-2"></i>Customers</a>
+            <a class="nav-link {{ request()->routeIs('admin.couriers.*') ? 'active' : '' }}" href="{{ route('admin.couriers.index') }}"><i class="bi bi-bicycle me-2"></i>Couriers</a>
+            <a class="nav-link {{ request()->routeIs('admin.services.*') ? 'active' : '' }}" href="{{ route('admin.services.index') }}"><i class="bi bi-tags me-2"></i>Services</a>
+            <a class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" href="{{ route('admin.payments.index') }}"><i class="bi bi-credit-card me-2"></i>Payments</a>
+            <a class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}"><i class="bi bi-bar-chart me-2"></i>Reports</a>
+            <a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" href="{{ route('admin.settings.edit') }}"><i class="bi bi-gear me-2"></i>Settings</a>
+        @elseif(auth()->user()->isCourier())
+            <a class="nav-link {{ request()->routeIs('courier.dashboard') ? 'active' : '' }}" href="{{ route('courier.dashboard') }}"><i class="bi bi-grid me-2"></i>Dashboard</a>
+            <a class="nav-link {{ request()->routeIs('courier.history') ? 'active' : '' }}" href="{{ route('courier.history') }}"><i class="bi bi-clock-history me-2"></i>History</a>
+        @else
+            <a class="nav-link {{ request()->routeIs('customer.dashboard') ? 'active' : '' }}" href="{{ route('customer.dashboard') }}"><i class="bi bi-house me-2"></i>Home</a>
+            <a class="nav-link {{ request()->routeIs('customer.orders.create') ? 'active' : '' }}" href="{{ route('customer.orders.create') }}"><i class="bi bi-plus-circle me-2"></i>Order Baru</a>
+            <a class="nav-link {{ request()->routeIs('customer.orders.history') ? 'active' : '' }}" href="{{ route('customer.orders.history') }}"><i class="bi bi-receipt me-2"></i>History</a>
+            <a class="nav-link {{ request()->routeIs('customer.addresses.*') ? 'active' : '' }}" href="{{ route('customer.addresses.index') }}"><i class="bi bi-geo-alt me-2"></i>Alamat</a>
+            <a class="nav-link {{ request()->routeIs('customer.profile.*') ? 'active' : '' }}" href="{{ route('customer.profile.edit') }}"><i class="bi bi-person me-2"></i>Profile</a>
+        @endif
     </nav>
+</aside>
+@endauth
 
     <!-- Main Content Area -->
-    <main class="py-4 flex-grow-1">
+    <main class="py-4 flex-grow-1 app-content">
         <div class="container">
             <!-- Flash Message Alerts -->
             @if(session('success'))
@@ -261,6 +305,18 @@
             @yield('content')
         </div>
     </main>
+
+@auth
+<nav class="mobile-bottom-nav" aria-label="Navigasi mobile">
+    @if(auth()->user()->isAdmin())
+        <a class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}"><i class="bi bi-grid"></i>Dashboard</a><a class="{{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" href="{{ route('admin.orders.index') }}"><i class="bi bi-bag"></i>Orders</a><a class="{{ request()->routeIs('admin.customers.*') ? 'active' : '' }}" href="{{ route('admin.customers.index') }}"><i class="bi bi-people"></i>Customer</a><a class="{{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" href="{{ route('admin.settings.edit') }}"><i class="bi bi-gear"></i>Settings</a>
+    @elseif(auth()->user()->isCourier())
+        <a class="active" href="{{ route('courier.dashboard') }}"><i class="bi bi-grid"></i>Dashboard</a><a href="{{ route('courier.dashboard') }}"><i class="bi bi-box-arrow-down"></i>Pickup</a><a href="{{ route('courier.dashboard') }}"><i class="bi bi-box-arrow-up"></i>Delivery</a><a class="{{ request()->routeIs('courier.history') ? 'active' : '' }}" href="{{ route('courier.history') }}"><i class="bi bi-clock-history"></i>History</a>
+    @else
+        <a class="{{ request()->routeIs('customer.dashboard') ? 'active' : '' }}" href="{{ route('customer.dashboard') }}"><i class="bi bi-house"></i>Home</a><a class="{{ request()->routeIs('customer.orders.create') ? 'active' : '' }}" href="{{ route('customer.orders.create') }}"><i class="bi bi-plus-circle"></i>Order</a><a class="{{ request()->routeIs('customer.orders.history') ? 'active' : '' }}" href="{{ route('customer.orders.history') }}"><i class="bi bi-receipt"></i>History</a><a class="{{ request()->routeIs('customer.profile.*') ? 'active' : '' }}" href="{{ route('customer.profile.edit') }}"><i class="bi bi-person"></i>Profile</a>
+    @endif
+</nav>
+@endauth
 
     <!-- Footer -->
     <footer class="py-3 text-center text-muted">
