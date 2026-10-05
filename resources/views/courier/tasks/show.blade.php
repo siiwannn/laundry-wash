@@ -4,34 +4,6 @@
 
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.7.3/dist/maplibre-gl.css">
-<style>
-    .courier-navigation-page { min-height: calc(100vh - 170px); }
-    .courier-navigation-page > .col-lg-7 { width: 100%; padding: 0; }
-    .courier-navigation-page > .col-lg-5 {
-        position: fixed;
-        z-index: 5;
-        left: 24px;
-        bottom: 24px;
-        width: min(430px, calc(100vw - 48px));
-        padding: 0;
-    }
-    .courier-navigation-page > .col-lg-5 .card { border: 0; box-shadow: 0 14px 34px rgba(15, 23, 42, .18) !important; }
-    .courier-navigation-page > .col-lg-5 .card:first-child { margin-bottom: 0 !important; }
-    .courier-navigation-page > .col-lg-5 .card:last-child { display: none; }
-    .courier-navigation-map { min-height: calc(100vh - 170px); border: 0; border-radius: 0; background: #DDE7F4; }
-    .courier-navigation-map .card-header { display: none; }
-    .courier-navigation-map .card-footer { position: absolute; z-index: 4; top: 18px; left: 24px; right: 24px; border: 0; border-radius: 16px; box-shadow: 0 10px 26px rgba(15, 23, 42, .16); }
-    #courierMap { height: calc(100vh - 170px) !important; min-height: 620px; }
-    .courier-navigation-controls { position: absolute; z-index: 3; right: 24px; bottom: 190px; }
-    .courier-navigation-page .card-header.bg-primary { border-radius: 18px 18px 0 0; }
-    @media (max-width: 575.98px) {
-        .courier-navigation-page, .courier-navigation-map { min-height: calc(100vh - 140px); }
-        #courierMap { height: calc(100vh - 140px) !important; min-height: 560px; }
-        .courier-navigation-page > .col-lg-5 { left: 12px; bottom: 12px; width: calc(100vw - 24px); }
-        .courier-navigation-map .card-footer { top: 12px; left: 12px; right: 12px; }
-        .courier-navigation-controls { right: 12px; bottom: 190px; }
-    }
-</style>
 @endpush
 
 @section('content')
@@ -71,15 +43,15 @@
     </div>
 @endif
 
-<div class="row g-4 courier-navigation-page">
+<div class="row g-4">
     <!-- Map Navigation View -->
     <div class="col-lg-7">
-        <div class="card shadow-sm overflow-hidden mb-4 courier-navigation-map">
+        <div class="card shadow-sm overflow-hidden mb-4">
             <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
                 <span class="small fw-semibold text-muted"><i class="bi bi-map me-1 text-primary"></i> Peta Rute Navigasi</span>
                 <span class="small text-muted">Peta perjalanan menggunakan MapLibre dan OpenFreeMap.</span>
             </div>
-            <div id="courierMap" style="width: 100%;"></div>
+            <div id="courierMap" style="height: 380px; width: 100%;"></div>
             <div class="card-footer bg-light py-2 px-3 small text-muted">
                 <i class="bi bi-house-door-fill text-success me-1"></i> Titik Tujuan: <strong>{{ $targetAddress->address ?? 'Alamat Pelanggan' }}</strong>
             </div>
@@ -181,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const targetLng = {{ $targetAddress->longitude ?? 106.8456 }};
     const mapStyleUrl = @json(config('services.tracking.map_style_url'));
 
-    const map = new maplibregl.Map({ container: 'courierMap', style: mapStyleUrl, center: [targetLng, targetLat], zoom: 17.5, pitch: 58, bearing: 0 });
+    const map = new maplibregl.Map({ container: 'courierMap', style: mapStyleUrl, center: [targetLng, targetLat], zoom: 14, pitch: 0, bearing: 0 });
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
 
     const destinationElement = document.createElement('div');
@@ -327,9 +299,9 @@ document.addEventListener('DOMContentLoaded', function () {
             map.easeTo({
                 center: [latestPosition.longitude, latestPosition.latitude],
                 bearing: latestPosition.heading ?? map.getBearing(),
-                pitch: 58,
-                zoom: 17.5,
-                offset: [0, -(map.getContainer().clientHeight * 0.25)],
+                pitch: 0,
+                zoom: 14,
+                offset: [0, 0],
                 duration: 900,
             });
 
