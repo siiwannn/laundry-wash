@@ -24,9 +24,9 @@
     .tracking-shell > .col-lg-8 .card-footer > div > .small { display: none; }
     .tracking-metric { min-width: 120px; }
     .tracking-metric-value { font-variant-numeric: tabular-nums; }
-    .driver-marker { width: 58px; height: 58px; transform-origin: center; will-change: transform; }
+    .driver-marker { width: 58px; height: 58px; transform-origin: center; will-change: transform; z-index: 10; }
     .driver-marker img, .destination-marker img { width: 100%; height: 100%; display: block; }
-    .destination-marker { width: 44px; height: 44px; }
+    .destination-marker { width: 44px; height: 44px; z-index: 8; }
     .map-overlay-controls { position: absolute; z-index: 2; right: 24px; bottom: 190px; }
     @media (max-width: 575.98px) {
         .tracking-shell { min-height: calc(100vh - 60px); }
@@ -307,23 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
-    map.on('load', () => {
-        if (map.getSource('openmaptiles') && !map.getLayer('tracking-3d-buildings')) {
-            const labelLayer = map.getStyle().layers.find(layer => layer.type === 'symbol' && layer.layout?.['text-field']);
-            map.addLayer({
-                id: 'tracking-3d-buildings',
-                source: 'openmaptiles',
-                'source-layer': 'building',
-                type: 'fill-extrusion',
-                minzoom: 15,
-                paint: {
-                    'fill-extrusion-color': '#CBD5E1',
-                    'fill-extrusion-height': ['coalesce', ['get', 'render_height'], ['get', 'height'], 5],
-                    'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
-                    'fill-extrusion-opacity': .7,
-                },
-            }, labelLayer?.id);
-        }
+    function addTrackingLayers() {
         map.addSource('active-route', {
             type: 'geojson',
             data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } }
@@ -353,6 +337,36 @@ document.addEventListener('DOMContentLoaded', () => {
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: { 'line-color': '#64748B', 'line-width': 8, 'line-opacity': .92 }
         });
+    }
+
+    map.on('load', () => {
+        try {
+            const styleLayers = map.getStyle().layers ?? [];
+            const hasBuildingSourceLayer = styleLayers.some(layer =>
+                layer.source === 'openmaptiles' && layer['source-layer'] === 'building'
+            );
+            if (map.getSource('openmaptiles') && hasBuildingSourceLayer && !map.getLayer('tracking-3d-buildings')) {
+                const labelLayer = styleLayers.find(layer => layer.type === 'symbol' && layer.layout?.['text-field']);
+                map.addLayer({
+                    id: 'tracking-3d-buildings',
+                    source: 'openmaptiles',
+                    'source-layer': 'building',
+                    type: 'fill-extrusion',
+                    minzoom: 15,
+                    layout: { visibility: 'visible' },
+                    paint: {
+                        'fill-extrusion-color': '#CBD5E1',
+                        'fill-extrusion-height': ['coalesce', ['get', 'render_height'], ['get', 'height'], 5],
+                        'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+                        'fill-extrusion-opacity': .7,
+                    },
+                }, labelLayer?.id);
+            }
+        } catch (error) {
+            console.warn('3D buildings tidak tersedia; tracking tetap dilanjutkan.', error);
+        }
+
+        addTrackingLayers();
         applyTrackingData(initialData);
     });
 

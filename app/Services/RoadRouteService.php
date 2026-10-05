@@ -24,7 +24,8 @@ class RoadRouteService
                 $baseUrl = rtrim((string) config('services.tracking.routing_url'), '/');
                 $coordinates = "{$fromLongitude},{$fromLatitude};{$toLongitude},{$toLatitude}";
                 $response = Http::acceptJson()
-                    ->timeout(4)
+                    ->connectTimeout(3)
+                    ->timeout(8)
                     ->retry(1, 150, fn (Throwable $exception) => $exception instanceof ConnectionException)
                     ->get("{$baseUrl}/route/v1/driving/{$coordinates}", [
                         'overview' => 'full',
