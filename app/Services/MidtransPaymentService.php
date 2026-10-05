@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\PaymentMethod;
 use App\Models\Order;
 use App\Models\Payment;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Midtrans\Config;
 use Midtrans\Snap;
@@ -16,7 +17,7 @@ class MidtransPaymentService
     {
         $this->configure();
 
-        $token = Snap::getSnapToken([
+        $payload = [
             'transaction_details' => [
                 'order_id' => $payment->gateway_order_id,
                 'gross_amount' => (int) round((float) $payment->amount),
@@ -32,9 +33,15 @@ class MidtransPaymentService
                 'quantity' => 1,
                 'name' => 'Laundry '.$order->order_number,
             ]],
-            'enabled_payments' => ['qris', 'bca_va', 'bni_va', 'bri_va', 'permata_va'],
+            'enabled_payments' => ['other_qris', 'bca_va', 'bni_va', 'bri_va', 'permata_va'],
             'expiry' => ['unit' => 'hours', 'duration' => 24],
-        ]);
+        ];
+
+        if (app()->environment(['local', 'development'])) {
+            Log::debug('Midtrans Snap payload', ['payload' => $payload]);
+        }
+
+        $token = Snap::getSnapToken($payload);
 
         if (! is_string($token) || $token === '') {
             throw new RuntimeException('Midtrans tidak mengembalikan Snap token yang valid.');
