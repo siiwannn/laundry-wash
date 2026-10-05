@@ -85,7 +85,11 @@ class CustomerOrderController extends Controller
         Gate::authorize('pay', $order);
 
         try {
-            $payment = $this->paymentService->createMidtransPayment($order, $request->user());
+            $payment = $this->paymentService->createMidtransPayment(
+                $order,
+                $request->user(),
+                $request->boolean('refresh_token'),
+            );
 
             return response()->json([
                 'success' => true,

@@ -63,6 +63,27 @@ class MidtransPaymentTest extends TestCase
         $this->assertSame(PaymentStatus::PENDING, $order->fresh()->payment_status);
     }
 
+    public function test_customer_can_refresh_snap_token_after_closing_checkout(): void
+    {
+        $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
+        $order = $this->createOrder($customer, OrderStatus::READY);
+        $gateway = Mockery::mock(MidtransPaymentService::class);
+        $gateway->shouldReceive('createSnapToken')->twice()->andReturn('snap-first-token', 'snap-refreshed-token');
+        $this->app->instance(MidtransPaymentService::class, $gateway);
+
+        $this->actingAs($customer)->postJson(route('customer.orders.pay', $order))
+            ->assertOk()
+            ->assertJsonPath('snap_token', 'snap-first-token');
+
+        $this->actingAs($customer)->postJson(route('customer.orders.pay', $order), ['refresh_token' => true])
+            ->assertOk()
+            ->assertJsonPath('snap_token', 'snap-refreshed-token');
+
+        $this->assertDatabaseCount('payments', 1);
+        $this->assertSame('snap-refreshed-token', Payment::firstOrFail()->snap_token);
+        $this->assertSame(PaymentStatus::PENDING, Payment::firstOrFail()->status);
+    }
+
     public function test_webhook_rejects_invalid_signature(): void
     {
         $payment = $this->createPendingPayment();

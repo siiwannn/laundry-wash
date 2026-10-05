@@ -21,7 +21,7 @@ class PaymentService
         private readonly MidtransPaymentService $midtrans,
     ) {}
 
-    public function createMidtransPayment(Order $order, User $customer): Payment
+    public function createMidtransPayment(Order $order, User $customer, bool $refreshToken = false): Payment
     {
         if ($order->customer_id !== $customer->id) {
             throw new Exception('Pembayaran hanya dapat dilakukan oleh pemilik pesanan.');
@@ -37,8 +37,18 @@ class PaymentService
             ->latest()
             ->first();
 
-        if ($activePayment?->snap_token) {
+        if ($activePayment?->snap_token && ! $refreshToken) {
             return $activePayment;
+        }
+
+        if ($activePayment?->snap_token && $refreshToken) {
+            return DB::transaction(function () use ($activePayment, $order, $customer) {
+                $snapToken = $this->midtrans->createSnapToken($order->loadMissing('customer'), $activePayment);
+                $activePayment->update(['snap_token' => $snapToken]);
+                $this->activityLog->record($customer, "Payment Snap Token Refreshed: {$activePayment->gateway_order_id}");
+
+                return $activePayment->fresh();
+            });
         }
 
         return DB::transaction(function () use ($order, $customer) {

@@ -13,6 +13,8 @@ class StorePaymentRequest extends FormRequest
 
     public function rules(): array
     {
-        return [];
+        return [
+            'refresh_token' => ['sometimes', 'boolean'],
+        ];
     }
 }

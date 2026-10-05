@@ -275,6 +275,7 @@
 <script>
 document.getElementById('payWithMidtrans')?.addEventListener('click', async function () {
     const button = this;
+    let refreshToken = false;
     const restoreButton = () => {
         button.disabled = false;
         button.innerHTML = '<i class="bi bi-credit-card me-1"></i> Bayar Sekarang';
@@ -287,12 +288,15 @@ document.getElementById('payWithMidtrans')?.addEventListener('click', async func
         const response = await fetch(@json(route('customer.orders.pay', $order)), {
             method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             },
+            body: JSON.stringify({ refresh_token: refreshToken }),
         });
         const data = await response.json();
         if (!response.ok || !data.snap_token) throw new Error(data.message || 'Pembayaran tidak dapat dibuat.');
+        refreshToken = false;
 
         window.snap.pay(data.snap_token, {
             onSuccess: () => window.location.reload(),
@@ -301,10 +305,12 @@ document.getElementById('payWithMidtrans')?.addEventListener('click', async func
                 alert('Pembayaran masih menunggu penyelesaian. Anda dapat membuka Snap kembali.');
             },
             onError: () => {
+                refreshToken = true;
                 restoreButton();
                 alert('Pembayaran gagal diproses. Silakan coba lagi.');
             },
             onClose: () => {
+                refreshToken = true;
                 restoreButton();
                 alert('Pembayaran dibatalkan atau belum diselesaikan.');
             },
