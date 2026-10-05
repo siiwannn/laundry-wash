@@ -139,6 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let pollingStopped = false;
     let countdown = 10;
     const traveledCoordinates = [];
+    let routeHasBeenFitted = false;
 
     const statusElement = document.getElementById('trackingStatusText');
     const updatedElement = document.getElementById('lastUpdatedText');
@@ -167,6 +168,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         etaElement.textContent = route ? `${Math.max(1, Math.ceil(route.duration_seconds / 60))} menit` : '--';
         distanceElement.textContent = route ? `${(route.distance_meters / 1000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} km` : '--';
+        if (!routeHasBeenFitted && route?.geometry?.coordinates?.length) {
+            const bounds = new maplibregl.LngLatBounds();
+            route.geometry.coordinates.forEach((coordinate) => bounds.extend(coordinate));
+            if (!bounds.isEmpty()) {
+                map.fitBounds(bounds, { padding: 42, maxZoom: 15, duration: 600 });
+                routeHasBeenFitted = true;
+            }
+        }
     }
 
     function updateTraveledRoute(coordinates) {
@@ -233,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentCoordinates = nextCoordinates;
             currentBearing = nextBearing ?? currentBearing;
             driverMarker.setLngLat(nextCoordinates).setRotation(currentBearing).addTo(map);
-            followCamera(nextCoordinates, currentBearing, reducedMotion ? 0 : 700);
+            if (!routeHasBeenFitted) followCamera(nextCoordinates, currentBearing, reducedMotion ? 0 : 700);
             return;
         }
 
