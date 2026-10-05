@@ -165,6 +165,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const etaElement = document.getElementById('courierEta');
     const distanceElement = document.getElementById('courierDistance');
     let routeRefreshInFlight = false;
+    let routeHasBeenFitted = false;
+
+    function fitRoute(route) {
+        if (routeHasBeenFitted || !route?.geometry?.coordinates?.length) return;
+        const bounds = new maplibregl.LngLatBounds();
+        route.geometry.coordinates.forEach((coordinate) => bounds.extend(coordinate));
+        if (!bounds.isEmpty()) {
+            map.fitBounds(bounds, { padding: 42, maxZoom: 15, duration: 600 });
+            routeHasBeenFitted = true;
+        }
+    }
 
     function updateRoute(route) {
         const source = map.getSource('courier-active-route');
@@ -175,6 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         etaElement.textContent = route ? `${Math.max(1, Math.ceil(route.duration_seconds / 60))} menit` : '--';
         distanceElement.textContent = route ? `${(route.distance_meters / 1000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} km` : '--';
+        fitRoute(route);
     }
 
     async function refreshRoute() {
