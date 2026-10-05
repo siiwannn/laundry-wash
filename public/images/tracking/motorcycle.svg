@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title">
+  <title id="title">Motor kurir Laundry Wash</title>
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#0F172A" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)" transform="rotate(-25 48 48)">
+    <ellipse cx="48" cy="77" rx="27" ry="7" fill="#0F172A" opacity=".16"/>
+    <circle cx="28" cy="64" r="13" fill="#0F172A"/>
+    <circle cx="28" cy="64" r="7" fill="#CBD5E1"/>
+    <circle cx="70" cy="64" r="13" fill="#0F172A"/>
+    <circle cx="70" cy="64" r="7" fill="#CBD5E1"/>
+    <path d="M28 62 41 42h22l8 20H59L49 51 39 64Z" fill="url(#body)" stroke="#1D4ED8" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M52 43h16l-5-9H49Z" fill="#172554"/>
+    <path d="M66 37 77 27" fill="none" stroke="#1E293B" stroke-width="4" stroke-linecap="round"/>
+    <path d="m73 27 11 2" fill="none" stroke="#1E293B" stroke-width="4" stroke-linecap="round"/>
+    <rect x="38" y="35" width="24" height="12" rx="4" fill="#F8FAFC" stroke="#2563EB" stroke-width="3"/>
+    <path d="M45 35v-8h13v8" fill="#DBEAFE" stroke="#2563EB" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="69" cy="48" r="4" fill="#FEF3C7"/>
+  </g>
+</svg>

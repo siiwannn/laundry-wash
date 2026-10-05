@@ -12,11 +12,31 @@ use App\Models\CustomerAddress;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class LiveGpsTrackingTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Http::fake([
+            'router.project-osrm.org/*' => Http::response([
+                'code' => 'Ok',
+                'routes' => [[
+                    'distance' => 4300.4,
+                    'duration' => 480.2,
+                    'geometry' => [
+                        'type' => 'LineString',
+                        'coordinates' => [[106.8456, -6.2088], [106.82, -6.2], [106.8, -6.2]],
+                    ],
+                ]],
+            ]),
+        ]);
+    }
 
     public function test_courier_can_send_location_for_own_active_trip(): void
     {
@@ -90,7 +110,34 @@ class LiveGpsTrackingTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('data.is_active', true)
             ->assertJsonPath('data.assignment_id', $assignment->id)
-            ->assertJsonPath('data.courier_location.latitude', -6.2088);
+            ->assertJsonPath('data.courier_location.latitude', -6.2088)
+            ->assertJsonPath('data.journey_status', 'Menuju lokasi pickup')
+            ->assertJsonPath('data.route.distance_meters', 4300)
+            ->assertJsonPath('data.route.duration_seconds', 480);
+    }
+
+    public function test_tracking_is_active_during_delivery(): void
+    {
+        [$customer, $courier, $order, $assignment] = $this->createPickupTrip();
+        $assignment->update(['type' => AssignmentType::DELIVERY]);
+        $order->update([
+            'status' => OrderStatus::COURIER_TO_CUSTOMER,
+            'payment_status' => PaymentStatus::PAID,
+        ]);
+
+        $this->actingAs($courier)->postJson(route('api.courier.location'), [
+            'assignment_id' => $assignment->id,
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+            'heading' => 135,
+        ])->assertOk();
+
+        $this->actingAs($customer)->getJson(route('api.orders.tracking', $order))
+            ->assertOk()
+            ->assertJsonPath('data.is_active', true)
+            ->assertJsonPath('data.type', 'delivery')
+            ->assertJsonPath('data.journey_status', 'Menuju customer')
+            ->assertJsonPath('data.courier_location.heading', 135);
     }
 
     public function test_customer_cannot_poll_another_customers_order(): void
@@ -116,6 +163,25 @@ class LiveGpsTrackingTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('data.is_active', false);
+    }
+
+    public function test_courier_cannot_send_location_after_assignment_is_completed(): void
+    {
+        [$customer, $courier, $order, $assignment] = $this->createPickupTrip();
+        $assignment->update([
+            'status' => AssignmentStatus::COMPLETED,
+            'completed_at' => now(),
+        ]);
+        $order->update(['status' => OrderStatus::PICKED_UP]);
+
+        $this->actingAs($courier)->postJson(route('api.courier.location'), [
+            'assignment_id' => $assignment->id,
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+        ])->assertUnprocessable()
+            ->assertJsonPath('message', 'GPS hanya dapat dikirim setelah perjalanan dimulai.');
+
+        $this->assertDatabaseCount('courier_locations', 0);
     }
 
     private function createPickupTrip(

@@ -139,7 +139,10 @@ Assignment delivery wajib ditolak jika Order atau Payment belum Paid. Tracking b
 - Courier mengirim lokasi dengan `navigator.geolocation.watchPosition()`.
 - Lokasi dikirim melalui AJAX setiap 10 detik.
 - Customer mengambil lokasi terbaru melalui polling setiap 10 detik.
-- Peta menggunakan Leaflet dan OpenStreetMap.
+- Peta Live Tracking menggunakan MapLibre GL JS dan style OpenFreeMap/OpenMapTiles.
+- Backend mengambil geometry rute jalan, jarak tersisa, dan ETA dari endpoint routing berbasis OSRM.
+- Marker SVG motor bergerak dengan interpolasi halus sepanjang geometry jalan dan berputar mengikuti bearing.
+- Auto Follow menjaga camera pada kendaraan dengan pitch sekitar 45 derajat; customer dapat menonaktifkannya dengan tombol atau interaksi map.
 - Tracking hanya aktif pada perjalanan pickup atau delivery.
 
 ---
@@ -171,5 +174,6 @@ Assignment delivery wajib ditolak jika Order atau Payment belum Paid. Tracking b
 # 9. Constraints
 
 - Tidak menggunakan Firebase, Redis, WebSocket, Socket.io, atau Pusher.
+- Tidak menggunakan Leaflet atau Google Maps pada modul Live Tracking.
 - Tidak menerima pembayaran Cash atau Transfer Manual.
 - Tidak menyediakan aksi Verify Payment untuk Admin.

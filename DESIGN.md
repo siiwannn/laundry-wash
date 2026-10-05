@@ -403,21 +403,21 @@ Selesai
 
 # Map
 
-Gunakan
+Gunakan MapLibre GL JS dengan style OpenFreeMap/OpenMapTiles.
 
-Leaflet
+Marker Courier menggunakan asset SVG motor flat/isometric, tajam pada Retina Display, berputar mengikuti bearing, dan bergerak halus sepanjang route jalan.
 
-OpenStreetMap
+Marker tujuan menggunakan asset SVG non-pin.
 
-Marker Customer
+Polyline route mengikuti jalan dan wajib menampilkan ETA serta jarak tersisa.
 
-Marker Courier
+Map mendukung zoom, rotate, pitch sekitar 45 derajat, serta 3D Buildings jika style menyediakan source bangunan.
 
-Polyline Route (opsional)
+Auto Follow dapat dimatikan tanpa menonaktifkan tracking.
 
 Map minimal tinggi
 
-350px
+350px; pada halaman Live Tracking gunakan minimal 480px di desktop dan tinggi adaptif di mobile.
 
 ---
 

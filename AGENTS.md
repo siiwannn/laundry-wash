@@ -74,9 +74,9 @@ MySQL 8
 
 Maps
 
-Leaflet.js
+MapLibre GL JS
 
-OpenStreetMap
+OpenFreeMap / OpenMapTiles
 
 GPS
 
@@ -296,11 +296,13 @@ AI tidak boleh mengubah Formula.
 
 # Tracking Rules
 
-Gunakan
+Gunakan MapLibre GL JS dan style OpenFreeMap/OpenMapTiles untuk modul Live Tracking.
 
-Leaflet.js
+Route wajib mengikuti jalan dan menyediakan ETA serta remaining distance melalui service routing ringan.
 
-OpenStreetMap
+Marker Courier wajib berupa SVG motor, bergerak dengan smooth interpolation, dan berputar mengikuti bearing.
+
+Auto Follow menggunakan pitch sekitar 45 derajat dan dapat dimatikan oleh Customer.
 
 Browser Geolocation API
 

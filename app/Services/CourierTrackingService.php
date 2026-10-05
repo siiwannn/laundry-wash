@@ -13,7 +13,10 @@ use Exception;
 
 class CourierTrackingService
 {
-    public function __construct(private readonly ActivityLogService $activityLog) {}
+    public function __construct(
+        private readonly ActivityLogService $activityLog,
+        private readonly RoadRouteService $roadRoute,
+    ) {}
 
     /**
      * Ingest courier GPS location update.
@@ -70,6 +73,7 @@ class CourierTrackingService
         if (! $activeAssignment) {
             return [
                 'is_active' => false,
+                'journey_status' => $this->inactiveJourneyStatus($order),
                 'message' => 'Tidak ada kurir yang sedang aktif melakukan perjalanan untuk pesanan ini.',
             ];
         }
@@ -83,12 +87,40 @@ class CourierTrackingService
             ? $order->pickupAddress
             : ($order->deliveryAddress ?? $order->pickupAddress);
 
+        $route = null;
+        $movementRoute = null;
+        if ($latestLocation && $targetAddress?->latitude !== null && $targetAddress?->longitude !== null) {
+            $route = $this->roadRoute->route(
+                (float) $latestLocation->latitude,
+                (float) $latestLocation->longitude,
+                (float) $targetAddress->latitude,
+                (float) $targetAddress->longitude,
+            );
+
+            $previousLocation = $activeAssignment->locations()
+                ->whereKeyNot($latestLocation->id)
+                ->latest('recorded_at')
+                ->first();
+
+            if ($previousLocation) {
+                $movementRoute = $this->roadRoute->route(
+                    (float) $previousLocation->latitude,
+                    (float) $previousLocation->longitude,
+                    (float) $latestLocation->latitude,
+                    (float) $latestLocation->longitude,
+                );
+            }
+        }
+
+        $journeyStatus = $this->activeJourneyStatus($activeAssignment->type, $route['distance_meters'] ?? null);
+
         return [
             'is_active' => true,
             'assignment_id' => $activeAssignment->id,
             'type' => $activeAssignment->type->value,
             'type_label' => $activeAssignment->type->label(),
             'assignment_status' => $activeAssignment->status->value,
+            'journey_status' => $journeyStatus,
             'order_status' => $order->status->value,
             'order_status_label' => $order->status->label(),
             'courier' => [
@@ -101,9 +133,14 @@ class CourierTrackingService
                 'latitude' => (float) $latestLocation->latitude,
                 'longitude' => (float) $latestLocation->longitude,
                 'accuracy' => (float) $latestLocation->accuracy,
+                'speed' => $latestLocation->speed !== null ? (float) $latestLocation->speed : null,
+                'heading' => $latestLocation->heading !== null ? (float) $latestLocation->heading : null,
                 'recorded_at' => $latestLocation->recorded_at->format('H:i:s'),
+                'recorded_at_iso' => $latestLocation->recorded_at->toIso8601String(),
                 'recorded_human' => $latestLocation->recorded_at->diffForHumans(),
             ] : null,
+            'route' => $route,
+            'movement_route' => $movementRoute,
             'destination' => $targetAddress ? [
                 'label' => $targetAddress->label,
                 'address' => $targetAddress->address,
@@ -111,5 +148,23 @@ class CourierTrackingService
                 'longitude' => (float) $targetAddress->longitude,
             ] : null,
         ];
+    }
+
+    private function activeJourneyStatus(AssignmentType $type, ?int $distanceMeters): string
+    {
+        if ($distanceMeters !== null && $distanceMeters <= 500) {
+            return 'Hampir tiba';
+        }
+
+        return $type === AssignmentType::PICKUP
+            ? 'Menuju lokasi pickup'
+            : 'Menuju customer';
+    }
+
+    private function inactiveJourneyStatus(Order $order): string
+    {
+        return in_array($order->status, [OrderStatus::PICKED_UP, OrderStatus::RECEIVED_AT_LAUNDRY], true)
+            ? 'Sudah mengambil laundry'
+            : $order->status->label();
     }
 }

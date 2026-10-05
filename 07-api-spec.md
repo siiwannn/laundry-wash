@@ -184,9 +184,7 @@ Detail order.
 
 ## GET /orders/{id}/tracking
 
-Tracking Laundry.
-
-Tracking Courier.
+Mengembalikan posisi Courier, bearing, status perjalanan, tujuan, route GeoJSON, remaining distance dalam meter, dan ETA dalam detik. Endpoint hanya dapat dilihat oleh pemilik order, Admin, atau Courier yang ditugaskan.
 
 ---
 
@@ -327,7 +325,9 @@ Memulai Pickup atau Delivery.
 {
     "latitude":-6.200000,
     "longitude":106.816666,
-    "accuracy":10
+    "accuracy":10,
+    "speed":8.4,
+    "heading":135
 }
 ```
 

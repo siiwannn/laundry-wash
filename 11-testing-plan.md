@@ -344,6 +344,36 @@ Lokasi terakhir tetap tampil.
 
 ---
 
+## TC-GPS-004
+
+Pickup dan Delivery berstatus On The Way
+
+Expected
+
+Tracking aktif, payload berisi status perjalanan, route jalan, ETA, remaining distance, dan bearing.
+
+---
+
+## TC-GPS-005
+
+Assignment selesai
+
+Expected
+
+Tracking tidak aktif dan Courier tidak dapat mengirim lokasi baru.
+
+---
+
+## TC-GPS-006
+
+Customer atau Courier mengakses assignment milik pengguna lain
+
+Expected
+
+Request ditolak oleh Policy atau validasi ownership.
+
+---
+
 # PAYMENT
 
 ## TC-PAY-001

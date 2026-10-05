@@ -49,4 +49,9 @@ return [
         'is_3ds' => env('MIDTRANS_IS_3DS', true),
     ],
 
+    'tracking' => [
+        'map_style_url' => env('MAP_STYLE_URL', 'https://tiles.openfreemap.org/styles/liberty'),
+        'routing_url' => env('ROUTING_URL', 'https://router.project-osrm.org'),
+    ],
+
 ];

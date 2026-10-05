@@ -2,6 +2,10 @@
 
 @section('title', 'Tugas Kurir - ' . $assignment->order->order_number)
 
+@push('styles')
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.7.3/dist/maplibre-gl.css">
+@endpush
+
 @section('content')
 <div class="row align-items-center mb-3">
     <div class="col-md-7">
@@ -45,11 +49,11 @@
         <div class="card shadow-sm overflow-hidden mb-4">
             <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
                 <span class="small fw-semibold text-muted"><i class="bi bi-map me-1 text-primary"></i> Peta Rute Navigasi</span>
-                <span class="small text-muted">Buka di: <a href="https://www.google.com/maps/dir/?api=1&destination={{ $targetAddress->latitude ?? -6.2088 }},{{ $targetAddress->longitude ?? 106.8456 }}" target="_blank" class="fw-semibold text-primary">Google Maps &rarr;</a></span>
+                <span class="small text-muted">Peta perjalanan menggunakan MapLibre dan OpenFreeMap.</span>
             </div>
             <div id="courierMap" style="height: 380px; width: 100%;"></div>
             <div class="card-footer bg-light py-2 px-3 small text-muted">
-                <i class="bi bi-geo-alt-fill text-danger me-1"></i> Titik Tujuan: <strong>{{ $targetAddress->address ?? 'Alamat Pelanggan' }}</strong>
+                <i class="bi bi-house-door-fill text-success me-1"></i> Titik Tujuan: <strong>{{ $targetAddress->address ?? 'Alamat Pelanggan' }}</strong>
             </div>
         </div>
 
@@ -140,40 +144,32 @@
 </div>
 
 @push('scripts')
+<script src="https://unpkg.com/maplibre-gl@5.7.3/dist/maplibre-gl.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const assignmentId = {{ $assignment->id }};
     const isTripActive = {{ $assignment->status->value === 'on_the_way' ? 'true' : 'false' }};
     const targetLat = {{ $targetAddress->latitude ?? -6.2088 }};
     const targetLng = {{ $targetAddress->longitude ?? 106.8456 }};
+    const mapStyleUrl = @json(config('services.tracking.map_style_url'));
 
-    // Initialize Map
-    const map = L.map('courierMap').setView([targetLat, targetLng], 14);
+    const map = new maplibregl.Map({ container: 'courierMap', style: mapStyleUrl, center: [targetLng, targetLat], zoom: 14, pitch: 45 });
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
+    const destinationElement = document.createElement('div');
+    destinationElement.style.width = '44px';
+    destinationElement.style.height = '44px';
+    destinationElement.innerHTML = '<img src="{{ asset('images/tracking/destination.svg') }}" alt="" style="width:100%;height:100%">';
+    new maplibregl.Marker({ element: destinationElement })
+        .setLngLat([targetLng, targetLat])
+        .setPopup(new maplibregl.Popup({ offset: 22 }).setText(@json($targetAddress->address ?? 'Alamat')))
+        .addTo(map);
 
-    const destIcon = L.divIcon({
-        className: 'dest-marker',
-        html: '<div style="background-color: #dc2626; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.3); font-size: 16px;"><i class="bi bi-house-door-fill"></i></div>',
-        iconSize: [34, 34],
-        iconAnchor: [17, 17]
-    });
-
-    const courierIcon = L.divIcon({
-        className: 'courier-marker',
-        html: '<div style="background-color: #0284c7; color: white; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.3); font-size: 18px;"><i class="bi bi-bicycle"></i></div>',
-        iconSize: [38, 38],
-        iconAnchor: [19, 19]
-    });
-
-    // Destination Marker
-    const targetMarker = L.marker([targetLat, targetLng], { icon: destIcon }).addTo(map)
-        .bindPopup('<strong>Tujuan:</strong> {{ addslashes($targetAddress->address ?? "Alamat") }}').openPopup();
-
-    let courierMarker = null;
+    const courierElement = document.createElement('div');
+    courierElement.style.width = '58px';
+    courierElement.style.height = '58px';
+    courierElement.innerHTML = '<img src="{{ asset('images/tracking/motorcycle.svg') }}" alt="" style="width:100%;height:100%;filter:drop-shadow(0 5px 5px rgba(15,23,42,.2))">';
+    const courierMarker = new maplibregl.Marker({ element: courierElement, rotationAlignment: 'map' });
     let latestPosition = null;
     let watchId = null;
     let transmissionTimer = null;
@@ -296,13 +292,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 heading: position.coords.heading
             };
 
-            if (!courierMarker) {
-                courierMarker = L.marker([latestPosition.latitude, latestPosition.longitude], { icon: courierIcon })
-                    .addTo(map)
-                    .bindPopup('<strong>Posisi Anda (Kurir)</strong>');
-            } else {
-                courierMarker.setLatLng([latestPosition.latitude, latestPosition.longitude]);
-            }
+            courierMarker
+                .setLngLat([latestPosition.longitude, latestPosition.latitude])
+                .setRotation(latestPosition.heading ?? 0)
+                .addTo(map);
+            map.easeTo({
+                center: [latestPosition.longitude, latestPosition.latitude],
+                bearing: latestPosition.heading ?? map.getBearing(),
+                pitch: 45,
+                duration: 700,
+            });
 
             updateBeaconState('info', 'Lokasi GPS Ditemukan', 'Mengirim koordinat pertama ke server...');
 

@@ -2,266 +2,348 @@
 
 @section('title', 'Live Tracking Kurir - Pesanan ' . $order->order_number)
 
+@push('styles')
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.7.3/dist/maplibre-gl.css">
+<style>
+    .tracking-map { min-height: 480px; }
+    .tracking-metric { min-width: 120px; }
+    .tracking-metric-value { font-variant-numeric: tabular-nums; }
+    .driver-marker { width: 58px; height: 58px; transform-origin: center; will-change: transform; }
+    .driver-marker img, .destination-marker img { width: 100%; height: 100%; display: block; }
+    .destination-marker { width: 44px; height: 44px; }
+    .map-overlay-controls { position: absolute; z-index: 2; right: 12px; bottom: 32px; }
+    @media (max-width: 575.98px) { .tracking-map { min-height: 56vh; } }
+    @media (prefers-reduced-motion: reduce) { .animate-pulse, .spinner-grow { animation: none !important; } }
+</style>
+@endpush
+
 @section('content')
 <div class="row align-items-center mb-3">
     <div class="col-md-7">
-        <div class="d-flex align-items-center gap-2 mb-1">
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
             <h4 class="fw-bold mb-0">Live Tracking Posisi Kurir</h4>
-            <span class="badge bg-danger animate-pulse">
-                <i class="bi bi-broadcast me-1"></i> LIVE GPS
-            </span>
+            <span class="badge bg-danger animate-pulse" id="liveBadge"><i class="bi bi-broadcast me-1" aria-hidden="true"></i> LIVE GPS</span>
         </div>
-        <p class="text-muted small mb-0">Pesanan <strong>{{ $order->order_number }}</strong> &bull; Memantau pergerakan kurir secara real-time.</p>
+        <p class="text-muted small mb-0">Pesanan <strong>{{ $order->order_number }}</strong> diperbarui setiap 10 detik.</p>
     </div>
     <div class="col-md-5 text-md-end mt-2 mt-md-0">
-        <a href="{{ route('customer.orders.show', $order) }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left me-1"></i> Rincian Pesanan
-        </a>
+        <a href="{{ route('customer.orders.show', $order) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Rincian Pesanan</a>
     </div>
 </div>
 
 <div class="row g-4">
-    <!-- Map Container -->
     <div class="col-lg-8">
         <div class="card shadow-sm overflow-hidden">
-            <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center" id="trackingAlert" role="status" aria-live="polite">
-                <div class="small fw-semibold text-muted d-flex align-items-center gap-2">
-                    <span class="spinner-grow spinner-grow-sm text-success" role="status"></span>
-                    <span>Status: <strong class="text-dark" id="trackingStatusText">Menghubungkan ke GPS kurir...</strong></span>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-outline-primary btn-sm d-none" id="retryTrackingButton">
-                        <i class="bi bi-arrow-clockwise me-1"></i> Coba Lagi
-                    </button>
-                    <div class="small text-muted" id="lastUpdatedText">Update: -</div>
+            <div class="card-header bg-white py-3 px-3" id="trackingAlert" role="status" aria-live="polite">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <div class="small text-muted">Status perjalanan</div>
+                        <strong id="trackingStatusText">{{ $trackingData['journey_status'] ?? 'Menghubungkan ke GPS kurir...' }}</strong>
+                    </div>
+                    <div class="small text-muted" id="lastUpdatedText">Update: {{ $trackingData['courier_location']['recorded_at'] ?? '-' }}</div>
                 </div>
             </div>
 
-            <!-- Leaflet Map Container -->
-            <div id="liveTrackingMap" style="height: 480px; width: 100%; position: relative;"></div>
+            <div class="position-relative">
+                <div id="liveTrackingMap" class="tracking-map w-100" aria-label="Peta posisi kurir dan rute menuju tujuan"></div>
+                <div class="map-overlay-controls d-flex flex-column gap-2">
+                    <button type="button" class="btn btn-primary shadow-sm" id="followButton" aria-pressed="true" aria-label="Matikan kamera mengikuti kurir">
+                        <i class="bi bi-crosshair me-1" aria-hidden="true"></i><span>Ikuti Kurir</span>
+                    </button>
+                    <button type="button" class="btn btn-light border shadow-sm d-none" id="retryTrackingButton">
+                        <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Coba Lagi
+                    </button>
+                </div>
+            </div>
 
-            <div class="card-footer bg-light py-2 px-3 small text-muted d-flex justify-content-between">
-                <span><i class="bi bi-info-circle me-1"></i> Peta diperbarui otomatis setiap 10 detik via AJAX.</span>
-                <span class="fw-semibold text-primary" id="countdownText">10s</span>
+            <div class="card-footer bg-white p-3">
+                <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <div class="tracking-metric border rounded-3 px-3 py-2">
+                            <div class="small text-muted">ETA</div>
+                            <div class="h5 fw-bold mb-0 tracking-metric-value" id="etaValue">{{ isset($trackingData['route']['duration_seconds']) ? max(1, (int) ceil($trackingData['route']['duration_seconds'] / 60)) . ' menit' : '--' }}</div>
+                        </div>
+                        <div class="tracking-metric border rounded-3 px-3 py-2">
+                            <div class="small text-muted">Jarak tersisa</div>
+                            <div class="h5 fw-bold mb-0 tracking-metric-value" id="distanceValue">{{ isset($trackingData['route']['distance_meters']) ? number_format($trackingData['route']['distance_meters'] / 1000, 1, ',', '.') . ' km' : '--' }}</div>
+                        </div>
+                    </div>
+                    <div class="small text-muted"><i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>Update berikutnya: <strong id="countdownText">10s</strong></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Courier Info & Destination Card -->
     <div class="col-lg-4">
-        <!-- Courier Card -->
         <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-white py-3">
-                <h6 class="fw-bold mb-0"><i class="bi bi-bicycle me-2 text-warning"></i> Informasi Kurir Bertugas</h6>
-            </div>
+            <div class="card-header bg-white py-3"><h6 class="fw-bold mb-0"><i class="bi bi-bicycle me-2 text-warning" aria-hidden="true"></i>Kurir Bertugas</h6></div>
             <div class="card-body">
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <div class="rounded-circle bg-warning-subtle text-dark p-3 fw-bold fs-4">
-                        <i class="bi bi-person-badge"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0" id="courierName">{{ $trackingData['courier']['name'] ?? 'Kurir' }}</h6>
-                        <span class="text-muted small" id="courierVehicle">
-                            {{ $trackingData['courier']['vehicle_type'] ?? 'Motor' }} &bull; {{ $trackingData['courier']['vehicle_plate'] ?? '-' }}
-                        </span>
-                    </div>
-                </div>
-
-                <div class="d-grid gap-2 mb-3">
-                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $trackingData['courier']['phone'] ?? '') }}" target="_blank" class="btn btn-success btn-sm fw-semibold" id="waBtn">
-                        <i class="bi bi-whatsapp me-1"></i> Chat Kurir via WhatsApp
-                    </a>
-                    <a href="tel:{{ $trackingData['courier']['phone'] ?? '' }}" class="btn btn-outline-secondary btn-sm" id="callBtn">
-                        <i class="bi bi-telephone me-1"></i> Telepon Kurir
-                    </a>
-                </div>
-
-                <div class="p-2 bg-light rounded small border">
-                    <div class="text-muted">Aktivitas Kurir:</div>
-                    <strong class="text-primary" id="taskTypeLabel">{{ $trackingData['type_label'] ?? 'Perjalanan' }}</strong>
+                <h6 class="fw-bold mb-1" id="courierName">{{ $trackingData['courier']['name'] ?? 'Kurir' }}</h6>
+                <p class="text-muted small mb-3" id="courierVehicle">{{ $trackingData['courier']['vehicle_type'] ?? 'Motor' }} &bull; {{ $trackingData['courier']['vehicle_plate'] ?? '-' }}</p>
+                <div class="d-grid gap-2">
+                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $trackingData['courier']['phone'] ?? '') }}" target="_blank" rel="noopener" class="btn btn-success btn-sm fw-semibold"><i class="bi bi-whatsapp me-1" aria-hidden="true"></i> Chat Kurir</a>
+                    <a href="tel:{{ $trackingData['courier']['phone'] ?? '' }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-telephone me-1" aria-hidden="true"></i> Telepon Kurir</a>
                 </div>
             </div>
         </div>
 
-        <!-- Destination Address Card -->
         <div class="card shadow-sm">
-            <div class="card-header bg-white py-3">
-                <h6 class="fw-bold mb-0"><i class="bi bi-geo-alt-fill me-2 text-danger"></i> Titik Tujuan</h6>
-            </div>
+            <div class="card-header bg-white py-3"><h6 class="fw-bold mb-0"><i class="bi bi-geo-alt-fill me-2 text-danger" aria-hidden="true"></i>Titik Tujuan</h6></div>
             <div class="card-body">
                 <span class="badge bg-secondary mb-2" id="destLabel">{{ $trackingData['destination']['label'] ?? 'Alamat' }}</span>
-                <p class="small text-dark mb-2" id="destAddress">{{ $trackingData['destination']['address'] ?? 'Menuju alamat pelanggan.' }}</p>
-                <div class="small text-muted" id="destCoords">
-                    @if(isset($trackingData['destination']['latitude']))
-                        Koordinat: {{ $trackingData['destination']['latitude'] }}, {{ $trackingData['destination']['longitude'] }}
-                    @endif
-                </div>
+                <p class="small text-dark mb-0" id="destAddress">{{ $trackingData['destination']['address'] ?? 'Menuju alamat pelanggan.' }}</p>
             </div>
         </div>
     </div>
 </div>
 
 @push('scripts')
+<script src="https://unpkg.com/maplibre-gl@5.7.3/dist/maplibre-gl.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', () => {
     const trackingUrl = @json(route('api.orders.tracking', $order));
-    const defaultLat = {{ $trackingData['courier_location']['latitude'] ?? $trackingData['destination']['latitude'] ?? -6.2088 }};
-    const defaultLng = {{ $trackingData['courier_location']['longitude'] ?? $trackingData['destination']['longitude'] ?? 106.8456 }};
+    const mapStyleUrl = @json(config('services.tracking.map_style_url'));
+    const initialData = @json($trackingData);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const defaultCoordinates = [
+        initialData.courier_location?.longitude ?? initialData.destination?.longitude ?? 106.8456,
+        initialData.courier_location?.latitude ?? initialData.destination?.latitude ?? -6.2088
+    ];
 
-    // Initialize Leaflet Map
-    const map = L.map('liveTrackingMap').setView([defaultLat, defaultLng], 14);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    // Custom Icons using HTML divIcon
-    const courierIcon = L.divIcon({
-        className: 'custom-courier-marker',
-        html: '<div style="background-color: #0284c7; color: white; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.3); font-size: 18px;"><i class="bi bi-bicycle"></i></div>',
-        iconSize: [38, 38],
-        iconAnchor: [19, 19]
+    const map = new maplibregl.Map({
+        container: 'liveTrackingMap',
+        style: mapStyleUrl,
+        center: defaultCoordinates,
+        zoom: 14,
+        pitch: 45,
+        bearing: 0,
+        attributionControl: true
     });
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
 
-    const homeIcon = L.divIcon({
-        className: 'custom-home-marker',
-        html: '<div style="background-color: #dc2626; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.3); font-size: 16px;"><i class="bi bi-house-door-fill"></i></div>',
-        iconSize: [34, 34],
-        iconAnchor: [17, 17]
-    });
+    const driverElement = document.createElement('div');
+    driverElement.className = 'driver-marker';
+    driverElement.innerHTML = '<img src="{{ asset('images/tracking/motorcycle.svg') }}" alt="">';
+    const driverMarker = new maplibregl.Marker({ element: driverElement, rotationAlignment: 'map' });
 
-    let courierMarker = null;
-    let homeMarker = null;
-    let polyline = null;
+    const destinationElement = document.createElement('div');
+    destinationElement.className = 'destination-marker';
+    destinationElement.innerHTML = '<img src="{{ asset('images/tracking/destination.svg') }}" alt="">';
+    const destinationMarker = new maplibregl.Marker({ element: destinationElement });
 
-    // Plot initial destination marker
-    @if(isset($trackingData['destination']['latitude']))
-        const destLat = {{ $trackingData['destination']['latitude'] }};
-        const destLng = {{ $trackingData['destination']['longitude'] }};
-        homeMarker = L.marker([destLat, destLng], { icon: homeIcon })
-            .addTo(map)
-            .bindPopup('<strong>Tujuan:</strong> {{ addslashes($trackingData['destination']['address'] ?? "Rumah") }}');
-    @endif
-
-    // Plot initial courier marker if exists
-    @if(isset($trackingData['courier_location']['latitude']))
-        const initCourierLat = {{ $trackingData['courier_location']['latitude'] }};
-        const initCourierLng = {{ $trackingData['courier_location']['longitude'] }};
-        courierMarker = L.marker([initCourierLat, initCourierLng], { icon: courierIcon })
-            .addTo(map)
-            .bindPopup('<strong>Posisi Kurir:</strong> {{ addslashes($trackingData['courier']['name'] ?? "Kurir") }}')
-            .openPopup();
-    @endif
-
-    // Polling Logic: fetch every 10 seconds while a courier trip is active.
-    let countdown = 10;
-    let countdownTimer = null;
+    let currentCoordinates = null;
+    let currentBearing = initialData.courier_location?.heading ?? 0;
+    let lastRecordedAt = null;
+    let animationFrame = null;
+    let autoFollow = true;
     let pollingStopped = false;
-    const countdownEl = document.getElementById('countdownText');
-    const statusTextEl = document.getElementById('trackingStatusText');
-    const lastUpdatedEl = document.getElementById('lastUpdatedText');
+    let countdown = 10;
+
+    const statusElement = document.getElementById('trackingStatusText');
+    const updatedElement = document.getElementById('lastUpdatedText');
+    const etaElement = document.getElementById('etaValue');
+    const distanceElement = document.getElementById('distanceValue');
+    const countdownElement = document.getElementById('countdownText');
     const retryButton = document.getElementById('retryTrackingButton');
+    const followButton = document.getElementById('followButton');
 
-    function startCountdown() {
-        if (countdownTimer !== null) return;
-
-        countdownTimer = setInterval(() => {
-            if (pollingStopped) return;
-
-            countdown--;
-            if (countdown <= 0) {
-                countdown = 10;
-                fetchTrackingData();
-            }
-            countdownEl.innerText = countdown + 's';
-        }, 1000);
+    function setAutoFollow(enabled) {
+        autoFollow = enabled;
+        followButton.setAttribute('aria-pressed', String(enabled));
+        followButton.setAttribute('aria-label', enabled ? 'Matikan kamera mengikuti kurir' : 'Aktifkan kamera mengikuti kurir');
+        followButton.classList.toggle('btn-primary', enabled);
+        followButton.classList.toggle('btn-light', !enabled);
+        followButton.querySelector('span').textContent = enabled ? 'Ikuti Kurir' : 'Ikuti Lagi';
     }
 
-    function stopPolling(message) {
-        pollingStopped = true;
-        if (countdownTimer !== null) {
-            clearInterval(countdownTimer);
-            countdownTimer = null;
+    function updateRoute(route) {
+        const emptyRoute = { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } };
+        const feature = route?.geometry
+            ? { type: 'Feature', properties: {}, geometry: route.geometry }
+            : emptyRoute;
+        const source = map.getSource('active-route');
+        if (source) source.setData(feature);
+
+        etaElement.textContent = route ? `${Math.max(1, Math.ceil(route.duration_seconds / 60))} menit` : '--';
+        distanceElement.textContent = route ? `${(route.distance_meters / 1000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} km` : '--';
+    }
+
+    function shortestBearing(from, to) {
+        return from + ((((to - from) % 360) + 540) % 360 - 180);
+    }
+
+    function bearingBetween(from, to) {
+        const startLat = from[1] * Math.PI / 180;
+        const endLat = to[1] * Math.PI / 180;
+        const deltaLng = (to[0] - from[0]) * Math.PI / 180;
+        const y = Math.sin(deltaLng) * Math.cos(endLat);
+        const x = Math.cos(startLat) * Math.sin(endLat) - Math.sin(startLat) * Math.cos(endLat) * Math.cos(deltaLng);
+        return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+    }
+
+    function pointAlongPath(path, progress) {
+        if (path.length < 2) return path[0];
+        const lengths = [];
+        let total = 0;
+        for (let index = 1; index < path.length; index += 1) {
+            const dx = path[index][0] - path[index - 1][0];
+            const dy = path[index][1] - path[index - 1][1];
+            total += Math.hypot(dx, dy);
+            lengths.push(total);
         }
-        countdownEl.innerText = 'Selesai';
-        statusTextEl.innerText = message;
+        const target = total * progress;
+        const segmentIndex = lengths.findIndex(length => length >= target);
+        const safeIndex = segmentIndex === -1 ? lengths.length - 1 : segmentIndex;
+        const previousLength = safeIndex === 0 ? 0 : lengths[safeIndex - 1];
+        const segmentLength = lengths[safeIndex] - previousLength || 1;
+        const localProgress = (target - previousLength) / segmentLength;
+        const start = path[safeIndex];
+        const end = path[safeIndex + 1];
+        return [
+            start[0] + (end[0] - start[0]) * localProgress,
+            start[1] + (end[1] - start[1]) * localProgress,
+        ];
     }
+
+    function animateDriver(nextCoordinates, nextBearing, movementGeometry) {
+        const path = movementGeometry?.coordinates?.length > 1
+            ? movementGeometry.coordinates
+            : [currentCoordinates, nextCoordinates].filter(Boolean);
+        if (!currentCoordinates || reducedMotion) {
+            currentCoordinates = nextCoordinates;
+            currentBearing = nextBearing ?? currentBearing;
+            driverMarker.setLngLat(nextCoordinates).setRotation(currentBearing).addTo(map);
+            if (autoFollow) map.easeTo({ center: nextCoordinates, bearing: currentBearing, duration: reducedMotion ? 0 : 700 });
+            return;
+        }
+
+        if (animationFrame !== null) cancelAnimationFrame(animationFrame);
+        const startBearing = currentBearing;
+        const startedAt = performance.now();
+        const duration = 8500;
+
+        const step = (timestamp) => {
+            const progress = Math.min((timestamp - startedAt) / duration, 1);
+            const eased = progress < .5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+            const coordinates = pointAlongPath(path, eased);
+            const ahead = pointAlongPath(path, Math.min(eased + .015, 1));
+            const routeBearing = movementGeometry?.coordinates?.length > 1
+                ? bearingBetween(coordinates, ahead)
+                : (nextBearing ?? bearingBetween(coordinates, ahead));
+            const bearing = shortestBearing(startBearing, routeBearing);
+            driverMarker.setLngLat(coordinates).setRotation(bearing).addTo(map);
+            if (autoFollow) map.easeTo({ center: coordinates, bearing, pitch: 45, duration: 0 });
+            if (progress < 1) animationFrame = requestAnimationFrame(step);
+            else {
+                currentCoordinates = nextCoordinates;
+                currentBearing = ((bearing % 360) + 360) % 360;
+                animationFrame = null;
+            }
+        };
+        animationFrame = requestAnimationFrame(step);
+    }
+
+    function applyTrackingData(data) {
+        statusElement.textContent = data.journey_status ?? data.order_status_label ?? 'Perjalanan aktif';
+        updateRoute(data.route);
+
+        if (data.destination) destinationMarker.setLngLat([data.destination.longitude, data.destination.latitude]).addTo(map);
+        if (!data.courier_location) {
+            updatedElement.textContent = 'Menunggu koordinat pertama dari kurir';
+            return;
+        }
+
+        updatedElement.textContent = `Update: ${data.courier_location.recorded_at}`;
+        if (lastRecordedAt === data.courier_location.recorded_at_iso) return;
+        lastRecordedAt = data.courier_location.recorded_at_iso;
+        animateDriver(
+            [data.courier_location.longitude, data.courier_location.latitude],
+            data.courier_location.heading,
+            data.movement_route?.geometry
+        );
+    }
+
+    map.on('load', () => {
+        if (map.getSource('openmaptiles') && !map.getLayer('tracking-3d-buildings')) {
+            const labelLayer = map.getStyle().layers.find(layer => layer.type === 'symbol' && layer.layout?.['text-field']);
+            map.addLayer({
+                id: 'tracking-3d-buildings',
+                source: 'openmaptiles',
+                'source-layer': 'building',
+                type: 'fill-extrusion',
+                minzoom: 15,
+                paint: {
+                    'fill-extrusion-color': '#CBD5E1',
+                    'fill-extrusion-height': ['coalesce', ['get', 'render_height'], ['get', 'height'], 5],
+                    'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+                    'fill-extrusion-opacity': .7,
+                },
+            }, labelLayer?.id);
+        }
+        map.addSource('active-route', {
+            type: 'geojson',
+            data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } }
+        });
+        map.addLayer({
+            id: 'active-route-line',
+            type: 'line',
+            source: 'active-route',
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#3B82F6', 'line-width': 6, 'line-opacity': .9 }
+        });
+        applyTrackingData(initialData);
+    });
+
+    ['dragstart', 'zoomstart', 'rotatestart', 'pitchstart'].forEach(eventName => {
+        map.on(eventName, event => { if (event.originalEvent) setAutoFollow(false); });
+    });
+    followButton.addEventListener('click', () => {
+        setAutoFollow(!autoFollow);
+        if (autoFollow && currentCoordinates) map.easeTo({ center: currentCoordinates, bearing: currentBearing, pitch: 45, zoom: Math.max(map.getZoom(), 15), duration: reducedMotion ? 0 : 600 });
+    });
+
+    map.on('zoom', () => {
+        const scale = Math.max(.78, Math.min(1.22, .78 + (map.getZoom() - 12) * .08));
+        driverElement.querySelector('img').style.transform = `scale(${scale})`;
+    });
 
     async function fetchTrackingData() {
         if (pollingStopped) return;
-
         retryButton.classList.add('d-none');
-
         try {
-            const response = await fetch(trackingUrl, {
-                headers: { 'Accept': 'application/json' }
-            });
+            const response = await fetch(trackingUrl, { headers: { Accept: 'application/json' } });
             const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || 'Server gagal memuat posisi kurir.');
-            }
-
-            const data = result.data;
-
-            if (!data.is_active) {
-                stopPolling(data.message || 'Perjalanan kurir sudah selesai.');
+            if (!response.ok || !result.success) throw new Error(result.message || 'Server gagal memuat posisi kurir.');
+            if (!result.data.is_active) {
+                pollingStopped = true;
+                statusElement.textContent = result.data.journey_status ?? result.data.message;
+                countdownElement.textContent = 'Selesai';
+                document.getElementById('liveBadge').classList.replace('bg-danger', 'bg-secondary');
                 return;
             }
-
-            statusTextEl.innerText = 'Kurir sedang dalam perjalanan (' + data.order_status_label + ')';
-
-            if (!data.courier_location) {
-                lastUpdatedEl.innerText = 'Menunggu koordinat pertama dari kurir';
-                return;
-            }
-
-            const cLat = data.courier_location.latitude;
-            const cLng = data.courier_location.longitude;
-
-            lastUpdatedEl.innerText = 'Update: ' + data.courier_location.recorded_at;
-
-            if (!courierMarker) {
-                courierMarker = L.marker([cLat, cLng], { icon: courierIcon }).addTo(map);
-            } else {
-                courierMarker.setLatLng([cLat, cLng]);
-            }
-
-            if (homeMarker) {
-                const hLatLng = homeMarker.getLatLng();
-                if (polyline) map.removeLayer(polyline);
-                polyline = L.polyline([[cLat, cLng], [hLatLng.lat, hLatLng.lng]], {
-                    color: '#0284c7',
-                    dashArray: '6, 8',
-                    weight: 3
-                }).addTo(map);
-
-                const group = new L.featureGroup([courierMarker, homeMarker]);
-                map.fitBounds(group.getBounds().pad(0.2));
-            } else {
-                map.panTo([cLat, cLng]);
-            }
+            applyTrackingData(result.data);
         } catch (error) {
-            statusTextEl.innerText = `${error.message} Periksa koneksi lalu tekan Coba Lagi.`;
+            statusElement.textContent = `${error.message} Periksa koneksi lalu coba lagi.`;
             retryButton.classList.remove('d-none');
         }
     }
 
-    retryButton.addEventListener('click', () => {
-        pollingStopped = false;
-        countdown = 10;
-        startCountdown();
-        fetchTrackingData();
-    });
-
+    retryButton.addEventListener('click', fetchTrackingData);
     window.addEventListener('online', fetchTrackingData);
     window.addEventListener('beforeunload', () => {
         pollingStopped = true;
-        if (countdownTimer !== null) clearInterval(countdownTimer);
+        if (animationFrame !== null) cancelAnimationFrame(animationFrame);
     });
 
-    startCountdown();
+    setInterval(() => {
+        if (pollingStopped) return;
+        countdown -= 1;
+        if (countdown <= 0) {
+            countdown = 10;
+            fetchTrackingData();
+        }
+        countdownElement.textContent = `${countdown}s`;
+    }, 1000);
     fetchTrackingData();
 });
 </script>
