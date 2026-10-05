@@ -268,22 +268,76 @@
 </div>
 @endif
 
+@if($order->canAcceptPayment())
+<div class="modal fade" id="paymentIncompleteModal" tabindex="-1" aria-labelledby="paymentIncompleteTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="paymentIncompleteTitle">Pembayaran belum selesai</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body text-muted">
+                Pembayaran belum selesai. Apakah Anda ingin melanjutkan pembayaran atau memilih metode pembayaran lain di Snap?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Nanti</button>
+                <button type="button" class="btn btn-outline-primary" id="changeSnapMethodButton">Ganti Metode Pembayaran</button>
+                <button type="button" class="btn btn-success" id="continueSnapPaymentButton">Lanjutkan Pembayaran</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 @push('scripts')
 @if($order->canAcceptPayment())
 <script src="{{ config('services.midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
 @endif
 <script>
-let refreshTokenOnNextAttempt = false;
+const paymentButton = document.getElementById('payWithMidtrans');
+const incompletePaymentModalElement = document.getElementById('paymentIncompleteModal');
+const incompletePaymentModal = incompletePaymentModalElement ? bootstrap.Modal.getOrCreateInstance(incompletePaymentModalElement) : null;
+const continueSnapPaymentButton = document.getElementById('continueSnapPaymentButton');
+const changeSnapMethodButton = document.getElementById('changeSnapMethodButton');
+let currentSnapToken = null;
 
-document.getElementById('payWithMidtrans')?.addEventListener('click', async function () {
-    const button = this;
+const restorePaymentButton = () => {
+    if (!paymentButton) return;
+    paymentButton.disabled = false;
+    paymentButton.innerHTML = '<i class="bi bi-credit-card me-1"></i> Bayar Sekarang';
+};
+
+const showIncompletePaymentDialog = () => {
+    incompletePaymentModal?.show();
+};
+
+const openSnap = (token) => {
+    currentSnapToken = token;
+    window.snap.pay(token, {
+        onSuccess: () => window.location.reload(),
+        onPending: () => {
+            restorePaymentButton();
+            alert('Pembayaran masih menunggu penyelesaian.');
+        },
+        onError: () => {
+            restorePaymentButton();
+            showIncompletePaymentDialog();
+        },
+        onClose: () => {
+            restorePaymentButton();
+            showIncompletePaymentDialog();
+        },
+    });
+};
+
+const requestSnapToken = async (refreshToken = false) => {
+    if (!paymentButton) return;
     const restoreButton = () => {
-        button.disabled = false;
-        button.innerHTML = '<i class="bi bi-credit-card me-1"></i> Bayar Sekarang';
+        restorePaymentButton();
     };
 
-    button.disabled = true;
-    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyiapkan pembayaran';
+    paymentButton.disabled = true;
+    paymentButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyiapkan pembayaran';
 
     try {
         const response = await fetch(@json(route('customer.orders.pay', $order)), {
@@ -293,33 +347,25 @@ document.getElementById('payWithMidtrans')?.addEventListener('click', async func
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             },
-            body: JSON.stringify({ refresh_token: refreshTokenOnNextAttempt }),
+            body: JSON.stringify({ refresh_token: refreshToken }),
         });
         const data = await response.json();
         if (!response.ok || !data.snap_token) throw new Error(data.message || 'Pembayaran tidak dapat dibuat.');
-        refreshTokenOnNextAttempt = false;
-
-        window.snap.pay(data.snap_token, {
-            onSuccess: () => window.location.reload(),
-            onPending: () => {
-                restoreButton();
-                alert('Pembayaran masih menunggu penyelesaian. Anda dapat membuka Snap kembali.');
-            },
-            onError: () => {
-                refreshTokenOnNextAttempt = true;
-                restoreButton();
-                alert('Pembayaran gagal diproses. Silakan coba lagi.');
-            },
-            onClose: () => {
-                refreshTokenOnNextAttempt = true;
-                restoreButton();
-                alert('Pembayaran dibatalkan atau belum diselesaikan.');
-            },
-        });
+        openSnap(data.snap_token);
     } catch (error) {
         alert(error.message);
         restoreButton();
     }
+};
+
+paymentButton?.addEventListener('click', () => requestSnapToken(false));
+continueSnapPaymentButton?.addEventListener('click', () => {
+    incompletePaymentModal?.hide();
+    if (currentSnapToken) openSnap(currentSnapToken);
+});
+changeSnapMethodButton?.addEventListener('click', () => {
+    incompletePaymentModal?.hide();
+    requestSnapToken(true);
 });
 </script>
 @endpush
