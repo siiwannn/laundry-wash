@@ -79,9 +79,10 @@ class MidtransPaymentTest extends TestCase
             ->assertOk()
             ->assertJsonPath('snap_token', 'snap-refreshed-token');
 
-        $this->assertDatabaseCount('payments', 1);
-        $this->assertSame('snap-refreshed-token', Payment::firstOrFail()->snap_token);
-        $this->assertSame(PaymentStatus::PENDING, Payment::firstOrFail()->status);
+        $this->assertDatabaseCount('payments', 2);
+        $this->assertSame('snap-refreshed-token', Payment::latest('id')->firstOrFail()->snap_token);
+        $this->assertSame(PaymentStatus::PENDING, Payment::latest('id')->firstOrFail()->status);
+        $this->assertSame(PaymentStatus::FAILED, Payment::oldest('id')->firstOrFail()->status);
     }
 
     public function test_webhook_rejects_invalid_signature(): void

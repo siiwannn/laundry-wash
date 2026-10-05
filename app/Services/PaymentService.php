@@ -43,11 +43,27 @@ class PaymentService
 
         if ($activePayment?->snap_token && $refreshToken) {
             return DB::transaction(function () use ($activePayment, $order, $customer) {
-                $snapToken = $this->midtrans->createSnapToken($order->loadMissing('customer'), $activePayment);
-                $activePayment->update(['snap_token' => $snapToken]);
-                $this->activityLog->record($customer, "Payment Snap Token Refreshed: {$activePayment->gateway_order_id}");
+                $activePayment->update([
+                    'status' => PaymentStatus::FAILED,
+                    'gateway_status' => 'cancelled',
+                ]);
+                $this->activityLog->record($customer, "Payment Failed: {$activePayment->gateway_order_id}");
 
-                return $activePayment->fresh();
+                $payment = Payment::create([
+                    'order_id' => $order->id,
+                    'gateway_order_id' => 'LW-'.$order->id.'-'.Str::uuid(),
+                    'amount' => $order->total,
+                    'status' => PaymentStatus::PENDING,
+                    'gateway_status' => 'pending',
+                    'expires_at' => now()->addDay(),
+                ]);
+
+                $this->activityLog->record($customer, "Payment Created: {$payment->gateway_order_id}");
+                $snapToken = $this->midtrans->createSnapToken($order->loadMissing('customer'), $payment);
+                $payment->update(['snap_token' => $snapToken]);
+                $this->activityLog->record($customer, "Payment Pending: {$payment->gateway_order_id}");
+
+                return $payment->fresh();
             });
         }
 
