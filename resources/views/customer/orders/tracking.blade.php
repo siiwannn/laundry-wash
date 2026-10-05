@@ -5,20 +5,42 @@
 @push('styles')
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.7.3/dist/maplibre-gl.css">
 <style>
-    .tracking-map { min-height: 480px; }
+    .tracking-page { background: #E8EEF7; }
+    .tracking-header { display: none; }
+    .tracking-shell { min-height: calc(100vh - 76px); }
+    .tracking-shell > .col-lg-8 { width: 100%; padding: 0; }
+    .tracking-shell > .col-lg-4 { position: fixed; z-index: 5; left: 24px; bottom: 24px; width: min(430px, calc(100vw - 48px)); padding: 0; }
+    .tracking-shell > .col-lg-4 .card { margin-bottom: 8px !important; box-shadow: 0 14px 34px rgba(15, 23, 42, .18) !important; border: 0; }
+    .tracking-shell > .col-lg-4 .card:first-child { margin-bottom: 0 !important; }
+    .tracking-shell > .col-lg-4 .card:first-child .card-body { padding: 14px 18px; }
+    .tracking-shell > .col-lg-4 .card:first-child .card-header { display: none; }
+    .tracking-shell > .col-lg-4 .card:last-child { display: none; }
+    .tracking-shell > .col-lg-8 > .card { min-height: calc(100vh - 76px); border: 0; border-radius: 0; box-shadow: none !important; background: #DDE7F4; }
+    .tracking-map { min-height: calc(100vh - 76px); }
+    .tracking-shell > .col-lg-8 .card-header { display: none; }
+    .tracking-shell > .col-lg-8 .card-footer { position: absolute; z-index: 4; top: 18px; left: 24px; right: 24px; padding: 0 !important; background: transparent !important; border: 0; }
+    .tracking-shell > .col-lg-8 .card-footer > div { display: flex; justify-content: flex-start !important; }
+    .tracking-shell > .col-lg-8 .card-footer > div > .d-flex { background: #fff; border-radius: 16px; padding: 10px; box-shadow: 0 10px 26px rgba(15, 23, 42, .16); }
+    .tracking-shell > .col-lg-8 .card-footer > div > .small { display: none; }
     .tracking-metric { min-width: 120px; }
     .tracking-metric-value { font-variant-numeric: tabular-nums; }
     .driver-marker { width: 58px; height: 58px; transform-origin: center; will-change: transform; }
     .driver-marker img, .destination-marker img { width: 100%; height: 100%; display: block; }
     .destination-marker { width: 44px; height: 44px; }
-    .map-overlay-controls { position: absolute; z-index: 2; right: 12px; bottom: 32px; }
-    @media (max-width: 575.98px) { .tracking-map { min-height: 56vh; } }
+    .map-overlay-controls { position: absolute; z-index: 2; right: 24px; bottom: 190px; }
+    @media (max-width: 575.98px) {
+        .tracking-shell { min-height: calc(100vh - 60px); }
+        .tracking-shell > .col-lg-8 > .card, .tracking-map { min-height: calc(100vh - 60px); }
+        .tracking-shell > .col-lg-4 { left: 12px; bottom: 12px; width: calc(100vw - 24px); }
+        .tracking-shell > .col-lg-8 .card-footer { top: 12px; left: 12px; right: 12px; }
+        .map-overlay-controls { right: 12px; bottom: 190px; }
+    }
     @media (prefers-reduced-motion: reduce) { .animate-pulse, .spinner-grow { animation: none !important; } }
 </style>
 @endpush
 
 @section('content')
-<div class="row align-items-center mb-3">
+<div class="row align-items-center mb-3 tracking-header">
     <div class="col-md-7">
         <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
             <h4 class="fw-bold mb-0">Live Tracking Posisi Kurir</h4>
@@ -31,7 +53,7 @@
     </div>
 </div>
 
-<div class="row g-4">
+<div class="row g-4 tracking-shell tracking-page">
     <div class="col-lg-8">
         <div class="card shadow-sm overflow-hidden">
             <div class="card-header bg-white py-3 px-3" id="trackingAlert" role="status" aria-live="polite">
@@ -78,6 +100,7 @@
         <div class="card mb-4 shadow-sm">
             <div class="card-header bg-white py-3"><h6 class="fw-bold mb-0"><i class="bi bi-bicycle me-2 text-warning" aria-hidden="true"></i>Kurir Bertugas</h6></div>
             <div class="card-body">
+                <div class="small text-primary fw-semibold mb-2" id="trackingStatusTextBottom">{{ $trackingData['journey_status'] ?? 'Menghubungkan ke GPS kurir...' }}</div>
                 <h6 class="fw-bold mb-1" id="courierName">{{ $trackingData['courier']['name'] ?? 'Kurir' }}</h6>
                 <p class="text-muted small mb-3" id="courierVehicle">{{ $trackingData['courier']['vehicle_type'] ?? 'Motor' }} &bull; {{ $trackingData['courier']['vehicle_plate'] ?? '-' }}</p>
                 <div class="d-grid gap-2">
@@ -114,8 +137,8 @@ document.addEventListener('DOMContentLoaded', () => {
         container: 'liveTrackingMap',
         style: mapStyleUrl,
         center: defaultCoordinates,
-        zoom: 14,
-        pitch: 45,
+        zoom: 17.5,
+        pitch: 58,
         bearing: 0,
         attributionControl: true
     });
@@ -138,8 +161,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let autoFollow = true;
     let pollingStopped = false;
     let countdown = 10;
+    const traveledCoordinates = [];
 
-    const statusElement = document.getElementById('trackingStatusText');
+    const statusElement = document.getElementById('trackingStatusTextBottom') || document.getElementById('trackingStatusText');
     const updatedElement = document.getElementById('lastUpdatedText');
     const etaElement = document.getElementById('etaValue');
     const distanceElement = document.getElementById('distanceValue');
@@ -166,6 +190,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         etaElement.textContent = route ? `${Math.max(1, Math.ceil(route.duration_seconds / 60))} menit` : '--';
         distanceElement.textContent = route ? `${(route.distance_meters / 1000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} km` : '--';
+    }
+
+    function updateTraveledRoute(coordinates) {
+        if (!coordinates || (traveledCoordinates.length && traveledCoordinates.at(-1)[0] === coordinates[0] && traveledCoordinates.at(-1)[1] === coordinates[1])) return;
+        traveledCoordinates.push(coordinates);
+        const source = map.getSource('traveled-route');
+        if (source) source.setData({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: traveledCoordinates } });
+    }
+
+    function followCamera(coordinates, bearing, duration = 0) {
+        if (!autoFollow) return;
+        map.easeTo({
+            center: coordinates,
+            bearing,
+            pitch: 58,
+            zoom: 17.5,
+            offset: [0, -(map.getContainer().clientHeight * .25)],
+            duration,
+        });
     }
 
     function shortestBearing(from, to) {
@@ -213,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentCoordinates = nextCoordinates;
             currentBearing = nextBearing ?? currentBearing;
             driverMarker.setLngLat(nextCoordinates).setRotation(currentBearing).addTo(map);
-            if (autoFollow) map.easeTo({ center: nextCoordinates, bearing: currentBearing, duration: reducedMotion ? 0 : 700 });
+            followCamera(nextCoordinates, currentBearing, reducedMotion ? 0 : 700);
             return;
         }
 
@@ -232,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 : (nextBearing ?? bearingBetween(coordinates, ahead));
             const bearing = shortestBearing(startBearing, routeBearing);
             driverMarker.setLngLat(coordinates).setRotation(bearing).addTo(map);
-            if (autoFollow) map.easeTo({ center: coordinates, bearing, pitch: 45, duration: 0 });
+            followCamera(coordinates, bearing);
             if (progress < 1) animationFrame = requestAnimationFrame(step);
             else {
                 currentCoordinates = nextCoordinates;
@@ -256,6 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updatedElement.textContent = `Update: ${data.courier_location.recorded_at}`;
         if (lastRecordedAt === data.courier_location.recorded_at_iso) return;
         lastRecordedAt = data.courier_location.recorded_at_iso;
+        updateTraveledRoute([data.courier_location.longitude, data.courier_location.latitude]);
         animateDriver(
             [data.courier_location.longitude, data.courier_location.latitude],
             data.courier_location.heading,
@@ -284,12 +328,30 @@ document.addEventListener('DOMContentLoaded', () => {
             type: 'geojson',
             data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } }
         });
+        map.addSource('traveled-route', {
+            type: 'geojson',
+            data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } }
+        });
+        map.addLayer({
+            id: 'active-route-casing',
+            type: 'line',
+            source: 'active-route',
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#FFFFFF', 'line-width': 13, 'line-opacity': .95 }
+        });
         map.addLayer({
             id: 'active-route-line',
             type: 'line',
             source: 'active-route',
             layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: { 'line-color': '#3B82F6', 'line-width': 6, 'line-opacity': .9 }
+            paint: { 'line-color': '#2563EB', 'line-width': 8, 'line-opacity': .95 }
+        });
+        map.addLayer({
+            id: 'traveled-route-line',
+            type: 'line',
+            source: 'traveled-route',
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#64748B', 'line-width': 8, 'line-opacity': .92 }
         });
         applyTrackingData(initialData);
     });
@@ -299,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     followButton.addEventListener('click', () => {
         setAutoFollow(!autoFollow);
-        if (autoFollow && currentCoordinates) map.easeTo({ center: currentCoordinates, bearing: currentBearing, pitch: 45, zoom: Math.max(map.getZoom(), 15), duration: reducedMotion ? 0 : 600 });
+        if (autoFollow && currentCoordinates) followCamera(currentCoordinates, currentBearing, reducedMotion ? 0 : 600);
     });
 
     map.on('zoom', () => {
