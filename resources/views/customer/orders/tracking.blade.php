@@ -340,32 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     map.on('load', () => {
-        try {
-            const styleLayers = map.getStyle().layers ?? [];
-            const hasBuildingSourceLayer = styleLayers.some(layer =>
-                layer.source === 'openmaptiles' && layer['source-layer'] === 'building'
-            );
-            if (map.getSource('openmaptiles') && hasBuildingSourceLayer && !map.getLayer('tracking-3d-buildings')) {
-                const labelLayer = styleLayers.find(layer => layer.type === 'symbol' && layer.layout?.['text-field']);
-                map.addLayer({
-                    id: 'tracking-3d-buildings',
-                    source: 'openmaptiles',
-                    'source-layer': 'building',
-                    type: 'fill-extrusion',
-                    minzoom: 15,
-                    layout: { visibility: 'visible' },
-                    paint: {
-                        'fill-extrusion-color': '#CBD5E1',
-                        'fill-extrusion-height': ['coalesce', ['get', 'render_height'], ['get', 'height'], 5],
-                        'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
-                        'fill-extrusion-opacity': .7,
-                    },
-                }, labelLayer?.id);
-            }
-        } catch (error) {
-            console.warn('3D buildings tidak tersedia; tracking tetap dilanjutkan.', error);
-        }
-
         addTrackingLayers();
         applyTrackingData(initialData);
     });
