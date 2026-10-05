@@ -85,7 +85,7 @@ Main Flow
 
 1. Customer memilih metode penyerahan.
    - Pickup
-   - Antar Sendiri
+- Pickup oleh Courier
 
 2. Customer memilih alamat.
 
@@ -171,19 +171,19 @@ Status Laundry = Ready
 
 Main Flow
 
-1. Customer memilih metode pembayaran.
+1. Customer membuka Midtrans Snap.
 
-2. Customer melakukan pembayaran.
+2. Customer memilih QRIS atau Virtual Account dan menyelesaikan pembayaran.
 
-3. Admin memverifikasi pembayaran.
+3. Midtrans mengirim webhook dengan signature yang valid.
 
-4. Status menjadi Paid.
+4. Sistem mengubah Payment dan Order menjadi Paid secara otomatis.
 
 Alternative Flow
 
-Pembayaran ditolak.
+Pembayaran gagal atau kedaluwarsa.
 
-Status tetap Pending Payment.
+Payment menjadi Failed dan Order kembali ke Ready agar Customer dapat mencoba lagi.
 
 ---
 
@@ -291,7 +291,7 @@ Semua perubahan disimpan pada Status History.
 
 ---
 
-# UC-12 Verifikasi Pembayaran
+# UC-12 Melihat Status Pembayaran
 
 Actor
 
@@ -299,13 +299,13 @@ Admin
 
 Main Flow
 
-1. Membuka Pembayaran.
+1. Admin membuka daftar pembayaran.
 
-2. Memverifikasi.
+2. Sistem menampilkan status terakhir dari Midtrans.
 
-3. Status menjadi Paid.
+3. Admin tidak dapat mengubah status secara manual.
 
-4. Courier Delivery dapat ditugaskan.
+4. Courier Delivery hanya dapat ditugaskan jika Order dan Payment berstatus Paid.
 
 ---
 

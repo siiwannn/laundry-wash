@@ -90,7 +90,19 @@ DB_DATABASE=laundry_wash
 DB_USERNAME=root
 
 DB_PASSWORD=password
+
+MIDTRANS_SERVER_KEY=SB-Mid-server-your-key
+
+MIDTRANS_CLIENT_KEY=SB-Mid-client-your-key
+
+MIDTRANS_IS_PRODUCTION=false
+
+MIDTRANS_IS_SANITIZED=true
+
+MIDTRANS_IS_3DS=true
 ```
+
+Atur Payment Notification URL pada dashboard Midtrans Sandbox ke `https://your-domain.com/api/midtrans/notification`. Jangan commit server key atau client key ke repository.
 
 ---
 
@@ -303,6 +315,8 @@ Karena Vercel tidak dirancang untuk menjalankan aplikasi Laravel tradisional ber
 - Order berhasil dibuat
 - Tracking berjalan
 - Pembayaran berjalan
+- Webhook Midtrans dapat diakses melalui HTTPS
+- Signature webhook tidak valid ditolak
 - Tidak ada Error 500
 - Semua halaman dapat diakses sesuai Role
 
@@ -323,7 +337,7 @@ Admin
 - Confirm Order
 - Assign Courier
 - Input Berat
-- Verifikasi Pembayaran
+- Lihat Status Pembayaran
 
 Courier
 

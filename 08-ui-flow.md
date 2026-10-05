@@ -72,7 +72,7 @@ Flow
 1. Pilih Metode Penyerahan
 
 - Pickup
-- Antar Sendiri
+- Pickup oleh Courier
 
 ↓
 
@@ -140,11 +140,10 @@ Menampilkan:
 - Total Tagihan
 - Metode Pembayaran
 
-Pilihan:
+Midtrans Snap menampilkan pilihan:
 
-- Tunai
-- Transfer
 - QRIS
+- Virtual Account
 
 Status:
 
@@ -191,7 +190,7 @@ Fitur:
 - Assign Courier
 - Input Berat
 - Update Status
-- Verifikasi Pembayaran
+- Lihat Status Pembayaran
 
 ---
 

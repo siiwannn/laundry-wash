@@ -166,9 +166,8 @@ Filter
 
 ```json
 {
-    "pickup_method":"pickup",
-    "delivery_method":"delivery",
     "pickup_address_id":1,
+    "service_id":1,
     "pickup_date":"2026-10-10",
     "pickup_time":"09:00",
     "notes":"Jangan gunakan parfum."
@@ -195,12 +194,13 @@ Tracking Courier.
 
 ## POST /orders/{id}/payment
 
-```json
-{
-    "method":"qris",
-    "amount":50000
-}
-```
+Tidak menerima metode atau nominal dari client. Sistem membuat transaksi Midtrans berdasarkan total order dan mengembalikan `snap_token` serta `client_key`.
+
+---
+
+## POST /api/midtrans/notification
+
+Webhook publik Midtrans. Sistem memvalidasi signature dan nominal sebelum memperbarui Payment dan Order. Status settlement/capture menjadi Paid; expire, deny, cancel, atau failure menjadi Failed.
 
 ---
 
@@ -273,15 +273,7 @@ delivery
 
 ---
 
-## PATCH /admin/orders/{id}/verify-payment
-
-```json
-{
-    "status":"paid"
-}
-```
-
----
+Admin hanya dapat melihat status pembayaran. Tidak tersedia endpoint verifikasi pembayaran manual.
 
 # Laundry Price
 

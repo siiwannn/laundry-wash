@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Enums\AssignmentType;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
-use App\Enums\ServiceType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,9 +21,6 @@ class Order extends Model
         'customer_id',
         'pickup_address_id',
         'delivery_address_id',
-        'service_type',
-        'pickup_method',
-        'delivery_method',
         'pickup_date',
         'pickup_time',
         'status',
@@ -45,7 +41,6 @@ class Order extends Model
         return [
             'status' => OrderStatus::class,
             'payment_status' => PaymentStatus::class,
-            'service_type' => ServiceType::class,
             'estimated_weight' => 'decimal:2',
             'actual_weight' => 'decimal:2',
             'pickup_date' => 'date',
@@ -116,11 +111,6 @@ class Order extends Model
     public function scopeForCustomer(Builder $query, int $customerId): Builder
     {
         return $query->where('customer_id', $customerId);
-    }
-
-    public function isPickupAndDelivery(): bool
-    {
-        return $this->service_type === ServiceType::PICKUP_AND_DELIVERY;
     }
 
     public function isPaid(): bool

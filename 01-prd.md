@@ -114,7 +114,7 @@ Hak akses:
 - Menghitung total biaya
 - Menugaskan kurir
 - Mengubah status laundry
-- Memverifikasi pembayaran
+- Melihat status pembayaran Midtrans
 - Melihat laporan
 
 ---
@@ -194,7 +194,7 @@ Laundry Wash menyediakan sistem terintegrasi yang mencakup:
 
 - Mobile App Android
 - Mobile App iOS
-- Payment Gateway
+- Pembayaran selain Midtrans QRIS dan Virtual Account
 - WhatsApp Notification
 - Email Notification
 - Loyalty Point
@@ -256,7 +256,7 @@ Membuat Order Laundry
 Memilih Metode Penyerahan
 
 - Pickup
-- Antar Sendiri
+- Pickup oleh Courier
 
 ↓
 
@@ -322,7 +322,7 @@ Customer melakukan pembayaran
 
 ↓
 
-Admin melakukan verifikasi pembayaran
+Webhook Midtrans mengubah pembayaran dan order menjadi Paid
 
 ↓
 
@@ -482,15 +482,14 @@ Status cancelled dapat dilakukan sebelum laundry mulai diproses.
 
 Pembayaran dilakukan setelah laundry selesai.
 
-Metode pembayaran:
+Payment gateway menggunakan Midtrans Snap Sandbox.
 
-- Tunai
-- Transfer Bank
+Metode pembayaran yang didukung:
+
 - QRIS
+- Virtual Account
 
-Tidak menggunakan Payment Gateway.
-
-Admin melakukan verifikasi pembayaran secara manual.
+Status pembayaran diperbarui otomatis melalui webhook Midtrans. Admin hanya melihat status pembayaran dan tidak melakukan verifikasi manual.
 
 Status pembayaran:
 
@@ -579,7 +578,7 @@ Customer dapat membuat order.
 
 FR-05
 
-Customer dapat memilih Pickup atau Antar Sendiri.
+Setiap order menggunakan pickup dan delivery oleh Courier.
 
 FR-06
 
@@ -623,7 +622,7 @@ Admin dapat menugaskan Courier.
 
 FR-15
 
-Admin dapat memverifikasi pembayaran.
+Admin dapat melihat status pembayaran Midtrans.
 
 FR-16
 
@@ -707,7 +706,7 @@ Sistem dianggap selesai apabila:
 3. Customer membuat pesanan baru.
 4. Customer memilih metode penyerahan:
    - Pickup
-   - Antar sendiri
+- Pickup oleh Courier
 5. Jika Pickup, customer memilih alamat, tanggal, dan slot waktu.
 6. Customer mengirim pesanan.
 7. Customer menunggu konfirmasi admin.
@@ -731,7 +730,7 @@ Sistem dianggap selesai apabila:
 7. Menginput berat aktual.
 8. Sistem menghitung harga otomatis.
 9. Mengubah status laundry.
-10. Memverifikasi pembayaran.
+10. Melihat status pembayaran Midtrans.
 11. Menugaskan courier delivery.
 12. Menutup order.
 13. Melihat laporan.
@@ -782,7 +781,7 @@ Sistem dianggap selesai apabila:
 - Assign Courier
 - Input Berat
 - Update Status
-- Verifikasi Pembayaran
+- Monitoring Pembayaran Midtrans
 - Laporan
 
 ---
@@ -814,7 +813,7 @@ Sistem dianggap selesai apabila:
 ## Pembayaran
 
 - Pembayaran hanya dapat dilakukan ketika status READY.
-- Admin wajib melakukan konfirmasi pembayaran.
+- Midtrans wajib mengonfirmasi pembayaran melalui webhook yang valid.
 - Courier tidak dapat delivery sebelum status PAID.
 
 ---
@@ -900,7 +899,6 @@ Belum mendukung:
 - Membership
 - Promo
 - Voucher
-- Payment Gateway
 - Mobile Apps
 
 ---
@@ -917,7 +915,6 @@ Versi berikutnya dapat menambahkan:
 - WhatsApp Notification
 - Email Notification
 - Push Notification
-- Payment Gateway
 - Optimasi Rute Kurir
 - Scan QR Order
 - Barcode Laundry
@@ -939,7 +936,7 @@ Proyek dianggap selesai apabila:
 - Tracking GPS berjalan.
 - Perhitungan harga berjalan otomatis.
 - Status laundry berjalan sesuai alur.
-- Pembayaran dapat diverifikasi.
+- Pembayaran berubah otomatis melalui webhook Midtrans yang valid.
 - Tidak terdapat error kritis.
 - Seluruh pengujian P0 berhasil.
 - Siap dipresentasikan.

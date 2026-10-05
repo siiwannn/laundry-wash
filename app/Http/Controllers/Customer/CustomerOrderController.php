@@ -10,6 +10,7 @@ use App\Models\Service;
 use App\Services\CourierTrackingService;
 use App\Services\OrderService;
 use App\Services\PaymentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -79,21 +80,20 @@ class CustomerOrderController extends Controller
         return view('customer.orders.history', compact('orders'));
     }
 
-    public function pay(StorePaymentRequest $request, Order $order): RedirectResponse
+    public function pay(StorePaymentRequest $request, Order $order): JsonResponse
     {
         Gate::authorize('pay', $order);
 
         try {
-            $this->paymentService->submitPayment(
-                $order,
-                auth()->user(),
-                $request->validated(),
-                $request->file('proof_file')
-            );
+            $payment = $this->paymentService->createMidtransPayment($order, $request->user());
 
-            return back()->with('success', 'Pembayaran berhasil dikirim! Menunggu konfirmasi verifikasi admin.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Gagal memproses pembayaran: '.$e->getMessage());
+            return response()->json([
+                'success' => true,
+                'snap_token' => $payment->snap_token,
+                'client_key' => config('services.midtrans.client_key'),
+            ]);
+        } catch (\Exception $exception) {
+            return response()->json(['success' => false, 'message' => $exception->getMessage()], 422);
         }
     }
 

@@ -72,7 +72,7 @@ saya ingin membuat order laundry agar pakaian dapat diproses.
 
 - Memilih metode penyerahan:
   - Pickup
-  - Antar Sendiri
+- Pickup oleh Courier
 - Memilih alamat pickup.
 - Memilih tanggal pickup.
 - Memilih jam pickup.
@@ -115,10 +115,9 @@ saya ingin melakukan pembayaran setelah laundry selesai.
 ### Acceptance Criteria
 
 - Pembayaran hanya dapat dilakukan ketika status READY.
-- Metode:
-  - Tunai
-  - Transfer
-  - QRIS
+- Customer membuka Midtrans Snap.
+- Metode yang tersedia hanya QRIS dan Virtual Account.
+- Status pembayaran diperbarui otomatis oleh webhook Midtrans.
 
 ---
 
@@ -228,10 +227,15 @@ Completed
 
 ---
 
-## US-A07 Verifikasi Pembayaran
+## US-A07 Melihat Status Pembayaran
 
 Sebagai Admin,
-saya ingin memverifikasi pembayaran customer.
+saya ingin melihat status pembayaran Midtrans tanpa mengubahnya secara manual.
+
+### Acceptance Criteria
+
+- Admin dapat melihat status pending, paid, atau failed.
+- Admin tidak memiliki aksi verifikasi pembayaran.
 
 ---
 

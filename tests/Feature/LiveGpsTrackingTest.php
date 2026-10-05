@@ -6,7 +6,6 @@ use App\Enums\AssignmentStatus;
 use App\Enums\AssignmentType;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
-use App\Enums\ServiceType;
 use App\Enums\UserRole;
 use App\Models\CourierAssignment;
 use App\Models\CustomerAddress;
@@ -138,7 +137,6 @@ class LiveGpsTrackingTest extends TestCase
             'customer_id' => $customer->id,
             'pickup_address_id' => $address->id,
             'delivery_address_id' => $address->id,
-            'service_type' => ServiceType::PICKUP_AND_DELIVERY,
             'status' => $orderStatus,
             'payment_status' => PaymentStatus::PENDING,
             'subtotal' => 40000,

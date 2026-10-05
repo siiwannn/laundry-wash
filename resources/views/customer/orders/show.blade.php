@@ -64,7 +64,7 @@
                 <div class="small">Silakan lakukan pembayaran sebesar <strong>Rp {{ number_format($order->total, 0, ',', '.') }}</strong> agar kurir dapat mengantarkan cucian ke rumah Anda.</div>
             </div>
         </div>
-        <button type="button" class="btn btn-success fw-bold px-4" data-bs-toggle="modal" data-bs-target="#paymentModal">
+        <button type="button" class="btn btn-success fw-bold px-4" id="payWithMidtrans">
             <i class="bi bi-credit-card me-1"></i> Bayar Sekarang
         </button>
     </div>
@@ -150,15 +150,8 @@
                     @foreach($order->payments as $payment)
                         <div class="p-3 border rounded mb-2 bg-light d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="fw-bold mb-1">{{ $payment->method->label() }} &bull; Rp {{ number_format($payment->amount, 0, ',', '.') }}</h6>
-                                <small class="text-muted">Diajukan: {{ $payment->created_at->format('d/m/Y H:i') }}</small>
-                                @if($payment->proof_file)
-                                    <div class="mt-1">
-                                        <a href="{{ asset('storage/' . $payment->proof_file) }}" target="_blank" class="small text-info text-decoration-none">
-                                            <i class="bi bi-image me-1"></i> Bukti Transfer Terlampir
-                                        </a>
-                                    </div>
-                                @endif
+                                <h6 class="fw-bold mb-1">{{ $payment->method?->label() ?? 'Menunggu pilihan Midtrans' }} &bull; Rp {{ number_format($payment->amount, 0, ',', '.') }}</h6>
+                                <small class="text-muted">Dibuat: {{ $payment->created_at->format('d/m/Y H:i') }}</small>
                             </div>
                             <span class="badge {{ $payment->status->badgeClass() }} py-2 px-3">
                                 {{ $payment->status->label() }}
@@ -183,7 +176,7 @@
                 <div class="mb-3">
                     <span class="small text-muted d-block">Metode Layanan:</span>
                     <strong class="text-dark">
-                        {{ $order->isPickupAndDelivery() ? 'Antar Jemput oleh Kurir' : 'Antar & Ambil Sendiri ke Workshop' }}
+                        Pickup dan Delivery oleh Courier
                     </strong>
                 </div>
                 @if($order->pickupAddress)
@@ -248,82 +241,7 @@
     </div>
 </div>
 
-<!-- Modal 1: Payment Modal -->
-@if($order->canAcceptPayment())
-<div class="modal fade" id="paymentModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <form action="{{ route('customer.orders.pay', $order) }}" method="POST" enctype="multipart/form-data" class="modal-content">
-            @csrf
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold"><i class="bi bi-wallet2 text-success me-2"></i> Pembayaran Laundry</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="p-3 bg-light rounded text-center mb-3">
-                    <span class="text-muted small">Total yang harus dibayar:</span>
-                    <h3 class="fw-bold text-primary mb-0">Rp {{ number_format($order->total, 0, ',', '.') }}</h3>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-semibold small">Pilih Metode Pembayaran:</label>
-                    <div class="d-grid gap-2">
-                        <label class="p-3 border rounded cursor-pointer d-flex align-items-center gap-3">
-                            <input type="radio" name="method" value="transfer" class="form-check-input mt-0" checked onchange="togglePaymentInstructions('transfer')">
-                            <div>
-                                <strong class="d-block text-dark"><i class="bi bi-bank me-1 text-primary"></i> Transfer Bank Manual</strong>
-                                <small class="text-muted">BCA / Mandiri / BRI</small>
-                            </div>
-                        </label>
-                        <label class="p-3 border rounded cursor-pointer d-flex align-items-center gap-3">
-                            <input type="radio" name="method" value="qris" class="form-check-input mt-0" onchange="togglePaymentInstructions('qris')">
-                            <div>
-                                <strong class="d-block text-dark"><i class="bi bi-qr-code-scan me-1 text-danger"></i> QRIS (Semua E-Wallet)</strong>
-                                <small class="text-muted">GoPay, OVO, Dana, ShopeePay, BCA Mobile</small>
-                            </div>
-                        </label>
-                        <label class="p-3 border rounded cursor-pointer d-flex align-items-center gap-3">
-                            <input type="radio" name="method" value="cash" class="form-check-input mt-0" onchange="togglePaymentInstructions('cash')">
-                            <div>
-                                <strong class="d-block text-dark"><i class="bi bi-cash-stack me-1 text-success"></i> Tunai (Cash on Delivery)</strong>
-                                <small class="text-muted">Bayar langsung ke kurir saat pakaian diantar</small>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Transfer Instructions -->
-                <div id="transferInstructions" class="p-3 bg-light rounded border mb-3">
-                    <h6 class="fw-bold mb-2 small text-uppercase">Nomor Rekening Resmi:</h6>
-                    <div class="small mb-1"><strong>Bank BCA:</strong> 8890 1234 5678 (a.n Laundry Wash)</div>
-                    <div class="small"><strong>Bank Mandiri:</strong> 1320 0098 7654 (a.n Laundry Wash)</div>
-                </div>
-
-                <!-- QRIS Instructions -->
-                <div id="qrisInstructions" class="p-3 bg-light rounded border mb-3 text-center" style="display: none;">
-                    <h6 class="fw-bold mb-2 small text-uppercase">Scan QRIS Laundry Wash:</h6>
-                    <div class="p-2 bg-white d-inline-block rounded border mb-2">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=LAUNDRY-WASH-ORDER-{{ $order->order_number }}-AMOUNT-{{ (int) $order->total }}" alt="QRIS Code" class="img-fluid" style="width: 160px; height: 160px;">
-                    </div>
-                    <div class="small text-muted">Scan menggunakan aplikasi mobile banking atau e-wallet Anda.</div>
-                </div>
-
-                <!-- Proof Upload (for Transfer & QRIS) -->
-                <div id="proofUploadSection" class="mb-3">
-                    <label for="proof_file" class="form-label fw-semibold small">Unggah Bukti Transfer / Resi:</label>
-                    <input type="file" name="proof_file" id="proof_file" class="form-control form-control-sm" accept="image/*">
-                    <small class="text-muted" style="font-size: 0.72rem;">Format: JPG, PNG (Maksimal 4 MB)</small>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Tutup</button>
-                <button type="submit" class="btn btn-success fw-bold px-4">Kirim Konfirmasi Bayar</button>
-            </div>
-        </form>
-    </div>
-</div>
-@endif
-
-<!-- Modal 2: Cancel Modal -->
+<!-- Cancel Modal -->
 @if($order->canBeCancelled())
 <div class="modal fade" id="cancelModal" tabindex="-1">
     <div class="modal-dialog">
@@ -351,26 +269,38 @@
 @endif
 
 @push('scripts')
+@if($order->canAcceptPayment())
+<script src="{{ config('services.midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
+@endif
 <script>
-function togglePaymentInstructions(method) {
-    const transferBox = document.getElementById('transferInstructions');
-    const qrisBox = document.getElementById('qrisInstructions');
-    const proofBox = document.getElementById('proofUploadSection');
+document.getElementById('payWithMidtrans')?.addEventListener('click', async function () {
+    const button = this;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyiapkan pembayaran';
 
-    if (method === 'transfer') {
-        transferBox.style.display = 'block';
-        qrisBox.style.display = 'none';
-        proofBox.style.display = 'block';
-    } else if (method === 'qris') {
-        transferBox.style.display = 'none';
-        qrisBox.style.display = 'block';
-        proofBox.style.display = 'block';
-    } else {
-        transferBox.style.display = 'none';
-        qrisBox.style.display = 'none';
-        proofBox.style.display = 'none';
+    try {
+        const response = await fetch(@json(route('customer.orders.pay', $order)), {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+        });
+        const data = await response.json();
+        if (!response.ok || !data.snap_token) throw new Error(data.message || 'Pembayaran tidak dapat dibuat.');
+
+        window.snap.pay(data.snap_token, {
+            onSuccess: () => window.location.reload(),
+            onPending: () => window.location.reload(),
+            onError: () => window.location.reload(),
+            onClose: () => { button.disabled = false; button.innerHTML = '<i class="bi bi-credit-card me-1"></i> Bayar Sekarang'; },
+        });
+    } catch (error) {
+        alert(error.message);
+        button.disabled = false;
+        button.innerHTML = '<i class="bi bi-credit-card me-1"></i> Bayar Sekarang';
     }
-}
+});
 </script>
 @endpush
 @endsection

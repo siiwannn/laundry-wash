@@ -106,8 +106,6 @@ Tabel utama transaksi laundry.
 | order_number | VARCHAR(50) UNIQUE |
 | customer_id | FK users |
 | pickup_address_id | FK customer_addresses |
-| pickup_method | ENUM('pickup','drop_off') |
-| delivery_method | ENUM('delivery','self_pickup') |
 | pickup_date | DATE |
 | pickup_time | TIME |
 | status | ENUM('pending','confirmed','pickup_assigned','courier_to_pickup','picked_up','received_at_laundry','washing','drying','ironing','ready','waiting_payment','paid','delivery_assigned','courier_to_customer','delivered','completed','cancelled') |
@@ -187,12 +185,15 @@ Pembayaran.
 |--------|------|
 | id | BIGINT |
 | order_id | FK orders |
-| method | ENUM('cash','transfer','qris') |
+| gateway_order_id | VARCHAR(100) UNIQUE |
+| gateway_transaction_id | VARCHAR(100) NULL |
+| snap_token | TEXT NULL |
+| gateway_status | VARCHAR(50) NULL |
+| method | ENUM('qris','virtual_account') NULL |
 | amount | DECIMAL(12,2) |
 | status | ENUM('pending','paid','failed') |
-| verified_by | FK users NULL |
 | paid_at | DATETIME NULL |
-| reference | VARCHAR(100) NULL |
+| expires_at | DATETIME NULL |
 | created_at | TIMESTAMP |
 | updated_at | TIMESTAMP |
 
@@ -326,7 +327,10 @@ activity_logs.user_id
 - Sistem hanya mendukung Laundry Kiloan.
 - Harga dihitung berdasarkan Berat Aktual × Harga per Kilogram.
 - Berat aktual hanya dapat diinput Admin.
-- Pembayaran dilakukan setelah laundry selesai.
+- Pembayaran dilakukan setelah laundry selesai melalui Midtrans Snap.
+- Hanya QRIS dan Virtual Account yang didukung.
+- Webhook Midtrans memperbarui status pembayaran dan order secara otomatis.
+- Order selalu menggunakan pickup dan delivery oleh Courier.
 - GPS hanya aktif saat Pickup atau Delivery.
 - Semua perubahan status disimpan pada order_status_histories.
 - Semua aktivitas penting disimpan pada activity_logs.

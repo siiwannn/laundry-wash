@@ -3,9 +3,6 @@
 @section('title', 'Kelola Pesanan ' . $order->order_number . ' - Admin')
 
 @section('content')
-@if($order->status === \App\Enums\OrderStatus::PAID && $order->delivery_method === 'self_pickup')
-<div class="alert alert-info d-flex justify-content-between align-items-center mb-4"><div><strong>Siap diambil di outlet.</strong><div class="small">Konfirmasi setelah laundry diserahkan kepada customer.</div></div><form method="POST" action="{{ route('admin.orders.complete-self-pickup', $order) }}">@csrf @method('PATCH')<button class="btn btn-primary" onclick="return confirm('Laundry sudah diterima customer?')">Selesaikan Order</button></form></div>
-@endif
 <div class="row align-items-center mb-4">
     <div class="col-md-7">
         <div class="d-flex align-items-center gap-2 mb-1">
@@ -46,7 +43,7 @@
                     @elseif($order->status->value === 'ready')
                         Laundry telah selesai dan siap. Menunggu customer mengirim pembayaran.
                     @elseif($order->status->value === 'waiting_payment')
-                        Pembayaran telah dikirim customer dan menunggu verifikasi Admin.
+                        Pembayaran sedang diproses otomatis oleh Midtrans.
                     @elseif($order->status->value === 'paid')
                         Pembayaran sudah lunas. Tugaskan kurir delivery untuk mengantar laundry.
                     @elseif($order->status->value === 'completed')
@@ -192,32 +189,17 @@
                             <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
                                 <div>
                                     <div class="fw-bold text-dark mb-1">
-                                        {{ $payment->method->label() }} &bull; Rp {{ number_format($payment->amount, 0, ',', '.') }}
+                                        {{ $payment->method?->label() ?? 'Menunggu pilihan Midtrans' }} &bull; Rp {{ number_format($payment->amount, 0, ',', '.') }}
                                     </div>
                                     <div class="small text-muted">
                                         Waktu: {{ $payment->created_at->format('d/m/Y H:i') }}
-                                        @if($payment->reference) &bull; Ref: {{ $payment->reference }} @endif
+                                        @if($payment->gateway_transaction_id) &bull; ID: {{ $payment->gateway_transaction_id }} @endif
                                     </div>
-                                    @if($payment->proof_file)
-                                        <div class="mt-2">
-                                            <a href="{{ asset('storage/' . $payment->proof_file) }}" target="_blank" class="btn btn-outline-info btn-sm">
-                                                <i class="bi bi-image me-1"></i> Lihat Bukti Transfer
-                                            </a>
-                                        </div>
-                                    @endif
                                 </div>
                                 <div>
-                                    @if($payment->status->value === 'pending')
-                                        <form action="{{ route('admin.payments.confirm', $payment) }}" method="POST">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn btn-success btn-sm fw-semibold" onclick="return confirm('Konfirmasi bahwa uang sebesar Rp {{ number_format($payment->amount, 0, ',', '.') }} telah diterima?')">
-                                                <i class="bi bi-check2-circle me-1"></i> Konfirmasi Lunas
-                                            </button>
-                                        </form>
-                                    @else
-                                        <span class="badge bg-success py-2 px-3"><i class="bi bi-check-circle me-1"></i> Lunas</span>
-                                    @endif
+                                    <span class="badge {{ $payment->status->badgeClass() }} py-2 px-3">
+                                        {{ $payment->status->label() }}
+                                    </span>
                                 </div>
                             </div>
                         @endforeach
@@ -225,7 +207,7 @@
                 @else
                     <div class="text-center py-4 text-muted">
                         <i class="bi bi-hourglass-split fs-2 d-block mb-2"></i>
-                        Customer belum melakukan pengajuan pembayaran.
+                        Belum ada transaksi Midtrans untuk pesanan ini.
                     </div>
                 @endif
             </div>

@@ -2,10 +2,8 @@
 
 namespace App\Http\Requests\Order;
 
-use App\Enums\ServiceType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Enum;
 
 class StoreOrderRequest extends FormRequest
 {
@@ -17,33 +15,33 @@ class StoreOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'service_type' => ['required', new Enum(ServiceType::class)],
+            'service_type' => ['prohibited'],
+            'delivery_method' => ['prohibited'],
             'service_id' => [
                 'required',
                 Rule::exists('services', 'id')->where('is_active', true),
             ],
             'estimated_weight' => ['nullable', 'numeric', 'min:0.5', 'max:500'],
             'pickup_address_id' => [
-                'required_if:service_type,pickup_and_delivery',
-                'nullable',
+                'required',
                 Rule::exists('customer_addresses', 'id')->where(
                     fn ($query) => $query->where('user_id', $this->user()->id)
                 ),
             ],
             'notes' => ['nullable', 'string', 'max:500'],
-            'pickup_date' => ['required_if:service_type,pickup_and_delivery', 'nullable', 'date', 'after_or_equal:today'],
-            'pickup_time' => ['required_if:service_type,pickup_and_delivery', 'nullable', 'date_format:H:i'],
-            'delivery_method' => ['required', Rule::in(['delivery', 'self_pickup'])],
+            'pickup_date' => ['required', 'date', 'after_or_equal:today'],
+            'pickup_time' => ['required', 'date_format:H:i'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'service_type.required' => 'Pilih jenis layanan antar/jemput.',
+            'service_type.prohibited' => 'Metode drop-off tidak lagi didukung.',
+            'delivery_method.prohibited' => 'Seluruh order wajib menggunakan delivery courier.',
             'service_id.required' => 'Pilih paket layanan laundry.',
             'service_id.exists' => 'Paket layanan laundry tidak valid atau sedang tidak aktif.',
-            'pickup_address_id.required_if' => 'Alamat penjemputan wajib dipilih untuk layanan Antar Jemput.',
+            'pickup_address_id.required' => 'Alamat penjemputan wajib dipilih.',
             'pickup_address_id.exists' => 'Alamat penjemputan tidak valid atau bukan milik Anda.',
             'estimated_weight.min' => 'Perkiraan berat minimal adalah 0.5 kg.',
         ];

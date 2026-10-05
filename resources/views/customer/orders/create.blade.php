@@ -46,39 +46,14 @@
                 </div>
             </div>
 
-            <!-- Step 2: Delivery & Pickup Method -->
+            <!-- Step 2: Pickup Schedule -->
             <div class="card mb-4">
                 <div class="card-header bg-white py-3">
-                    <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-2-circle-fill me-2"></i> Metode Pengiriman</h5>
+                    <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-2-circle-fill me-2"></i> Jadwal Pickup Courier</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="card p-3 border cursor-pointer method-card border-primary bg-primary-subtle" style="cursor: pointer;">
-                                <div class="d-flex align-items-start gap-2">
-                                    <input type="radio" name="service_type" value="pickup_and_delivery" class="form-check-input mt-1" id="type_pickup" checked>
-                                    <div>
-                                        <div class="fw-bold text-dark"><i class="bi bi-bicycle me-1 text-primary"></i> Antar Jemput (Kurir)</div>
-                                        <small class="text-muted">Kurir menjemput cucian dan mengantarkannya kembali saat bersih (+Rp 10.000).</small>
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="card p-3 border cursor-pointer method-card" style="cursor: pointer;">
-                                <div class="d-flex align-items-start gap-2">
-                                    <input type="radio" name="service_type" value="self_drop_off" class="form-check-input mt-1" id="type_dropoff">
-                                    <div>
-                                        <div class="fw-bold text-dark"><i class="bi bi-box-arrow-in-down me-1 text-secondary"></i> Drop-off Mandiri</div>
-                                        <small class="text-muted">Anda membawa dan mengambil cucian sendiri langsung ke outlet workshop (Gratis ongkir).</small>
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Pickup Address Selection (Hidden if self drop-off) -->
-                    <div id="addressSelectionSection">
+                    <div class="alert alert-info small"><i class="bi bi-bicycle me-1"></i> Laundry akan dijemput dan diantar kembali oleh courier Laundry Wash.</div>
+                    <div>
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <label for="pickup_address_id" class="form-label fw-semibold small mb-0">Alamat Penjemputan:</label>
                             <a href="{{ route('customer.addresses.create') }}" class="btn btn-link btn-sm p-0 text-decoration-none" target="_blank">
@@ -103,7 +78,6 @@
                             <div class="col-md-6"><label for="pickup_time" class="form-label fw-semibold small">Jam Pickup</label><input id="pickup_time" name="pickup_time" type="time" value="{{ old('pickup_time', '09:00') }}" class="form-control"></div>
                         </div>
                     </div>
-                    <div class="mt-3"><label for="delivery_method" class="form-label fw-semibold small">Metode Pengambilan Setelah Selesai</label><select id="delivery_method" name="delivery_method" class="form-select"><option value="delivery">Diantar kurir</option><option value="self_pickup">Ambil sendiri di outlet</option></select></div>
                 </div>
             </div>
 
@@ -153,9 +127,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     const serviceRadios = document.querySelectorAll('.service-radio');
     const weightInput = document.getElementById('estimated_weight');
-    const pickupRadio = document.getElementById('type_pickup');
-    const dropoffRadio = document.getElementById('type_dropoff');
-    const addressSection = document.getElementById('addressSelectionSection');
     const totalText = document.getElementById('estimatedTotalText');
     const breakdownText = document.getElementById('breakdownText');
 
@@ -170,8 +141,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        const isPickup = pickupRadio.checked;
-        const deliveryFee = isPickup ? 10000 : 0;
+        const deliveryFee = 10000;
         const weight = parseFloat(weightInput.value) || 0;
 
         const subtotal = weight * pricePerKg;
@@ -180,17 +150,10 @@ document.addEventListener('DOMContentLoaded', function () {
         totalText.innerText = 'Rp ' + grandTotal.toLocaleString('id-ID');
         breakdownText.innerText = `(${weight} kg x Rp ${pricePerKg.toLocaleString('id-ID')} + Ongkir Rp ${deliveryFee.toLocaleString('id-ID')})`;
 
-        if (isPickup) {
-            addressSection.style.display = 'block';
-        } else {
-            addressSection.style.display = 'none';
-        }
     }
 
     serviceRadios.forEach(r => r.addEventListener('change', calculateEstimate));
     weightInput.addEventListener('input', calculateEstimate);
-    pickupRadio.addEventListener('change', calculateEstimate);
-    dropoffRadio.addEventListener('change', calculateEstimate);
 
     calculateEstimate();
 });

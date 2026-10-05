@@ -91,7 +91,7 @@ Task
 - Input Berat Aktual
 - Hitung Harga Otomatis
 - Update Status Laundry
-- Verifikasi Pembayaran
+- Monitoring Pembayaran Midtrans
 - Pengaturan Harga Laundry
 
 Deliverable
@@ -146,7 +146,7 @@ Task
 
 - Waiting Payment
 - Payment
-- Payment Verification
+- Midtrans Webhook
 - Payment History
 
 Deliverable

@@ -1,327 +1,175 @@
 # Workflow System
 
 **Brand:** Laundry Wash
-
-**Versi:** 1.0
+**Versi:** 1.1
 
 ---
 
 # 1. Main Business Workflow
 
 ```text
-                Customer Login
-                      │
-                      ▼
-              Customer Create Order
-                      │
-                      ▼
-                  Pending
-                      │
-                      ▼
-            Admin Confirm Order
-                      │
-                      ▼
-                 Confirmed
-              ┌───────────────┐
-              │               │
-              ▼               ▼
-       Pickup Dipilih     Antar Sendiri
-              │               │
-              ▼               ▼
-   Assign Pickup Courier  Customer Antar Laundry
-              │               │
-              ▼               ▼
-      Courier To Pickup  Received At Laundry
-              │               ▲
-              ▼               │
-          Picked Up ──────────┘
-              │
-              ▼
-     Received At Laundry
-              │
-              ▼
-     Admin Input Weight
-              │
-              ▼
- Sistem Hitung Total Harga
-              │
-              ▼
-           Washing
-              │
-              ▼
-           Drying
-              │
-              ▼
-          Ironing
-              │
-              ▼
-            Ready
-              │
-              ▼
-      Waiting Payment
-              │
-              ▼
- Customer Melakukan Pembayaran
-              │
-              ▼
- Admin Verifikasi Pembayaran
-              │
-              ▼
-             Paid
-              │
-              ▼
-      Pilih Metode Pengambilan
-              │
-      ┌───────┴────────┐
-      ▼                ▼
-Delivery          Ambil Sendiri
-      │                │
-      ▼                ▼
-Assign Courier     Customer Datang
-      │                │
-      ▼                ▼
-Courier To Customer    Completed
-      │
-      ▼
-Delivered
-      │
-      ▼
-Completed
+Customer Login
+      ↓
+Customer Create Order
+      ↓
+Admin Confirm Order
+      ↓
+Assign Pickup Courier
+      ↓
+Courier Pickup + GPS Tracking
+      ↓
+Received At Laundry
+      ↓
+Admin Input Actual Weight
+      ↓
+Washing → Drying → Ironing → Ready
+      ↓
+Customer Membuka Midtrans Snap
+      ↓
+QRIS / Virtual Account
+      ↓
+Webhook Midtrans Terverifikasi
+      ↓
+Order Paid
+      ↓
+Assign Delivery Courier
+      ↓
+Courier Delivery + GPS Tracking
+      ↓
+Delivered → Completed
 ```
+
+Sistem tidak mendukung Drop Off atau Self Pickup.
 
 ---
 
 # 2. Courier Pickup Workflow
 
 ```text
-Courier Login
-      │
-      ▼
-Lihat Daftar Pickup
-      │
-      ▼
-Klik Mulai Pickup
-      │
-      ▼
-GPS Aktif
-      │
-      ▼
-Lokasi dikirim setiap 10 detik
-      │
-      ▼
-Menuju Customer
-      │
-      ▼
+Admin Assign Pickup Courier
+      ↓
+Courier Mulai Pickup
+      ↓
+Browser Geolocation Aktif
+      ↓
+Lokasi Dikirim Setiap 10 Detik
+      ↓
 Laundry Dijemput
-      │
-      ▼
-Konfirmasi Pickup
-      │
-      ▼
-Status = Picked Up
-      │
-      ▼
-GPS Berhenti
+      ↓
+Pickup Assignment Selesai
+      ↓
+Laundry Diterima di Outlet
 ```
 
+Tracking berhenti ketika assignment pickup selesai.
+
 ---
 
-# 3. Courier Delivery Workflow
+# 3. Laundry Workflow
 
 ```text
-Courier Login
-      │
-      ▼
-Lihat Daftar Delivery
-      │
-      ▼
-Klik Mulai Delivery
-      │
-      ▼
-GPS Aktif
-      │
-      ▼
-Lokasi dikirim setiap 10 detik
-      │
-      ▼
-Menuju Customer
-      │
-      ▼
-Laundry Diterima Customer
-      │
-      ▼
-Konfirmasi Delivery
-      │
-      ▼
-Status = Completed
-      │
-      ▼
-GPS Berhenti
-```
-
----
-
-# 4. Live GPS Workflow
-
-1. Courier menekan tombol **Mulai Pickup** atau **Mulai Delivery**.
-2. Browser meminta izin akses lokasi.
-3. Browser membaca koordinat menggunakan:
-
-   - navigator.geolocation.watchPosition()
-
-4. Frontend mengirim:
-
-   - Latitude
-   - Longitude
-   - Accuracy
-   - Timestamp
-
-5. Data dikirim ke server setiap **10 detik** menggunakan AJAX.
-6. Laravel menyimpan lokasi terbaru.
-7. Customer membuka halaman Tracking.
-8. Frontend melakukan polling setiap **10 detik**.
-9. Marker Leaflet diperbarui.
-10. Ketika tugas selesai, GPS berhenti.
-
----
-
-# 5. Payment Workflow
-
-```text
-Laundry Ready
-      │
-      ▼
-Waiting Payment
-      │
-      ▼
-Customer Memilih Metode Pembayaran
-      │
-      ▼
-Tunai / Transfer / QRIS
-      │
-      ▼
-Admin Verifikasi
-      │
-      ▼
-Paid
-```
-
----
-
-# 6. Order Status Workflow
-
-```text
-Pending
-
-↓
-
-Confirmed
-
-↓
-
-Pickup Assigned
-
-↓
-
-Courier To Pickup
-
-↓
-
-Picked Up
-
-↓
-
 Received At Laundry
-
-↓
-
+      ↓
+Input Actual Weight
+      ↓
 Washing
-
-↓
-
+      ↓
 Drying
-
-↓
-
+      ↓
 Ironing
-
-↓
-
+      ↓
 Ready
+```
 
-↓
-
-Waiting Payment
-
-↓
-
-Paid
-
-↓
-
-Delivery Assigned
-
-↓
-
-Courier To Customer
-
-↓
-
-Delivered
-
-↓
-
-Completed
+```text
+subtotal = actual_weight × price_per_kg
+total = subtotal + pickup_fee + delivery_fee + additional_fee
 ```
 
 ---
 
-# 7. Status History
+# 4. Payment Workflow
 
-Setiap perubahan status wajib disimpan.
+```text
+Ready
+      ↓
+Customer Membuat Transaksi Midtrans
+      ↓
+Payment Pending + Order Waiting Payment
+      ↓
+Customer Membayar via QRIS / Virtual Account
+      ↓
+Midtrans Mengirim Webhook
+      ↓
+Validasi Signature + Nominal
+      ↓
+Payment Paid + Order Paid
+```
 
-Data yang dicatat:
+Jika transaksi gagal atau kedaluwarsa, Payment menjadi Failed dan Order kembali ke Ready agar customer dapat mencoba lagi. Admin hanya melihat status pembayaran dan tidak melakukan verifikasi manual.
 
-- Order ID
-- Status Lama
-- Status Baru
-- User yang Mengubah
-- Tanggal & Waktu
-- Catatan (Opsional)
+Activity Log mencatat Payment Created, Payment Pending, Payment Paid, Payment Failed, dan Payment Expired.
 
 ---
 
-# 8. Business Rules
+# 5. Courier Delivery Workflow
 
-- Customer hanya dapat membuat order setelah login.
+```text
+Order Paid + Payment Paid
+      ↓
+Admin Assign Delivery Courier
+      ↓
+Courier Mulai Delivery
+      ↓
+Browser Geolocation Aktif
+      ↓
+Lokasi Dikirim Setiap 10 Detik
+      ↓
+Laundry Diterima Customer
+      ↓
+Delivered → Completed
+```
+
+Assignment delivery wajib ditolak jika Order atau Payment belum Paid. Tracking berhenti ketika assignment delivery selesai.
+
+---
+
+# 6. Tracking Workflow
+
+- Courier mengirim lokasi dengan `navigator.geolocation.watchPosition()`.
+- Lokasi dikirim melalui AJAX setiap 10 detik.
+- Customer mengambil lokasi terbaru melalui polling setiap 10 detik.
+- Peta menggunakan Leaflet dan OpenStreetMap.
+- Tracking hanya aktif pada perjalanan pickup atau delivery.
+
+---
+
+# 7. Business Rules
+
+- Customer harus login sebelum membuat order.
+- Semua order menggunakan pickup dan delivery oleh Courier.
 - Berat aktual hanya dapat diinput oleh Admin.
-- Harga dihitung otomatis berdasarkan berat aktual × harga per kilogram.
-- Pembayaran hanya dapat dilakukan ketika status **Ready**.
-- Delivery hanya dapat dilakukan setelah pembayaran dikonfirmasi.
-- GPS hanya aktif saat Pickup atau Delivery.
-- Customer hanya dapat melihat tracking miliknya sendiri.
-- Courier hanya dapat melihat tugas yang ditugaskan kepadanya.
+- Pembayaran hanya dapat dibuat ketika status Order Ready.
+- Metode pembayaran hanya QRIS dan Virtual Account melalui Midtrans Snap.
+- Status pembayaran hanya berubah melalui webhook Midtrans yang valid.
+- Delivery hanya dapat ditugaskan setelah Order dan Payment Paid.
+- Customer hanya dapat melihat order dan tracking miliknya.
+- Courier hanya dapat mengakses assignment miliknya.
 
 ---
 
-# 9. Error Flow
+# 8. Error Flow
 
-Jika:
-
-- GPS ditolak browser → tampilkan pesan agar pengguna mengaktifkan izin lokasi.
-- Courier kehilangan koneksi internet → simpan lokasi terakhir dan kirim ulang saat koneksi kembali.
-- Pembayaran gagal diverifikasi → status tetap **Waiting Payment**.
-- Courier gagal menyelesaikan pickup/delivery → Admin dapat melakukan penugasan ulang.
+- Izin GPS ditolak: tampilkan pesan untuk mengaktifkan lokasi browser.
+- Koneksi GPS terputus: pertahankan lokasi terakhir yang tersimpan.
+- Signature atau nominal webhook tidak valid: tolak request tanpa mengubah status.
+- Payment gagal atau kedaluwarsa: kembalikan Order ke Ready.
+- Pickup/delivery gagal: Admin dapat melakukan penugasan ulang sesuai status order.
 
 ---
 
-# 10. Constraint
+# 9. Constraints
 
-- Sistem hanya mendukung Laundry Kiloan.
-- Satu outlet.
-- Tiga role:
-  - Customer
-  - Admin
-  - Courier
-- Live GPS menggunakan Leaflet + OpenStreetMap.
-- Tidak menggunakan Firebase, WebSocket, Redis, Socket.io, atau Pusher.
+- Tidak menggunakan Firebase, Redis, WebSocket, Socket.io, atau Pusher.
+- Tidak menerima pembayaran Cash atau Transfer Manual.
+- Tidak menyediakan aksi Verify Payment untuk Admin.

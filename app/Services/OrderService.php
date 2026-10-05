@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
-use App\Enums\ServiceType;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
@@ -23,13 +22,12 @@ class OrderService
     public function createOrder(User $customer, array $data): Order
     {
         return DB::transaction(function () use ($customer, $data) {
-            $serviceType = ServiceType::from($data['service_type']);
             $orderNumber = $this->generateOrderNumber();
             $estimatedWeight = isset($data['estimated_weight']) ? (float) $data['estimated_weight'] : null;
 
             $setting = $this->settings->current();
-            $pickupFee = $serviceType === ServiceType::PICKUP_AND_DELIVERY ? (float) $setting->pickup_fee : 0.00;
-            $deliveryFee = $data['delivery_method'] === 'delivery' ? (float) $setting->delivery_fee : 0.00;
+            $pickupFee = (float) $setting->pickup_fee;
+            $deliveryFee = (float) $setting->delivery_fee;
             $additionalFee = 0.00;
 
             // Compute estimated subtotal
@@ -43,8 +41,7 @@ class OrderService
 
             $pickupAddressId = $data['pickup_address_id'] ?? null;
 
-            if ($serviceType === ServiceType::PICKUP_AND_DELIVERY
-                && ! $customer->addresses()->whereKey($pickupAddressId)->exists()) {
+            if (! $customer->addresses()->whereKey($pickupAddressId)->exists()) {
                 throw new Exception('Alamat penjemputan tidak valid atau bukan milik customer.');
             }
 
@@ -59,11 +56,8 @@ class OrderService
             $order = Order::create([
                 'order_number' => $orderNumber,
                 'customer_id' => $customer->id,
-                'pickup_address_id' => $serviceType === ServiceType::PICKUP_AND_DELIVERY ? $pickupAddressId : null,
-                'delivery_address_id' => $serviceType === ServiceType::PICKUP_AND_DELIVERY ? $pickupAddressId : null,
-                'service_type' => $serviceType,
-                'pickup_method' => $serviceType === ServiceType::PICKUP_AND_DELIVERY ? 'pickup' : 'drop_off',
-                'delivery_method' => $data['delivery_method'],
+                'pickup_address_id' => $pickupAddressId,
+                'delivery_address_id' => $pickupAddressId,
                 'pickup_date' => $data['pickup_date'] ?? null,
                 'pickup_time' => $data['pickup_time'] ?? null,
                 'status' => OrderStatus::PENDING,
@@ -235,27 +229,6 @@ class OrderService
                 'created_at' => now(),
             ]);
             $this->activityLog->record($actor, "Membatalkan order {$order->order_number}");
-
-            return $order;
-        });
-    }
-
-    public function completeSelfPickup(Order $order, User $admin): Order
-    {
-        if ($order->status !== OrderStatus::PAID || $order->payment_status !== PaymentStatus::PAID || $order->delivery_method !== 'self_pickup') {
-            throw new Exception('Pengambilan mandiri hanya dapat diselesaikan untuk order lunas dengan metode ambil di outlet.');
-        }
-
-        return DB::transaction(function () use ($order, $admin) {
-            $order->update(['status' => OrderStatus::COMPLETED]);
-            OrderStatusHistory::create([
-                'order_id' => $order->id,
-                'status' => OrderStatus::COMPLETED,
-                'note' => 'Laundry telah diambil customer di outlet. Pesanan selesai.',
-                'changed_by' => $admin->id,
-                'created_at' => now(),
-            ]);
-            $this->activityLog->record($admin, "Menyelesaikan pengambilan mandiri order {$order->order_number}");
 
             return $order;
         });

@@ -225,6 +225,17 @@ paid
 
 failed
 
+Payment Gateway
+
+- Midtrans Snap Sandbox
+- QRIS
+- Virtual Account
+- Webhook: `/api/midtrans/notification`
+- Admin hanya melihat status pembayaran
+- Tidak menggunakan Cash, Transfer Manual, atau verifikasi Admin
+
+Activity Log wajib mencatat Payment Created, Payment Pending, Payment Paid, Payment Failed, dan Payment Expired.
+
 ---
 
 # Courier Assignment

@@ -228,7 +228,7 @@ History dibuat.
 
 ## TC-ADM-005
 
-Verifikasi Pembayaran
+Webhook Pembayaran Paid
 
 Expected
 
@@ -348,7 +348,7 @@ Lokasi terakhir tetap tampil.
 
 ## TC-PAY-001
 
-Cash
+Midtrans QRIS
 
 Expected
 
@@ -358,7 +358,7 @@ Payment dibuat.
 
 ## TC-PAY-002
 
-Transfer
+Midtrans Virtual Account
 
 Expected
 
@@ -368,11 +368,31 @@ Payment dibuat.
 
 ## TC-PAY-003
 
-QRIS
+Webhook settlement/capture dengan signature dan nominal valid
 
 Expected
 
-Payment dibuat.
+Payment dan Order menjadi Paid secara idempotent.
+
+---
+
+## TC-PAY-004
+
+Webhook gagal atau kedaluwarsa
+
+Expected
+
+Payment menjadi Failed, Order kembali Ready, dan Activity Log mencatat Payment Failed atau Payment Expired.
+
+---
+
+## TC-PAY-005
+
+Webhook dengan signature atau nominal tidak valid
+
+Expected
+
+Request ditolak dan status tidak berubah.
 
 ---
 

@@ -5,9 +5,7 @@ namespace Tests\Feature;
 use App\Enums\AssignmentType;
 use App\Enums\CourierStatus;
 use App\Enums\OrderStatus;
-use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
-use App\Enums\ServiceType;
 use App\Enums\UserRole;
 use App\Models\CourierProfile;
 use App\Models\CustomerAddress;
@@ -16,7 +14,6 @@ use App\Models\Service;
 use App\Models\User;
 use App\Services\CourierAssignmentService;
 use App\Services\OrderService;
-use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -32,13 +29,33 @@ class OrderWorkflowTest extends TestCase
         $service = $this->createService();
 
         $response = $this->actingAs($customer)->post(route('customer.orders.store'), [
-            'service_type' => ServiceType::PICKUP_AND_DELIVERY->value,
+            'service_type' => 'self_drop_off',
             'service_id' => $service->id,
             'estimated_weight' => 3,
             'pickup_address_id' => $otherAddress->id,
         ]);
 
         $response->assertSessionHasErrors('pickup_address_id');
+        $this->assertDatabaseCount('orders', 0);
+    }
+
+    public function test_customer_cannot_create_drop_off_or_self_pickup_order(): void
+    {
+        $customer = $this->createUser(UserRole::CUSTOMER);
+        $address = $this->createAddress($customer);
+        $service = $this->createService();
+
+        $response = $this->actingAs($customer)->post(route('customer.orders.store'), [
+            'service_type' => 'self_drop_off',
+            'delivery_method' => 'self_pickup',
+            'service_id' => $service->id,
+            'estimated_weight' => 3,
+            'pickup_address_id' => $address->id,
+            'pickup_date' => now()->addDay()->toDateString(),
+            'pickup_time' => '10:00',
+        ]);
+
+        $response->assertSessionHasErrors(['service_type', 'delivery_method']);
         $this->assertDatabaseCount('orders', 0);
     }
 
@@ -53,33 +70,6 @@ class OrderWorkflowTest extends TestCase
         );
 
         app(OrderService::class)->updateLaundryStage($order, OrderStatus::READY, $admin);
-    }
-
-    public function test_payment_moves_order_from_ready_to_waiting_payment_then_paid(): void
-    {
-        $customer = $this->createUser(UserRole::CUSTOMER);
-        $admin = $this->createUser(UserRole::ADMIN);
-        $order = $this->createOrder($customer, OrderStatus::READY);
-        $paymentService = app(PaymentService::class);
-
-        $payment = $paymentService->submitPayment($order, $customer, [
-            'method' => PaymentMethod::TRANSFER->value,
-            'reference' => 'TEST-TRANSFER-001',
-        ]);
-
-        $this->assertSame(OrderStatus::WAITING_PAYMENT, $order->refresh()->status);
-        $this->assertSame(PaymentStatus::PENDING, $payment->status);
-
-        $paymentService->confirmPayment($payment, $admin);
-
-        $this->assertSame(OrderStatus::PAID, $order->refresh()->status);
-        $this->assertSame(PaymentStatus::PAID, $order->payment_status);
-        $this->assertSame(PaymentStatus::PAID, $payment->refresh()->status);
-        $this->assertDatabaseHas('order_status_histories', [
-            'order_id' => $order->id,
-            'status' => OrderStatus::PAID->value,
-            'changed_by' => $admin->id,
-        ]);
     }
 
     public function test_delivery_assignment_is_rejected_until_payment_is_paid(): void
@@ -103,34 +93,6 @@ class OrderWorkflowTest extends TestCase
             AssignmentType::DELIVERY,
             $admin
         );
-    }
-
-    public function test_admin_can_reject_payment_and_customer_can_resubmit(): void
-    {
-        $customer = $this->createUser(UserRole::CUSTOMER);
-        $admin = $this->createUser(UserRole::ADMIN);
-        $order = $this->createOrder($customer, OrderStatus::READY);
-        $service = app(PaymentService::class);
-        $payment = $service->submitPayment($order, $customer, ['method' => PaymentMethod::QRIS->value]);
-
-        $this->actingAs($admin)->patch(route('admin.payments.verify', $payment), ['status' => 'failed'])->assertRedirect();
-
-        $this->assertSame(PaymentStatus::FAILED, $payment->refresh()->status);
-        $this->assertSame(OrderStatus::READY, $order->refresh()->status);
-        $this->assertTrue($order->canAcceptPayment());
-    }
-
-    public function test_admin_can_complete_paid_self_pickup_order(): void
-    {
-        $customer = $this->createUser(UserRole::CUSTOMER);
-        $admin = $this->createUser(UserRole::ADMIN);
-        $order = $this->createOrder($customer, OrderStatus::PAID, PaymentStatus::PAID);
-        $order->update(['delivery_method' => 'self_pickup']);
-
-        app(OrderService::class)->completeSelfPickup($order, $admin);
-
-        $this->assertSame(OrderStatus::COMPLETED, $order->refresh()->status);
-        $this->assertDatabaseHas('order_status_histories', ['order_id' => $order->id, 'status' => 'completed']);
     }
 
     public function test_paid_order_can_receive_delivery_assignment(): void
@@ -198,7 +160,6 @@ class OrderWorkflowTest extends TestCase
             'customer_id' => $customer->id,
             'pickup_address_id' => $address->id,
             'delivery_address_id' => $address->id,
-            'service_type' => ServiceType::PICKUP_AND_DELIVERY,
             'status' => $status,
             'payment_status' => $paymentStatus,
             'subtotal' => 40000,

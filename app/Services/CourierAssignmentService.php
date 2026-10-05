@@ -7,7 +7,6 @@ use App\Enums\AssignmentType;
 use App\Enums\CourierStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
-use App\Enums\ServiceType;
 use App\Models\CourierAssignment;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
@@ -188,12 +187,8 @@ class CourierAssignmentService
      */
     public function receiveAtLaundry(Order $order, User $admin): Order
     {
-        $isPickedUp = $order->status === OrderStatus::PICKED_UP;
-        $isSelfDropOff = $order->service_type === ServiceType::SELF_DROP_OFF
-            && $order->status === OrderStatus::CONFIRMED;
-
-        if (! $isPickedUp && ! $isSelfDropOff) {
-            throw new Exception('Laundry hanya dapat diterima setelah pickup selesai atau customer melakukan drop-off.');
+        if ($order->status !== OrderStatus::PICKED_UP) {
+            throw new Exception('Laundry hanya dapat diterima setelah pickup courier selesai.');
         }
 
         return DB::transaction(function () use ($order, $admin) {

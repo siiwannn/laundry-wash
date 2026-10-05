@@ -10,11 +10,9 @@ use App\Http\Requests\Order\AssignCourierRequest;
 use App\Http\Requests\Order\UpdateStageRequest;
 use App\Http\Requests\Order\UpdateWeightRequest;
 use App\Models\Order;
-use App\Models\Payment;
 use App\Models\User;
 use App\Services\CourierAssignmentService;
 use App\Services\OrderService;
-use App\Services\PaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -24,7 +22,6 @@ class AdminOrderController extends Controller
     public function __construct(
         protected OrderService $orderService,
         protected CourierAssignmentService $assignmentService,
-        protected PaymentService $paymentService
     ) {}
 
     public function index(Request $request): View
@@ -149,28 +146,6 @@ class AdminOrderController extends Controller
             return back()->with('success', "Tahapan laundry berhasil diperbarui ke: {$newStage->label()}");
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
-        }
-    }
-
-    public function confirmPayment(Payment $payment): RedirectResponse
-    {
-        try {
-            $this->paymentService->confirmPayment($payment, auth()->user());
-
-            return back()->with('success', 'Pembayaran sebesar Rp '.number_format($payment->amount, 0, ',', '.').' berhasil dikonfirmasi LUNAS.');
-        } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
-        }
-    }
-
-    public function completeSelfPickup(Order $order): RedirectResponse
-    {
-        try {
-            $this->orderService->completeSelfPickup($order, auth()->user());
-
-            return back()->with('success', 'Pesanan selesai dan telah diserahkan kepada customer di outlet.');
-        } catch (\Exception $exception) {
-            return back()->with('error', $exception->getMessage());
         }
     }
 }

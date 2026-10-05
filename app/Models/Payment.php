@@ -14,13 +14,15 @@ class Payment extends Model
 
     protected $fillable = [
         'order_id',
+        'gateway_order_id',
+        'gateway_transaction_id',
+        'snap_token',
+        'gateway_status',
         'method',
         'amount',
         'status',
-        'proof_file',
-        'reference',
         'paid_at',
-        'verified_by',
+        'expires_at',
     ];
 
     protected function casts(): array
@@ -30,17 +32,13 @@ class Payment extends Model
             'status' => PaymentStatus::class,
             'amount' => 'decimal:2',
             'paid_at' => 'datetime',
+            'expires_at' => 'datetime',
         ];
     }
 
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
-    }
-
-    public function verifier(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'verified_by');
     }
 
     public function isPaid(): bool

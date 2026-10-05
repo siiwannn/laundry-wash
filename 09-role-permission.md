@@ -38,7 +38,7 @@ Sistem hanya memiliki tiga role:
 | Assign Courier | ❌ | ✅ | ❌ |
 | Input Actual Weight | ❌ | ✅ | ❌ |
 | Update Laundry Status | ❌ | ✅ | ❌ |
-| Verify Payment | ❌ | ✅ | ❌ |
+| Verify Payment | ❌ | ❌ | ❌ |
 | Manage Laundry Price | ❌ | ✅ | ❌ |
 | View Reports | ❌ | ✅ | ❌ |
 | View Courier List | ❌ | ✅ | ❌ |
@@ -93,7 +93,7 @@ Admin dapat:
 - Assign Courier.
 - Input Berat Aktual.
 - Mengubah Status Laundry.
-- Verifikasi Pembayaran.
+- Melihat status pembayaran Midtrans tanpa mengubahnya.
 - Melihat Dashboard.
 - Melihat Laporan.
 

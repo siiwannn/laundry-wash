@@ -3,16 +3,17 @@
 Dokumentasi utama untuk pengembangan Sistem Laundry berbasis web.
 
 ## Ringkasan
-Sistem ini digunakan untuk mengelola proses laundry dari pemesanan pelanggan, penjemputan oleh kurir, proses laundry, pembayaran, tracking status, hingga pengantaran kembali ke pelanggan.
+Sistem ini mengelola laundry end-to-end: pickup dan delivery oleh kurir, proses laundry, pembayaran otomatis Midtrans, serta tracking GPS.
 
 ## Tech Stack
-- Laravel 12
+- Laravel 13 (versi project berjalan)
 - PHP 8.3+
 - MySQL 8
 - Blade Template
-- Bootstrap 5 atau Tailwind CSS
+- Bootstrap 5
 - JavaScript
-- Google Maps API / Leaflet + OpenStreetMap untuk peta
+- Leaflet + OpenStreetMap untuk peta
+- Midtrans Snap Sandbox untuk QRIS dan Virtual Account
 - Browser Geolocation API untuk posisi kurir
 - Git & GitHub
 
@@ -20,7 +21,6 @@ Sistem ini digunakan untuk mengelola proses laundry dari pemesanan pelanggan, pe
 - Admin
 - Customer
 - Kurir
-- Owner
 
 ## Fitur Utama
 - Authentication
@@ -34,7 +34,7 @@ Sistem ini digunakan untuk mengelola proses laundry dari pemesanan pelanggan, pe
 - Tracking status order
 - Tracking posisi kurir
 - Proses laundry
-- Pembayaran
+- Pembayaran otomatis melalui webhook Midtrans
 - Pengantaran
 - Riwayat transaksi
 - Dashboard

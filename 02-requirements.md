@@ -48,7 +48,7 @@ FR-09
 Memilih metode penyerahan:
 
 - Pickup
-- Antar Sendiri
+- Pickup oleh Courier
 
 FR-10
 Menentukan alamat pickup.
@@ -115,7 +115,7 @@ FR-29
 Mengubah Status Laundry.
 
 FR-30
-Memverifikasi Pembayaran.
+Melihat Status Pembayaran Midtrans.
 
 FR-31
 Melihat laporan.
@@ -230,17 +230,14 @@ Tidak menggunakan:
 
 # 4. Payment Rules
 
-Metode pembayaran:
+Metode pembayaran Midtrans Snap:
 
-- Tunai
-- Transfer
 - QRIS
+- Virtual Account
 
 Pembayaran dilakukan setelah laundry selesai.
 
-Admin melakukan verifikasi pembayaran.
-
-Tidak menggunakan Payment Gateway.
+Webhook Midtrans memperbarui status pembayaran dan order secara otomatis. Admin hanya melihat status pembayaran.
 
 ---
 

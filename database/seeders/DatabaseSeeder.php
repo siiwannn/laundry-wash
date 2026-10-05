@@ -8,7 +8,6 @@ use App\Enums\CourierStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
-use App\Enums\ServiceType;
 use App\Enums\UserRole;
 use App\Models\CourierAssignment;
 use App\Models\CourierLocation;
@@ -168,7 +167,6 @@ class DatabaseSeeder extends Seeder
                 'customer_id' => $customer1->id,
                 'pickup_address_id' => $cust1Address->id,
                 'delivery_address_id' => $cust1Address->id,
-                'service_type' => ServiceType::PICKUP_AND_DELIVERY,
                 'status' => OrderStatus::PENDING,
                 'payment_status' => PaymentStatus::PENDING,
                 'estimated_weight' => 5.0,
@@ -204,7 +202,6 @@ class DatabaseSeeder extends Seeder
                 'customer_id' => $customer2->id,
                 'pickup_address_id' => $cust2Address->id,
                 'delivery_address_id' => $cust2Address->id,
-                'service_type' => ServiceType::PICKUP_AND_DELIVERY,
                 'status' => OrderStatus::COURIER_TO_PICKUP,
                 'payment_status' => PaymentStatus::PENDING,
                 'estimated_weight' => 4.0,
@@ -266,7 +263,6 @@ class DatabaseSeeder extends Seeder
                 'customer_id' => $customer1->id,
                 'pickup_address_id' => $cust1Address->id,
                 'delivery_address_id' => $cust1Address->id,
-                'service_type' => ServiceType::PICKUP_AND_DELIVERY,
                 'status' => OrderStatus::READY,
                 'payment_status' => PaymentStatus::PENDING,
                 'estimated_weight' => 6.0,
@@ -302,7 +298,6 @@ class DatabaseSeeder extends Seeder
                 'customer_id' => $customer2->id,
                 'pickup_address_id' => $cust2Address->id,
                 'delivery_address_id' => $cust2Address->id,
-                'service_type' => ServiceType::PICKUP_AND_DELIVERY,
                 'status' => OrderStatus::COMPLETED,
                 'payment_status' => PaymentStatus::PAID,
                 'estimated_weight' => 3.0,
@@ -325,10 +320,12 @@ class DatabaseSeeder extends Seeder
         Payment::firstOrCreate(
             ['order_id' => $orderCompleted->id],
             [
-                'method' => PaymentMethod::TRANSFER,
+                'gateway_order_id' => 'LW-DEMO-'.$orderCompleted->id,
+                'gateway_transaction_id' => 'midtrans-demo-889911',
+                'gateway_status' => 'settlement',
+                'method' => PaymentMethod::VIRTUAL_ACCOUNT,
                 'amount' => 58000,
                 'status' => PaymentStatus::PAID,
-                'reference' => 'TRX-BCA-889911',
                 'paid_at' => now()->subDay(),
             ]
         );
