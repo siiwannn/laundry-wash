@@ -78,6 +78,7 @@ Route::middleware(['auth', 'role:courier'])->prefix('courier')->name('courier.')
     Route::get('/dashboard', [CourierDashboardController::class, 'index'])->name('dashboard');
     Route::patch('/profile/status', [CourierDashboardController::class, 'updateProfileStatus'])->name('profile.status');
     Route::get('/tasks/{assignment}', [CourierTaskController::class, 'show'])->name('tasks.show');
+    Route::get('/tasks/{assignment}/route', [CourierTaskController::class, 'route'])->name('tasks.route');
     Route::patch('/tasks/{assignment}/start', [CourierTaskController::class, 'start'])->name('tasks.start');
     Route::patch('/tasks/{assignment}/complete', [CourierTaskController::class, 'complete'])->name('tasks.complete');
     Route::get('/history', [CourierTaskController::class, 'history'])->name('history');

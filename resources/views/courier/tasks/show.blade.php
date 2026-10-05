@@ -54,6 +54,10 @@
             <div id="courierMap" style="height: 380px; width: 100%;"></div>
             <div class="card-footer bg-light py-2 px-3 small text-muted">
                 <i class="bi bi-house-door-fill text-success me-1"></i> Titik Tujuan: <strong>{{ $targetAddress->address ?? 'Alamat Pelanggan' }}</strong>
+                <div class="d-flex gap-3 mt-2 fw-semibold text-primary">
+                    <span>ETA: <strong id="courierEta">{{ isset($trackingRoute['duration_seconds']) ? max(1, (int) ceil($trackingRoute['duration_seconds'] / 60)) . ' menit' : '--' }}</strong></span>
+                    <span>Jarak: <strong id="courierDistance">{{ isset($trackingRoute['distance_meters']) ? number_format($trackingRoute['distance_meters'] / 1000, 1, ',', '.') . ' km' : '--' }}</strong></span>
+                </div>
             </div>
         </div>
 
@@ -152,9 +156,60 @@ document.addEventListener('DOMContentLoaded', function () {
     const targetLat = {{ $targetAddress->latitude ?? -6.2088 }};
     const targetLng = {{ $targetAddress->longitude ?? 106.8456 }};
     const mapStyleUrl = @json(config('services.tracking.map_style_url'));
+    const routeUrl = @json(route('courier.tasks.route', $assignment));
+    const initialRoute = @json($trackingRoute ?? null);
 
     const map = new maplibregl.Map({ container: 'courierMap', style: mapStyleUrl, center: [targetLng, targetLat], zoom: 14, pitch: 0, bearing: 0 });
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+
+    const etaElement = document.getElementById('courierEta');
+    const distanceElement = document.getElementById('courierDistance');
+    let routeRefreshInFlight = false;
+
+    function updateRoute(route) {
+        const source = map.getSource('courier-active-route');
+        if (source) {
+            source.setData(route?.geometry
+                ? { type: 'Feature', properties: {}, geometry: route.geometry }
+                : { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } });
+        }
+        etaElement.textContent = route ? `${Math.max(1, Math.ceil(route.duration_seconds / 60))} menit` : '--';
+        distanceElement.textContent = route ? `${(route.distance_meters / 1000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} km` : '--';
+    }
+
+    async function refreshRoute() {
+        if (routeRefreshInFlight) return;
+        routeRefreshInFlight = true;
+        try {
+            const response = await fetch(routeUrl, { headers: { Accept: 'application/json' } });
+            const data = await response.json();
+            if (response.ok && data.success) updateRoute(data.route);
+        } finally {
+            routeRefreshInFlight = false;
+        }
+    }
+
+    map.on('load', () => {
+        map.addSource('courier-active-route', {
+            type: 'geojson',
+            data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } },
+        });
+        map.addLayer({
+            id: 'courier-active-route-casing',
+            type: 'line',
+            source: 'courier-active-route',
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#FFFFFF', 'line-width': 11, 'line-opacity': .95 },
+        });
+        map.addLayer({
+            id: 'courier-active-route-line',
+            type: 'line',
+            source: 'courier-active-route',
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#2563EB', 'line-width': 7, 'line-opacity': .95 },
+        });
+        updateRoute(initialRoute);
+    });
 
     const destinationElement = document.createElement('div');
     destinationElement.style.width = '44px';
@@ -260,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 'Pemancar GPS Live Aktif',
                 `Koordinat terakhir dikirim pada ${new Date().toLocaleTimeString('id-ID')}.`
             );
+            refreshRoute();
         } catch (error) {
             updateBeaconState('warning', 'Lokasi Belum Terkirim', `${error.message} Periksa koneksi lalu coba lagi.`, true);
         } finally {

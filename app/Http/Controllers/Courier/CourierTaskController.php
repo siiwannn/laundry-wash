@@ -7,13 +7,16 @@ use App\Enums\AssignmentType;
 use App\Http\Controllers\Controller;
 use App\Models\CourierAssignment;
 use App\Services\CourierAssignmentService;
+use App\Services\RoadRouteService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class CourierTaskController extends Controller
 {
     public function __construct(
-        protected CourierAssignmentService $assignmentService
+        protected CourierAssignmentService $assignmentService,
+        protected RoadRouteService $roadRoute
     ) {}
 
     public function show(CourierAssignment $assignment): View
@@ -31,8 +34,34 @@ class CourierTaskController extends Controller
         $targetAddress = $assignment->type === AssignmentType::PICKUP
             ? $assignment->order->pickupAddress
             : ($assignment->order->deliveryAddress ?? $assignment->order->pickupAddress);
+        $location = $assignment->latestLocation;
+        $profile = $assignment->courier?->courierProfile;
+        $latitude = $location?->latitude ?? $profile?->current_latitude;
+        $longitude = $location?->longitude ?? $profile?->current_longitude;
+        $trackingRoute = $latitude !== null && $longitude !== null && $targetAddress?->latitude !== null && $targetAddress?->longitude !== null
+            ? $this->roadRoute->route((float) $latitude, (float) $longitude, (float) $targetAddress->latitude, (float) $targetAddress->longitude)
+            : null;
 
-        return view('courier.tasks.show', compact('assignment', 'targetAddress'));
+        return view('courier.tasks.show', compact('assignment', 'targetAddress', 'trackingRoute'));
+    }
+
+    public function route(CourierAssignment $assignment): JsonResponse
+    {
+        $this->authorizeCourier($assignment);
+        $assignment->load(['order.pickupAddress', 'order.deliveryAddress', 'latestLocation', 'courier.courierProfile']);
+
+        $targetAddress = $assignment->type === AssignmentType::PICKUP
+            ? $assignment->order->pickupAddress
+            : ($assignment->order->deliveryAddress ?? $assignment->order->pickupAddress);
+        $location = $assignment->latestLocation;
+        $profile = $assignment->courier?->courierProfile;
+        $latitude = $location?->latitude ?? $profile?->current_latitude;
+        $longitude = $location?->longitude ?? $profile?->current_longitude;
+        $route = $latitude !== null && $longitude !== null && $targetAddress?->latitude !== null && $targetAddress?->longitude !== null
+            ? $this->roadRoute->route((float) $latitude, (float) $longitude, (float) $targetAddress->latitude, (float) $targetAddress->longitude)
+            : null;
+
+        return response()->json(['success' => true, 'route' => $route]);
     }
 
     public function start(CourierAssignment $assignment): RedirectResponse
