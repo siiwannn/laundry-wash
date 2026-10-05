@@ -125,7 +125,7 @@ class Order extends Model
 
     public function canAcceptPayment(): bool
     {
-        return $this->status === OrderStatus::READY
+        return in_array($this->status, [OrderStatus::READY, OrderStatus::WAITING_PAYMENT], true)
             && $this->payment_status === PaymentStatus::PENDING;
     }
 }

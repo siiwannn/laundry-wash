@@ -275,6 +275,11 @@
 <script>
 document.getElementById('payWithMidtrans')?.addEventListener('click', async function () {
     const button = this;
+    const restoreButton = () => {
+        button.disabled = false;
+        button.innerHTML = '<i class="bi bi-credit-card me-1"></i> Bayar Sekarang';
+    };
+
     button.disabled = true;
     button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyiapkan pembayaran';
 
@@ -291,14 +296,22 @@ document.getElementById('payWithMidtrans')?.addEventListener('click', async func
 
         window.snap.pay(data.snap_token, {
             onSuccess: () => window.location.reload(),
-            onPending: () => window.location.reload(),
-            onError: () => window.location.reload(),
-            onClose: () => { button.disabled = false; button.innerHTML = '<i class="bi bi-credit-card me-1"></i> Bayar Sekarang'; },
+            onPending: () => {
+                restoreButton();
+                alert('Pembayaran masih menunggu penyelesaian. Anda dapat membuka Snap kembali.');
+            },
+            onError: () => {
+                restoreButton();
+                alert('Pembayaran gagal diproses. Silakan coba lagi.');
+            },
+            onClose: () => {
+                restoreButton();
+                alert('Pembayaran dibatalkan atau belum diselesaikan.');
+            },
         });
     } catch (error) {
         alert(error.message);
-        button.disabled = false;
-        button.innerHTML = '<i class="bi bi-credit-card me-1"></i> Bayar Sekarang';
+        restoreButton();
     }
 });
 </script>

@@ -45,6 +45,24 @@ class MidtransPaymentTest extends TestCase
         $this->assertDatabaseHas('activity_logs', ['activity' => "Payment Pending: {$payment->gateway_order_id}"]);
     }
 
+    public function test_customer_can_reopen_existing_pending_snap_payment(): void
+    {
+        $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
+        $order = $this->createOrder($customer, OrderStatus::READY);
+        $gateway = Mockery::mock(MidtransPaymentService::class);
+        $gateway->shouldReceive('createSnapToken')->once()->andReturn('snap-reusable-token');
+        $this->app->instance(MidtransPaymentService::class, $gateway);
+
+        $firstResponse = $this->actingAs($customer)->postJson(route('customer.orders.pay', $order));
+        $secondResponse = $this->actingAs($customer)->postJson(route('customer.orders.pay', $order));
+
+        $firstResponse->assertOk()->assertJsonPath('snap_token', 'snap-reusable-token');
+        $secondResponse->assertOk()->assertJsonPath('snap_token', 'snap-reusable-token');
+        $this->assertDatabaseCount('payments', 1);
+        $this->assertSame(OrderStatus::WAITING_PAYMENT, $order->fresh()->status);
+        $this->assertSame(PaymentStatus::PENDING, $order->fresh()->payment_status);
+    }
+
     public function test_webhook_rejects_invalid_signature(): void
     {
         $payment = $this->createPendingPayment();
