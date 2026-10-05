@@ -146,6 +146,24 @@ class PaymentService
         });
     }
 
+    public function simulateSuccessfulPayment(Order $order, User $customer): Payment
+    {
+        if ($order->customer_id !== $customer->id) {
+            throw new Exception('Pembayaran hanya dapat disimulasikan oleh pemilik pesanan.');
+        }
+
+        if (! $order->canAcceptPayment()) {
+            throw new Exception('Simulasi hanya dapat dilakukan untuk pembayaran yang masih pending.');
+        }
+
+        $payment = $order->payments()
+            ->where('status', PaymentStatus::PENDING)
+            ->latest()
+            ->firstOrFail();
+
+        return DB::transaction(fn () => $this->markPaid($payment->fresh()));
+    }
+
     private function markPaid(Payment $payment): Payment
     {
         if ($payment->status === PaymentStatus::PAID) {

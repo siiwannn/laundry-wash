@@ -85,6 +85,26 @@ class MidtransPaymentTest extends TestCase
         $this->assertSame(PaymentStatus::FAILED, Payment::oldest('id')->firstOrFail()->status);
     }
 
+    public function test_local_customer_can_simulate_successful_payment(): void
+    {
+        config(['app.env' => 'local']);
+        $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
+        $order = $this->createOrder($customer, OrderStatus::READY);
+        $gateway = Mockery::mock(MidtransPaymentService::class);
+        $gateway->shouldReceive('createSnapToken')->once()->andReturn('snap-simulator-token');
+        $this->app->instance(MidtransPaymentService::class, $gateway);
+
+        $this->actingAs($customer)->postJson(route('customer.orders.pay', $order))->assertOk();
+        $this->actingAs($customer)
+            ->post(route('customer.orders.simulate-payment', $order))
+            ->assertRedirect();
+
+        $this->assertSame(PaymentStatus::PAID, Payment::firstOrFail()->status);
+        $this->assertSame(OrderStatus::PAID, $order->refresh()->status);
+        $this->assertSame(PaymentStatus::PAID, $order->payment_status);
+        $this->assertDatabaseHas('activity_logs', ['activity' => 'Payment Paid: '.$order->payments()->first()->gateway_order_id]);
+    }
+
     public function test_webhook_rejects_invalid_signature(): void
     {
         $payment = $this->createPendingPayment();

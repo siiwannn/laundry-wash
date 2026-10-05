@@ -67,6 +67,14 @@
         <button type="button" class="btn btn-success fw-bold px-4" id="payWithMidtrans">
             <i class="bi bi-credit-card me-1"></i> Bayar Sekarang
         </button>
+        @if(app()->environment('local'))
+            <form action="{{ route('customer.orders.simulate-payment', $order) }}" method="POST" class="ms-2">
+                @csrf
+                <button type="submit" class="btn btn-outline-dark fw-bold px-3">
+                    <i class="bi bi-wrench-adjustable-circle me-1"></i> Simulasikan Pembayaran Berhasil
+                </button>
+            </form>
+        @endif
     </div>
 @endif
 

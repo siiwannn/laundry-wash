@@ -101,6 +101,20 @@ class CustomerOrderController extends Controller
         }
     }
 
+    public function simulatePayment(StorePaymentRequest $request, Order $order): RedirectResponse
+    {
+        abort_unless(config('app.env') === 'local', 404);
+        Gate::authorize('pay', $order);
+
+        try {
+            $this->paymentService->simulateSuccessfulPayment($order, $request->user());
+
+            return back()->with('success', 'Pembayaran berhasil disimulasikan untuk development.');
+        } catch (\Exception $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+    }
+
     public function cancel(Request $request, Order $order): RedirectResponse
     {
         Gate::authorize('cancel', $order);
