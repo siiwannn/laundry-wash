@@ -66,7 +66,7 @@
                 @endif
 
                 <!-- Action 2: Assign Pickup Courier -->
-                @if($order->status->value === 'confirmed' && $order->isPickupAndDelivery())
+                @if($order->status->value === 'confirmed')
                     <button type="button" class="btn btn-warning btn-sm fw-semibold text-dark" data-bs-toggle="modal" data-bs-target="#assignCourierModal" onclick="setAssignType('pickup')">
                         <i class="bi bi-bicycle me-1"></i> Tugaskan Kurir Pickup
                     </button>
@@ -98,7 +98,7 @@
                 @endif
 
                 <!-- Action 6: Assign Delivery Courier -->
-                @if($order->status->value === 'paid' && $order->isPickupAndDelivery())
+                @if($order->status->value === 'paid')
                     <button type="button" class="btn btn-info btn-sm fw-semibold text-white" data-bs-toggle="modal" data-bs-target="#assignCourierModal" onclick="setAssignType('delivery')">
                         <i class="bi bi-bicycle me-1"></i> Tugaskan Kurir Antar (Delivery)
                     </button>

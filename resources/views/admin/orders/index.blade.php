@@ -81,15 +81,9 @@
                             <small class="text-muted"><i class="bi bi-whatsapp text-success me-1"></i>{{ $order->customer->phone ?? '-' }}</small>
                         </td>
                         <td>
-                            @if($order->isPickupAndDelivery())
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                                    <i class="bi bi-bicycle me-1"></i> Antar Jemput
-                                </span>
-                            @else
-                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
-                                    <i class="bi bi-box-arrow-in-down me-1"></i> Drop-off Sendiri
-                                </span>
-                            @endif
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                <i class="bi bi-bicycle me-1"></i> Pickup &amp; Delivery Courier
+                            </span>
                         </td>
                         <td>
                             @if($order->actual_weight)
