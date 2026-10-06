@@ -104,6 +104,12 @@ MIDTRANS_IS_3DS=true
 
 Atur Payment Notification URL pada dashboard Midtrans Sandbox ke `https://your-domain.com/api/midtrans/notification`. Jangan commit server key atau client key ke repository.
 
+### Nama bisnis pada Snap Checkout
+
+Nama yang tampil pada pop-up pembayaran Snap berasal dari profil merchant Midtrans, bukan dari payload aplikasi. Untuk lingkungan Sandbox, ubah **Business Name** melalui **Sandbox > Settings > General Settings** pada Dashboard Midtrans. Pastikan Server Key dan Client Key di `.env` berasal dari merchant serta lingkungan yang sama.
+
+Setelah mengganti nama, buat token Snap baru dari aplikasi (pilih **Ganti Metode Pembayaran** pada transaksi yang masih tertunda). Token lama dapat tetap menampilkan informasi merchant sebelumnya. Jangan pernah membagikan atau mencatat access key pada dokumentasi maupun commit.
+
 ---
 
 # Deployment Steps

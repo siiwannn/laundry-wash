@@ -3,10 +3,9 @@
 @section('title', 'Pesanan ' . $order->order_number . ' - Laundry Wash')
 
 @section('content')
-<div class="row align-items-center mb-4">
+<div class="workspace-page-heading row align-items-center mb-4">
     <div class="col-md-7">
         <div class="d-flex align-items-center gap-2 mb-1">
-            <h3 class="fw-bold mb-0">{{ $order->order_number }}</h3>
             <span class="badge badge-status {{ $order->status->badgeClass() }} fs-6">
                 {{ $order->status->label() }}
             </span>
@@ -56,25 +55,27 @@
 
 <!-- Payment Alert Banner if Order Ready and Payment Pending -->
 @if($order->canAcceptPayment())
-    <div class="alert alert-warning border-warning d-flex align-items-center justify-content-between shadow-sm mb-4" role="alert">
-        <div class="d-flex align-items-center gap-3">
+    <div class="alert alert-warning border-warning payment-banner shadow-sm mb-4" role="alert">
+        <div class="d-flex align-items-center gap-3 payment-banner-copy">
             <i class="bi bi-wallet2 fs-2 text-warning"></i>
             <div>
                 <h5 class="fw-bold mb-1">Cucian Anda Telah Selesai & Siap!</h5>
                 <div class="small">Silakan lakukan pembayaran sebesar <strong>Rp {{ number_format($order->total, 0, ',', '.') }}</strong> agar kurir dapat mengantarkan cucian ke rumah Anda.</div>
             </div>
         </div>
-        <button type="button" class="btn btn-success fw-bold px-4" id="payWithMidtrans">
-            <i class="bi bi-credit-card me-1"></i> Bayar Sekarang
-        </button>
-        @if(app()->environment('local'))
-            <form action="{{ route('customer.orders.simulate-payment', $order) }}" method="POST" class="ms-2">
+        <div class="payment-banner-actions">
+            <button type="button" class="btn btn-success fw-bold px-4" id="payWithMidtrans">
+                <i class="bi bi-credit-card me-1"></i> Bayar Sekarang
+            </button>
+            @if(app()->environment('local'))
+                <form action="{{ route('customer.orders.simulate-payment', $order) }}" method="POST">
                 @csrf
                 <button type="submit" class="btn btn-outline-dark fw-bold px-3">
                     <i class="bi bi-wrench-adjustable-circle me-1"></i> Simulasikan Pembayaran Berhasil
                 </button>
-            </form>
-        @endif
+                </form>
+            @endif
+        </div>
     </div>
 @endif
 

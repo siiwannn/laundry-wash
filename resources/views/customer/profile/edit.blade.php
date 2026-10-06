@@ -3,8 +3,8 @@
 @section('title', 'Profil Saya - Laundry Wash')
 
 @section('content')
-<div class="d-flex align-items-center justify-content-between mb-4">
-    <div><h1 class="h3 fw-bold mb-1">Profil Saya</h1><p class="text-muted mb-0">Kelola identitas dan keamanan akun.</p></div>
+<div class="workspace-page-heading d-flex align-items-center justify-content-between mb-4">
+    <div><p class="text-muted mb-0">Kelola identitas dan keamanan akun.</p></div>
 </div>
 <div class="row g-4">
     <div class="col-lg-7">

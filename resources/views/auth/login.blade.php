@@ -3,12 +3,9 @@
 @section('title', 'Masuk - Laundry Wash')
 
 @section('content')
-<div class="auth-header">
-    <div class="brand-icon">
-        <i class="bi bi-droplet-half"></i>
-    </div>
-    <h4 class="fw-bold mb-1">Laundry <span class="text-primary">Wash</span></h4>
-    <p class="text-muted small mb-0">Sistem Informasi Manajemen Laundry Terintegrasi</p>
+<div class="mb-4">
+    <h3 class="fw-bold mb-1" style="letter-spacing:-.5px">Selamat Datang</h3>
+    <p class="text-muted small mb-0">Masuk untuk mengelola laundry kamu dengan mudah.</p>
 </div>
 
 <div class="auth-body">
@@ -74,25 +71,6 @@
     </div>
 
     <!-- Quick Demo Accounts Switcher for Easy Review -->
-    <div class="mt-4 p-3 bg-light rounded-3 border">
-        <div class="fw-semibold small text-muted mb-2 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-            <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Akun Demo Cepat (Klik untuk isi)
-        </div>
-        <div class="d-grid gap-2">
-            <button type="button" class="btn btn-sm btn-outline-danger text-start d-flex justify-content-between align-items-center" onclick="fillCredentials('admin@laundrywash.com', 'password')">
-                <span><i class="bi bi-shield-lock me-1"></i> <strong>Admin</strong> (admin@laundrywash.com)</span>
-                <span class="badge bg-danger">Full Control</span>
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-warning text-dark text-start d-flex justify-content-between align-items-center" onclick="fillCredentials('courier@laundrywash.com', 'password')">
-                <span><i class="bi bi-bicycle me-1"></i> <strong>Kurir</strong> (courier@laundrywash.com)</span>
-                <span class="badge bg-warning text-dark">Live GPS</span>
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-primary text-start d-flex justify-content-between align-items-center" onclick="fillCredentials('customer@laundrywash.com', 'password')">
-                <span><i class="bi bi-person me-1"></i> <strong>Customer</strong> (customer@laundrywash.com)</span>
-                <span class="badge bg-primary">Order & Bayar</span>
-            </button>
-        </div>
-    </div>
 </div>
 
 @push('scripts')

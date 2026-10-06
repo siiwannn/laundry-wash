@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AdminDashboardRangeRequest;
 use App\Models\Order;
 use App\Services\ReportService;
 use Illuminate\View\View;
@@ -14,9 +15,16 @@ class AdminDashboardController extends Controller
         protected ReportService $reportService
     ) {}
 
-    public function index(): View
+    public function index(AdminDashboardRangeRequest $request): View
     {
         $stats = $this->reportService->getSummaryStats();
+        $revenueChart = $this->reportService->getDashboardRevenue();
+        $periodLabel = match ($request->validated('range', 'today')) {
+            'month' => '30 hari terakhir',
+            'week' => '7 hari terakhir',
+            default => 'Hari ini',
+        };
+        $dailyVolume = $this->reportService->getDailyOrderVolume($request->validated('range') === 'month' ? 30 : 7);
 
         // Recent orders
         $recentOrders = Order::with(['customer', 'items.service'])
@@ -34,7 +42,10 @@ class AdminDashboardController extends Controller
             'recentOrders',
             'pendingOrders',
             'readyForPickup',
-            'readyForDelivery'
+            'readyForDelivery',
+            'periodLabel',
+            'dailyVolume',
+            'revenueChart'
         ));
     }
 }

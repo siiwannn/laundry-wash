@@ -3,9 +3,8 @@
 @section('title', 'Kelola Pesanan - Admin Laundry Wash')
 
 @section('content')
-<div class="row align-items-center mb-4">
+<div class="workspace-page-heading row align-items-center mb-4">
     <div class="col-md-6">
-        <h3 class="fw-bold mb-1">Manajemen Pesanan Laundry</h3>
         <p class="text-muted mb-0">Pantau dan kelola seluruh siklus pesanan dari pelanggan.</p>
     </div>
     <div class="col-md-6 text-md-end mt-3 mt-md-0">
@@ -18,12 +17,14 @@
 <!-- Filters Card -->
 <div class="card mb-4">
     <div class="card-body">
-        <form action="{{ route('admin.orders.index') }}" method="GET" class="row g-2">
+        <form id="order-filters" action="{{ route('admin.orders.index') }}" method="GET" class="row g-2">
             <div class="col-md-4">
-                <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari No. Order, Nama Customer, HP..." value="{{ request('search') }}">
+                <label for="order-search" class="form-label">Cari pesanan</label>
+                <input id="order-search" type="search" name="search" class="form-control form-control-sm" placeholder="Nomor pesanan, nama, atau telepon" value="{{ request('search') }}">
             </div>
             <div class="col-md-3">
-                <select name="status" class="form-select form-select-sm">
+                <label for="order-status" class="form-label">Status pesanan</label>
+                <select id="order-status" name="status" class="form-select form-select-sm">
                     <option value="">-- Semua Status Order --</option>
                     @foreach($statuses as $status)
                         <option value="{{ $status->value }}" {{ request('status') === $status->value ? 'selected' : '' }}>
@@ -33,13 +34,14 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <select name="payment_status" class="form-select form-select-sm">
+                <label for="order-payment-status" class="form-label">Pembayaran</label>
+                <select id="order-payment-status" name="payment_status" class="form-select form-select-sm">
                     <option value="">-- Status Pembayaran --</option>
                     <option value="pending" {{ request('payment_status') === 'pending' ? 'selected' : '' }}>Belum Dibayar</option>
                     <option value="paid" {{ request('payment_status') === 'paid' ? 'selected' : '' }}>Lunas</option>
                 </select>
             </div>
-            <div class="col-md-2 d-flex gap-2">
+            <div class="col-md-2 d-flex align-items-end gap-2">
                 <button type="submit" class="btn btn-primary btn-sm w-100">
                     <i class="bi bi-funnel me-1"></i> Filter
                 </button>
@@ -111,7 +113,7 @@
                         </td>
                         <td class="text-end">
                             <a href="{{ route('admin.orders.show', $order) }}" class="btn btn-sm btn-outline-primary">
-                                Kelola &bull; Proses &rarr;
+                                Kelola &bull; Proses
                             </a>
                         </td>
                     </tr>

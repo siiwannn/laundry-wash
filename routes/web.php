@@ -15,11 +15,15 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Courier\CourierDashboardController;
 use App\Http\Controllers\Courier\CourierTaskController;
 use App\Http\Controllers\Customer\CustomerAddressController;
+use App\Http\Controllers\Customer\CustomerCatalogController;
 use App\Http\Controllers\Customer\CustomerDashboardController;
 use App\Http\Controllers\Customer\CustomerOrderController;
 use App\Http\Controllers\Customer\CustomerProfileController;
+use App\Services\ServiceCatalogService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/katalog', [CustomerCatalogController::class, 'index'])->name('catalog');
 
 // Public Root Redirect
 Route::get('/', function () {
@@ -30,12 +34,12 @@ Route::get('/', function () {
             'admin' => redirect()->route('admin.dashboard'),
             'courier' => redirect()->route('courier.dashboard'),
             'customer' => redirect()->route('customer.dashboard'),
-            default => redirect()->route('login'),
+            default => redirect()->route('catalog'),
         };
     }
 
-    return redirect()->route('login');
-});
+    return app(CustomerCatalogController::class)->index(app(ServiceCatalogService::class));
+})->name('home');
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {

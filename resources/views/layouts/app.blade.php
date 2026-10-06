@@ -98,130 +98,86 @@
         .app-sidebar .nav-link { color: #64748b; border-radius: 12px; padding: .75rem .875rem; margin-bottom: .25rem; }
         .app-sidebar .nav-link:hover, .app-sidebar .nav-link.active { color: var(--lw-primary); background: #eff6ff; font-weight: 600; }
         .app-content { margin-left: 250px; }
-        .mobile-bottom-nav { display: none; }
         :focus-visible { outline: 3px solid rgba(59, 130, 246, .35); outline-offset: 2px; }
         @media (min-width: 992px) { #navbarMain .navbar-nav.me-auto { display: none; } }
         @media (max-width: 991.98px) {
             .app-sidebar { display: none; }
-            .app-content { margin-left: 0; padding-bottom: 72px; }
-            footer { margin-bottom: 64px; }
-            .mobile-bottom-nav { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; inset: auto 0 0; z-index: 1040; background: #fff; border-top: 1px solid var(--lw-border); box-shadow: 0 -4px 18px rgba(15, 23, 42, .08); }
-            .mobile-bottom-nav a { min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .2rem; color: #64748b; text-decoration: none; font-size: .7rem; }
-            .mobile-bottom-nav a.active { color: var(--lw-primary); font-weight: 600; }
-            .mobile-bottom-nav i { font-size: 1.2rem; }
+            .app-content { margin-left: 0; }
         }
     </style>
     @stack('styles')
+    <link href="{{ asset('css/laundry-workspace.css') }}?v=20261006-4" rel="stylesheet">
+    @auth
+        @unless(request()->routeIs('catalog'))
+            <link href="{{ asset('css/workspace-consistency.css') }}?v=20261006-4" rel="stylesheet">
+        @endunless
+    @endauth
 </head>
-<body>
+<body class="{{ auth()->check() ? 'workspace-auth' : 'workspace-public' }} {{ request()->routeIs('catalog', 'home') ? 'catalog-page' : '' }} {{ request()->routeIs('*.dashboard') ? 'dashboard-page' : (auth()->check() && !request()->routeIs('catalog', 'home') ? 'workspace-detail-page' : '') }}">
     <!-- Top Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm py-2">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm py-2 workspace-navbar">
         <div class="container">
+            @auth
+                <span class="workspace-page-title workspace-admin-page-title">
+                    @if(request()->routeIs('*.dashboard'))
+                        <strong>{{ auth()->user()->isAdmin() ? 'Dashboard Laundry' : (auth()->user()->isCourier() ? 'Dashboard Kurir' : 'Dashboard Pelanggan') }}</strong>
+                        <small>{{ now()->locale('id')->translatedFormat('l, d F Y') }} &middot; operasional antar-jemput</small>
+                    @else
+                        <span>{{ \Illuminate\Support\Str::before($__env->yieldContent('title', 'Laundry Wash'), ' - ') }}</span>
+                    @endif
+                </span>
+            @endauth
             <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url('/') }}">
                 <i class="bi bi-droplet-half fs-4"></i>
                 <span>Laundry <span class="text-info">Wash</span></span>
             </a>
 
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            @guest
+                @if(request()->routeIs('catalog', 'home'))
+                    <div class="catalog-primary-nav d-none d-md-flex" aria-label="Navigasi katalog">
+                        <a href="#cara-kerja">Cara kerja</a>
+                        <a href="#layanan">Layanan</a>
+                        <a href="#tentang-kami">Tentang kami</a>
+                    </div>
+                @endif
+            @endguest
 
-            <div class="collapse navbar-collapse" id="navbarMain">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            @auth
+            <button id="mobile-sidebar-toggle" class="mobile-sidebar-toggle" type="button" aria-controls="workspace-sidebar" aria-expanded="false" aria-label="Buka navigasi" title="Buka navigasi"><i class="bi bi-layout-sidebar-inset" aria-hidden="true"></i></button>
+            @endauth
+
+            <div class="navbar-collapse d-flex align-items-center" id="navbarMain">
+                <ul class="navbar-nav ms-auto align-items-lg-center flex-row flex-lg-row gap-2 gap-lg-0">
                     @auth
                         @if(auth()->user()->isAdmin())
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active text-info fw-semibold' : '' }}" href="{{ route('admin.dashboard') }}">
-                                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
-                                </a>
+                            <li class="nav-item d-none d-xl-block">
+                                <form class="workspace-search" action="{{ route('admin.orders.index') }}" method="GET" role="search">
+                                    <i class="bi bi-search" aria-hidden="true"></i>
+                                    <input type="search" name="search" placeholder="Search" aria-label="Cari nomor order atau pelanggan">
+                                </form>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active text-info fw-semibold' : '' }}" href="{{ route('admin.orders.index') }}">
-                                    <i class="bi bi-bag-check me-1"></i> Kelola Order
-                                </a>
+                            <li class="nav-item d-none d-xl-block">
+                                <a class="workspace-filter-button" href="{{ route('admin.orders.index') }}#order-filters"><i class="bi bi-funnel" aria-hidden="true"></i> Filter</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('admin.services.*') ? 'active text-info fw-semibold' : '' }}" href="{{ route('admin.services.index') }}">
-                                    <i class="bi bi-tags me-1"></i> Layanan
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('admin.couriers.*') ? 'active text-info fw-semibold' : '' }}" href="{{ route('admin.couriers.index') }}">
-                                    <i class="bi bi-bicycle me-1"></i> Kurir
-                                </a>
-                            </li>
-                            <li class="nav-item"><a class="nav-link {{ request()->routeIs('admin.customers.*') ? 'active text-info fw-semibold' : '' }}" href="{{ route('admin.customers.index') }}"><i class="bi bi-people me-1"></i> Customer</a></li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active text-info fw-semibold' : '' }}" href="{{ route('admin.reports.index') }}">
-                                    <i class="bi bi-file-earmark-bar-graph me-1"></i> Laporan
-                                </a>
-                            </li>
-                            <li class="nav-item"><a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active text-info fw-semibold' : '' }}" href="{{ route('admin.settings.edit') }}"><i class="bi bi-gear me-1"></i> Pengaturan</a></li>
-                        @elseif(auth()->user()->isCourier())
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('courier.dashboard') ? 'active text-info fw-semibold' : '' }}" href="{{ route('courier.dashboard') }}">
-                                    <i class="bi bi-speedometer2 me-1"></i> Tugas Saya
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('courier.history') ? 'active text-info fw-semibold' : '' }}" href="{{ route('courier.history') }}">
-                                    <i class="bi bi-clock-history me-1"></i> Riwayat Tugas
-                                </a>
-                            </li>
-                        @elseif(auth()->user()->isCustomer())
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('customer.dashboard') ? 'active text-info fw-semibold' : '' }}" href="{{ route('customer.dashboard') }}">
-                                    <i class="bi bi-house me-1"></i> Beranda
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('customer.orders.create') ? 'active text-info fw-semibold' : '' }}" href="{{ route('customer.orders.create') }}">
-                                    <i class="bi bi-plus-circle me-1"></i> Order Baru
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('customer.orders.history') ? 'active text-info fw-semibold' : '' }}" href="{{ route('customer.orders.history') }}">
-                                    <i class="bi bi-receipt me-1"></i> Riwayat Order
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('customer.addresses.*') ? 'active text-info fw-semibold' : '' }}" href="{{ route('customer.addresses.index') }}">
-                                    <i class="bi bi-geo-alt me-1"></i> Buku Alamat
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('customer.profile.*') ? 'active text-info fw-semibold' : '' }}" href="{{ route('customer.profile.edit') }}">
-                                    <i class="bi bi-person me-1"></i> Profil
-                                </a>
+                        @else
+                            <li class="nav-item d-none d-xl-block">
+                                <form id="workspace-page-search" class="workspace-search" role="search">
+                                    <i class="bi bi-search" aria-hidden="true"></i>
+                                    <input type="search" list="workspace-page-options" placeholder="Cari halaman" aria-label="Cari halaman sesuai akses Anda" required autocomplete="off">
+                                    <datalist id="workspace-page-options"></datalist>
+                                    <button type="submit" class="visually-hidden-focusable">Buka</button>
+                                </form>
                             </li>
                         @endif
-                    @endauth
-                </ul>
-
-                <ul class="navbar-nav ms-auto align-items-lg-center">
-                    @auth
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 text-white" href="#" role="button" data-bs-toggle="dropdown">
-                                <span class="badge {{ auth()->user()->role->badgeClass() ?? 'bg-secondary' }}">
-                                    {{ auth()->user()->role->label() }}
-                                </span>
-                                <span>{{ auth()->user()->name }}</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                                <li class="px-3 py-2 border-bottom">
-                                    <small class="text-muted d-block">Masuk sebagai</small>
-                                    <span class="fw-semibold">{{ auth()->user()->email }}</span>
-                                </li>
-                                <li>
-                                    <form action="{{ route('logout') }}" method="POST" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="dropdown-item text-danger py-2">
-                                            <i class="bi bi-box-arrow-right me-2"></i> Keluar (Logout)
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
+                        <li class="nav-item d-none d-lg-block">
+                            <span class="workspace-icon-button workspace-icon-muted" role="img" aria-label="Notifikasi belum tersedia" title="Notifikasi belum tersedia"><i class="bi bi-bell" aria-hidden="true"></i></span>
                         </li>
+                        @if(auth()->user()->isAdmin())
+                        @elseif(auth()->user()->isCustomer())
+                            <li class="nav-item d-none d-lg-block"><a class="workspace-icon-button" href="{{ route('customer.profile.edit') }}" aria-label="Pengaturan profil" title="Pengaturan profil"><i class="bi bi-gear" aria-hidden="true"></i></a></li>
+                        @else
+                            <li class="nav-item d-none d-lg-block"><a class="workspace-icon-button" href="{{ route('courier.dashboard') }}#courier-availability" aria-label="Status kerja" title="Status kerja"><i class="bi bi-sliders" aria-hidden="true"></i></a></li>
+                        @endif
                     @else
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('login') }}">Masuk</a>
@@ -236,34 +192,54 @@
 </nav>
 
 @auth
-<aside class="app-sidebar" aria-label="Navigasi utama">
-    <div class="small text-uppercase text-muted fw-semibold px-2 mb-3">Menu {{ auth()->user()->role->label() }}</div>
+<aside id="workspace-sidebar" class="app-sidebar" aria-label="Navigasi utama">
+    <div class="workspace-brand-row">
+        <a class="workspace-brand" href="{{ url('/') }}"><i class="bi bi-droplet-half" aria-hidden="true"></i><span>Laundry Wash</span></a>
+        <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-controls="workspace-sidebar" aria-expanded="true" aria-label="Ciutkan sidebar" title="Ciutkan sidebar"><i class="bi bi-layout-sidebar-inset sidebar-toggle-desktop-icon" aria-hidden="true"></i><i class="bi bi-x-lg sidebar-toggle-mobile-icon" aria-hidden="true"></i></button>
+    </div>
+    <div class="workspace-nav-label small text-uppercase text-muted fw-semibold px-2 mb-3">Menu {{ auth()->user()->role->label() }}</div>
     <nav class="nav flex-column">
         @if(auth()->user()->isAdmin())
-            <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}"><i class="bi bi-grid me-2"></i>Dashboard</a>
-            <a class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" href="{{ route('admin.orders.index') }}"><i class="bi bi-bag-check me-2"></i>Orders</a>
-            <a class="nav-link {{ request()->routeIs('admin.customers.*') ? 'active' : '' }}" href="{{ route('admin.customers.index') }}"><i class="bi bi-people me-2"></i>Customers</a>
-            <a class="nav-link {{ request()->routeIs('admin.couriers.*') ? 'active' : '' }}" href="{{ route('admin.couriers.index') }}"><i class="bi bi-bicycle me-2"></i>Couriers</a>
-            <a class="nav-link {{ request()->routeIs('admin.services.*') ? 'active' : '' }}" href="{{ route('admin.services.index') }}"><i class="bi bi-tags me-2"></i>Services</a>
-            <a class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" href="{{ route('admin.payments.index') }}"><i class="bi bi-credit-card me-2"></i>Payments</a>
-            <a class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}"><i class="bi bi-bar-chart me-2"></i>Reports</a>
-            <a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" href="{{ route('admin.settings.edit') }}"><i class="bi bi-gear me-2"></i>Settings</a>
+            <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}" title="Dashboard" aria-label="Dashboard"><i class="bi bi-grid me-2" aria-hidden="true"></i><span class="sidebar-link-label">Dashboard</span></a>
+            <a class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" href="{{ route('admin.orders.index') }}" title="Pesanan" aria-label="Pesanan"><i class="bi bi-bag-check me-2" aria-hidden="true"></i><span class="sidebar-link-label">Pesanan</span></a>
+            <a class="nav-link {{ request()->routeIs('admin.customers.*') ? 'active' : '' }}" href="{{ route('admin.customers.index') }}" title="Pelanggan" aria-label="Pelanggan"><i class="bi bi-people me-2" aria-hidden="true"></i><span class="sidebar-link-label">Pelanggan</span></a>
+            <a class="nav-link {{ request()->routeIs('admin.couriers.*') ? 'active' : '' }}" href="{{ route('admin.couriers.index') }}" title="Kurir" aria-label="Kurir"><i class="bi bi-bicycle me-2" aria-hidden="true"></i><span class="sidebar-link-label">Kurir</span></a>
+            <a class="nav-link {{ request()->routeIs('admin.services.*') ? 'active' : '' }}" href="{{ route('admin.services.index') }}" title="Layanan" aria-label="Layanan"><i class="bi bi-tags me-2" aria-hidden="true"></i><span class="sidebar-link-label">Layanan</span></a>
+            <a class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" href="{{ route('admin.payments.index') }}" title="Pembayaran" aria-label="Pembayaran"><i class="bi bi-credit-card me-2" aria-hidden="true"></i><span class="sidebar-link-label">Pembayaran</span></a>
+            <a class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}" title="Laporan" aria-label="Laporan"><i class="bi bi-bar-chart me-2" aria-hidden="true"></i><span class="sidebar-link-label">Laporan</span></a>
+            <a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" href="{{ route('admin.settings.edit') }}" title="Pengaturan" aria-label="Pengaturan"><i class="bi bi-gear me-2" aria-hidden="true"></i><span class="sidebar-link-label">Pengaturan</span></a>
         @elseif(auth()->user()->isCourier())
-            <a class="nav-link {{ request()->routeIs('courier.dashboard') ? 'active' : '' }}" href="{{ route('courier.dashboard') }}"><i class="bi bi-grid me-2"></i>Dashboard</a>
-            <a class="nav-link {{ request()->routeIs('courier.history') ? 'active' : '' }}" href="{{ route('courier.history') }}"><i class="bi bi-clock-history me-2"></i>History</a>
+            <a class="nav-link {{ request()->routeIs('courier.dashboard') ? 'active' : '' }}" href="{{ route('courier.dashboard') }}" title="Dashboard" aria-label="Dashboard"><i class="bi bi-grid me-2" aria-hidden="true"></i><span class="sidebar-link-label">Dashboard</span></a>
+            <a class="nav-link {{ request()->routeIs('courier.history') ? 'active' : '' }}" href="{{ route('courier.history') }}" title="Riwayat" aria-label="Riwayat"><i class="bi bi-clock-history me-2" aria-hidden="true"></i><span class="sidebar-link-label">Riwayat</span></a>
         @else
-            <a class="nav-link {{ request()->routeIs('customer.dashboard') ? 'active' : '' }}" href="{{ route('customer.dashboard') }}"><i class="bi bi-house me-2"></i>Home</a>
-            <a class="nav-link {{ request()->routeIs('customer.orders.create') ? 'active' : '' }}" href="{{ route('customer.orders.create') }}"><i class="bi bi-plus-circle me-2"></i>Order Baru</a>
-            <a class="nav-link {{ request()->routeIs('customer.orders.history') ? 'active' : '' }}" href="{{ route('customer.orders.history') }}"><i class="bi bi-receipt me-2"></i>History</a>
-            <a class="nav-link {{ request()->routeIs('customer.addresses.*') ? 'active' : '' }}" href="{{ route('customer.addresses.index') }}"><i class="bi bi-geo-alt me-2"></i>Alamat</a>
-            <a class="nav-link {{ request()->routeIs('customer.profile.*') ? 'active' : '' }}" href="{{ route('customer.profile.edit') }}"><i class="bi bi-person me-2"></i>Profile</a>
+            <a class="nav-link {{ request()->routeIs('customer.dashboard') ? 'active' : '' }}" href="{{ route('customer.dashboard') }}" title="Dashboard" aria-label="Dashboard"><i class="bi bi-house me-2" aria-hidden="true"></i><span class="sidebar-link-label">Dashboard</span></a>
+            <a class="nav-link {{ request()->routeIs('customer.orders.create') ? 'active' : '' }}" href="{{ route('customer.orders.create') }}" title="Pesanan baru" aria-label="Pesanan baru"><i class="bi bi-plus-circle me-2" aria-hidden="true"></i><span class="sidebar-link-label">Pesanan baru</span></a>
+            <a class="nav-link {{ request()->routeIs('customer.orders.history') ? 'active' : '' }}" href="{{ route('customer.orders.history') }}" title="Riwayat" aria-label="Riwayat"><i class="bi bi-receipt me-2" aria-hidden="true"></i><span class="sidebar-link-label">Riwayat</span></a>
+            <a class="nav-link {{ request()->routeIs('customer.addresses.*') ? 'active' : '' }}" href="{{ route('customer.addresses.index') }}" title="Alamat" aria-label="Alamat"><i class="bi bi-geo-alt me-2" aria-hidden="true"></i><span class="sidebar-link-label">Alamat</span></a>
+            <a class="nav-link {{ request()->routeIs('customer.profile.*') ? 'active' : '' }}" href="{{ route('customer.profile.edit') }}" title="Profil" aria-label="Profil"><i class="bi bi-person me-2" aria-hidden="true"></i><span class="sidebar-link-label">Profil</span></a>
         @endif
     </nav>
+    <div class="sidebar-user-footer">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="workspace-avatar"><i class="bi bi-person" aria-hidden="true"></i></span>
+            <div class="min-w-0">
+                <div class="fw-semibold text-truncate">{{ auth()->user()->name }}</div>
+                <small class="text-muted d-block text-truncate">{{ auth()->user()->email }}</small>
+            </div>
+        </div>
+        <form action="{{ route('logout') }}" method="POST" class="mt-2">
+            @csrf
+            <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                Keluar
+            </button>
+        </form>
+    </div>
 </aside>
+<div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
 @endauth
 
     <!-- Main Content Area -->
-    <main class="py-4 flex-grow-1 app-content">
+    <main id="main-content" tabindex="-1" class="py-4 flex-grow-1 app-content">
         <div class="container">
             <!-- Flash Message Alerts -->
             @if(session('success'))
@@ -306,18 +282,6 @@
         </div>
     </main>
 
-@auth
-<nav class="mobile-bottom-nav" aria-label="Navigasi mobile">
-    @if(auth()->user()->isAdmin())
-        <a class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}"><i class="bi bi-grid"></i>Dashboard</a><a class="{{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" href="{{ route('admin.orders.index') }}"><i class="bi bi-bag"></i>Orders</a><a class="{{ request()->routeIs('admin.customers.*') ? 'active' : '' }}" href="{{ route('admin.customers.index') }}"><i class="bi bi-people"></i>Customer</a><a class="{{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" href="{{ route('admin.settings.edit') }}"><i class="bi bi-gear"></i>Settings</a>
-    @elseif(auth()->user()->isCourier())
-        <a class="active" href="{{ route('courier.dashboard') }}"><i class="bi bi-grid"></i>Dashboard</a><a href="{{ route('courier.dashboard') }}"><i class="bi bi-box-arrow-down"></i>Pickup</a><a href="{{ route('courier.dashboard') }}"><i class="bi bi-box-arrow-up"></i>Delivery</a><a class="{{ request()->routeIs('courier.history') ? 'active' : '' }}" href="{{ route('courier.history') }}"><i class="bi bi-clock-history"></i>History</a>
-    @else
-        <a class="{{ request()->routeIs('customer.dashboard') ? 'active' : '' }}" href="{{ route('customer.dashboard') }}"><i class="bi bi-house"></i>Home</a><a class="{{ request()->routeIs('customer.orders.create') ? 'active' : '' }}" href="{{ route('customer.orders.create') }}"><i class="bi bi-plus-circle"></i>Order</a><a class="{{ request()->routeIs('customer.orders.history') ? 'active' : '' }}" href="{{ route('customer.orders.history') }}"><i class="bi bi-receipt"></i>History</a><a class="{{ request()->routeIs('customer.profile.*') ? 'active' : '' }}" href="{{ route('customer.profile.edit') }}"><i class="bi bi-person"></i>Profile</a>
-    @endif
-</nav>
-@endauth
-
     <!-- Footer -->
     <footer class="py-3 text-center text-muted">
         <div class="container">
@@ -328,6 +292,9 @@
     <!-- Bootstrap 5 JS Bundle & Leaflet JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    @auth
+    <script src="{{ asset('js/workspace-navigation.js') }}?v=20261006-2" defer></script>
+    @endauth
     @stack('scripts')
 </body>
 </html>

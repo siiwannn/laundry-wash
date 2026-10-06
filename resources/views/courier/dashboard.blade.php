@@ -3,73 +3,39 @@
 @section('title', 'Dashboard Kurir - Laundry Wash')
 
 @section('content')
-<div class="row align-items-center mb-4">
-    <div class="col-md-7">
-        <h3 class="fw-bold mb-1">Dashboard Kurir Lapangan</h3>
-        <p class="text-muted mb-0">Selamat bertugas, <strong>{{ $courier->name }}</strong> &bull; Kendaraan: {{ $profile->vehicle_type ?? 'Motor' }} ({{ $profile->vehicle_plate ?? '-' }})</p>
+<div class="dashboard-heading">
+    <div>
+        <p class="mb-0">{{ $courier->name }} &middot; {{ $profile->vehicle_type ?? 'Motor' }} &middot; {{ $profile->vehicle_plate ?? 'Kendaraan belum diatur' }}</p>
     </div>
-    <div class="col-md-5 text-md-end mt-3 mt-md-0">
-        <!-- Work Status Switcher -->
-        <form action="{{ route('courier.profile.status') }}" method="POST" class="d-inline-flex align-items-center gap-2">
-            @csrf
-            @method('PATCH')
-            <span class="small fw-semibold text-muted">Status Ketersediaan:</span>
-            <select name="status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
-                <option value="available" {{ $profile && $profile->status->value === 'available' ? 'selected' : '' }}>🟢 Tersedia (Online)</option>
-                <option value="offline" {{ $profile && $profile->status->value === 'offline' ? 'selected' : '' }}>⚪ Istirahat (Offline)</option>
-            </select>
-        </form>
-    </div>
+    <form id="courier-availability" action="{{ route('courier.profile.status') }}" method="POST" class="d-inline-flex align-items-center gap-2">
+        @csrf
+        @method('PATCH')
+        <span class="small fw-semibold text-muted">Status kerja</span>
+        <select aria-label="Status kerja" name="status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+            <option value="available" {{ $profile && $profile->Tersedia</option>
+            <option value="offline" {{ $profile && $profile->Istirahat</option>
+        </select>
+    </form>
 </div>
 
-<!-- Courier Stats Overview -->
-<div class="row g-3 mb-4">
-    <div class="col-md-6 col-xl-3">
-        <div class="card p-3 border-start border-warning border-4 shadow-sm">
-            <span class="text-muted small text-uppercase fw-semibold">Tugas Aktif Saat Ini</span>
-            <h3 class="fw-bold text-warning mb-0 mt-1">{{ $activeTasks->count() }} Tugas</h3>
-            <small class="text-muted mt-1 d-block">Segera selesaikan penjemputan / pengantaran</small>
-        </div>
+<section class="dashboard-summary" aria-label="Ringkasan kurir">
+    <div class="role-summary-grid">
+        <x-dashboard-metric label="Tugas aktif" :value="$activeTasks->count()" icon="list-task" tone="orange" note="Menunggu atau dalam perjalanan" />
+        <x-dashboard-metric label="Pickup hari ini" :value="$pickupTodayCount" icon="box-arrow-in-down" tone="blue" note="Penjemputan" />
+        <x-dashboard-metric label="Delivery hari ini" :value="$deliveryTodayCount" icon="truck" tone="purple" note="Pengantaran" />
+        <x-dashboard-metric label="Selesai hari ini" :value="$todayCompletedCount" icon="check2-circle" tone="green" note="Tugas diselesaikan" />
     </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card p-3 border-start border-success border-4 shadow-sm">
-            <span class="text-muted small text-uppercase fw-semibold">Tugas Selesai Hari Ini</span>
-            <h3 class="fw-bold text-success mb-0 mt-1">{{ $todayCompletedCount }} Selesai</h3>
-            <small class="text-muted mt-1 d-block">Rekap performa operasional kurir harian</small>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card p-3 border-start border-primary border-4 shadow-sm">
-            <span class="text-muted small text-uppercase fw-semibold">Pickup Hari Ini</span>
-            <h3 class="fw-bold text-primary mb-0 mt-1">{{ $pickupTodayCount }}</h3>
-            <small class="text-muted mt-1 d-block">Tugas penjemputan terjadwal</small>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card p-3 border-start border-info border-4 shadow-sm">
-            <span class="text-muted small text-uppercase fw-semibold">Delivery Hari Ini</span>
-            <h3 class="fw-bold text-info mb-0 mt-1">{{ $deliveryTodayCount }}</h3>
-            <small class="text-muted mt-1 d-block">Tugas pengantaran terjadwal</small>
-        </div>
-    </div>
-    <div class="col-12">
-        <div class="card p-3 border-start border-primary border-4 shadow-sm">
-            <span class="text-muted small text-uppercase fw-semibold">Armada & Pelat Nomor</span>
-            <h5 class="fw-bold text-primary mb-0 mt-1">{{ $profile->vehicle_plate ?? 'B 1234 ABC' }}</h5>
-            <small class="text-muted mt-1 d-block">{{ $profile->vehicle_type ?? 'Motor' }} &bull; Pastikan GPS HP aktif</small>
-        </div>
-    </div>
-</div>
+</section>
 
 <!-- Active Task List Section -->
 <div class="mb-4">
-    <h4 class="fw-bold mb-3"><i class="bi bi-list-task me-2 text-primary"></i> Daftar Tugas Aktif Penjemputan / Pengantaran</h4>
+    <div class="d-flex justify-content-between align-items-center mb-3"><h2 class="dashboard-section-title mb-0">Tugas aktif</h2><a href="{{ route('courier.history') }}" class="dashboard-text-link">Riwayat</a></div>
 
     @if($activeTasks->count() > 0)
         <div class="row g-3">
             @foreach($activeTasks as $task)
                 <div class="col-lg-6">
-                    <div class="card h-100 shadow-sm border-start {{ $task->type->value === 'pickup' ? 'border-warning' : 'border-info' }} border-4">
+                    <div class="card h-100 courier-assignment-card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <span class="badge {{ $task->type->value === 'pickup' ? 'bg-warning text-dark' : 'bg-info text-white' }} px-3 py-1">
@@ -103,7 +69,7 @@
 
                             <div class="d-grid">
                                 <a href="{{ route('courier.tasks.show', $task) }}" class="btn btn-primary fw-bold py-2">
-                                    <i class="bi bi-box-arrow-in-right me-1"></i> Buka Tugas & Operasikan &rarr;
+                                    Lihat tugas
                                 </a>
                             </div>
                         </div>
@@ -116,7 +82,7 @@
             <div class="card-body">
                 <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
                 <h5 class="fw-bold mt-3 mb-1">Tidak Ada Tugas Tertunda</h5>
-                <p class="text-muted small mb-0">Semua tugas penjemputan dan pengantaran telah selesai. Bersiaplah untuk tugas berikutnya!</p>
+                <p class="text-muted small mb-0">Penjemputan atau pengantaran akan tampil setelah admin menugaskan Anda.</p>
             </div>
         </div>
     @endif

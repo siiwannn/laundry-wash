@@ -3,10 +3,9 @@
 @section('title', 'Kelola Pesanan ' . $order->order_number . ' - Admin')
 
 @section('content')
-<div class="row align-items-center mb-4">
+<div class="workspace-page-heading row align-items-center mb-4">
     <div class="col-md-7">
         <div class="d-flex align-items-center gap-2 mb-1">
-            <h3 class="fw-bold mb-0">{{ $order->order_number }}</h3>
             <span class="badge badge-status {{ $order->status->badgeClass() }} fs-6">
                 {{ $order->status->label() }}
             </span>
@@ -28,7 +27,7 @@
     <div class="card-body">
         <div class="row align-items-center">
             <div class="col-lg-7 mb-3 mb-lg-0">
-                <h6 class="fw-bold text-primary mb-1"><i class="bi bi-arrow-right-circle-fill me-1"></i> Aksi Operasional yang Diperlukan:</h6>
+                <h6 class="fw-bold text-primary mb-1"><i class="bi bi-exclamation-circle-fill me-1"></i> Aksi Operasional yang Diperlukan:</h6>
                 <div class="small text-dark">
                     @if($order->status->value === 'pending')
                         Pesanan baru masuk dari customer. Verifikasi dan konfirmasi agar dapat diproses.
@@ -177,7 +176,7 @@
         <!-- Payments Section -->
         <div class="card mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="fw-bold mb-0"><i class="bi bi-wallet2 me-2 text-success"></i> Riwayat & Verifikasi Pembayaran</h5>
+                <h5 class="fw-bold mb-0"><i class="bi bi-wallet2 me-2 text-success" aria-hidden="true"></i> Riwayat pembayaran</h5>
                 <span class="badge badge-status {{ $order->payment_status->badgeClass() }}">
                     {{ $order->payment_status->label() }}
                 </span>
@@ -338,7 +337,7 @@
                         <option value="">-- Pilih Kurir --</option>
                         @foreach($couriers as $courier)
                             <option value="{{ $courier->id }}">
-                                {{ $courier->name }} &bull; {{ $courier->courierProfile->vehicle_plate ?? 'Motor' }} ({{ $courier->courierProfile->status->label() ?? 'Tersedia' }})
+                                {{ $courier->name }} &bull; {{ $courier->courierProfile?->vehicle_plate ?? 'Kendaraan belum diatur' }} ({{ $courier->courierProfile?->status?->label() ?? 'Profil belum tersedia' }})
                             </option>
                         @endforeach
                     </select>

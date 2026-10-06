@@ -7,7 +7,6 @@
     <div class="col-lg-8">
         <div class="d-flex align-items-center justify-content-between mb-4">
             <div>
-                <h3 class="fw-bold mb-1">Buat Pesanan Laundry</h3>
                 <p class="text-muted mb-0">Isi formulir berikut dan kurir kami akan menjemput pakaian kotor Anda.</p>
             </div>
             <a href="{{ route('customer.dashboard') }}" class="btn btn-outline-secondary btn-sm">

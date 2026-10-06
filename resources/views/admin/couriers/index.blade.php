@@ -3,9 +3,8 @@
 @section('title', 'Kelola Kurir - Admin')
 
 @section('content')
-<div class="row align-items-center mb-4">
+<div class="workspace-page-heading row align-items-center mb-4">
     <div class="col-md-7">
-        <h3 class="fw-bold mb-1">Manajemen Kurir Lapangan</h3>
         <p class="text-muted mb-0">Kelola armada kurir penjemputan dan pengantaran laundry terintegrasi GPS.</p>
     </div>
     <div class="col-md-5 text-md-end mt-3 mt-md-0">

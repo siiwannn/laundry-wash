@@ -3,30 +3,25 @@
 @section('title', 'Beranda Customer - Laundry Wash')
 
 @section('content')
-<!-- Hero Welcome Banner -->
-<div class="card bg-primary text-white border-0 shadow-sm mb-4 overflow-hidden position-relative">
-    <div class="card-body p-4 p-lg-5">
-        <div class="row align-items-center">
-            <div class="col-lg-8">
-                <span class="badge bg-white text-primary mb-2 px-3 py-1 fw-bold">LAYANAN LAUNDRY ONLINE</span>
-                <h2 class="fw-bold mb-2">Halo, {{ $customer->name }}!</h2>
-                <p class="mb-4 text-white-50">Pakaian kotor menumpuk? Pesan kurir jemput sekarang, kami cuci bersih, wangi, dan setrika rapi sampai kembali ke tangan Anda.</p>
-                <a href="{{ route('customer.orders.create') }}" class="btn btn-warning btn-lg fw-bold text-dark px-4 shadow">
-                    <i class="bi bi-plus-circle-fill me-2"></i> Buat Pesanan Laundry Sekarang
-                </a>
-            </div>
-            <div class="col-lg-4 d-none d-lg-block text-end">
-                <i class="bi bi-droplet-half" style="font-size: 8rem; opacity: 0.15;"></i>
-            </div>
-        </div>
+<div class="dashboard-heading">
+    <div>
+        <p class="mb-0">Halo, {{ $customer->name }}. Pantau pesanan aktif dan pilih layanan laundry.</p>
     </div>
+    <a href="{{ route('customer.orders.create') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Buat pesanan</a>
 </div>
+<section class="dashboard-summary" aria-label="Ringkasan pelanggan">
+    <div class="role-summary-grid">
+        <x-dashboard-metric label="Pesanan aktif" :value="$activeOrders->count()" icon="basket2" tone="orange" note="Belum selesai" />
+        <x-dashboard-metric label="Layanan tersedia" :value="$services->count()" icon="grid" tone="blue" note="Pilihan laundry" />
+    </div>
+</section>
+<div class="customer-order-workspace">
 
 <!-- Active Orders Section -->
 <div class="mb-5">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i> Pesanan Aktif Anda</h4>
-        <a href="{{ route('customer.orders.history') }}" class="btn btn-link btn-sm text-decoration-none">Riwayat Pesanan &rarr;</a>
+        <h2 class="dashboard-section-title mb-0">Pesanan aktif</h2>
+        <a href="{{ route('customer.orders.history') }}" class="btn btn-link btn-sm text-decoration-none">Riwayat Pesanan</a>
     </div>
 
     @if($activeOrders->count() > 0)
@@ -57,7 +52,7 @@
                                     </div>
                                     <div class="col-12 mt-2">
                                         <span class="text-muted d-block">Alamat:</span>
-                                        <span>{{ $order->pickupAddress->address ?? 'Drop-off langsung' }}</span>
+                                    <span>{{ $order->pickupAddress->address ?? 'Alamat belum tersedia' }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -86,7 +81,7 @@
                                         </a>
                                     @endif
                                     <a href="{{ route('customer.orders.show', $order) }}" class="btn btn-outline-primary btn-sm">
-                                        Lihat Rincian &rarr;
+                                        Lihat Rincian
                                     </a>
                                 </div>
                             </div>
@@ -126,5 +121,6 @@
             </div>
         @endforeach
     </div>
+</div>
 </div>
 @endsection

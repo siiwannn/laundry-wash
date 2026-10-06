@@ -7,10 +7,9 @@
 @endpush
 
 @section('content')
-<div class="row align-items-center mb-3">
+<div class="workspace-page-heading row align-items-center mb-3">
     <div class="col-md-7">
         <div class="d-flex align-items-center gap-2 mb-1">
-            <h4 class="fw-bold mb-0">Tugas: {{ $assignment->type->label() }}</h4>
             <span class="badge {{ $assignment->status->badgeClass() }} fs-6">
                 {{ $assignment->status->label() }}
             </span>
@@ -254,8 +253,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateBeaconState(type, title, message, canRetry = false) {
         if (!alertEl) return;
 
-        alertEl.className = `alert alert-${type} shadow-sm d-flex align-items-center justify-content-between mb-4`;
-        titleEl.innerHTML = `<i class="bi bi-broadcast me-1"></i> ${title}`;
+        alertEl.className = `courier-gps-banner courier-gps-${type} mb-4`;
+        titleEl.textContent = title;
         statusEl.innerText = message;
         retryButton.classList.toggle('d-none', !canRetry);
         spinnerEl.classList.toggle('d-none', type !== 'info');

@@ -39,6 +39,14 @@ Sistem ini mengelola laundry end-to-end: pickup dan delivery oleh kurir, proses 
 - Riwayat transaksi
 - Dashboard
 - Laporan
+- Katalog layanan publik dengan CTA pendaftaran dan pemesanan
+- Antarmuka responsif untuk desktop dan mobile, termasuk sidebar yang dapat dibuka/tutup pada workspace
+
+## Pembaruan Antarmuka
+
+- Halaman katalog publik menggunakan identitas visual Laundry Wash bernuansa oranye.
+- Dashboard Admin, Customer, dan Kurir memakai komponen tombol, badge status, kartu, dan sidebar yang konsisten.
+- Tampilan mobile memprioritaskan navigasi yang dapat diakses, grid kartu adaptif, serta area aksi pembayaran yang tidak terpotong.
 
 ## Dokumen
 1. `01-prd.md`

@@ -7,11 +7,43 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\User;
 use Carbon\Carbon;
 
 class ReportService
 {
+    public function getDashboardRevenue(): array
+    {
+        $start = today()->subDays(6);
+        $payments = Payment::where('status', PaymentStatus::PAID)
+            ->whereBetween('paid_at', [$start, now()])->get(['paid_at', 'amount']);
+        $grouped = $payments->groupBy(fn ($payment) => Carbon::parse($payment->paid_at)->toDateString());
+        $days = collect(range(0, 6))->map(function ($offset) use ($start, $grouped) {
+            $date = $start->copy()->addDays($offset);
+
+            return ['label' => $date->format('j M'), 'amount' => (float) ($grouped->get($date->toDateString())?->sum('amount') ?? 0)];
+        });
+
+        return ['days' => $days->all(), 'max' => max(1, $days->max('amount')), 'total' => $days->sum('amount')];
+    }
+
+    public function getDailyOrderVolume(int $days = 7): array
+    {
+        $start = now()->subDays($days - 1)->startOfDay();
+        $counts = Order::where('created_at', '>=', $start)
+            ->get(['created_at'])
+            ->groupBy(fn (Order $order) => $order->created_at->toDateString())
+            ->map->count();
+
+        return collect(range(0, $days - 1))->map(function (int $offset) use ($start, $counts): array {
+            $date = $start->copy()->addDays($offset);
+            $count = (int) ($counts[$date->toDateString()] ?? 0);
+
+            return ['label' => $date->format('d M'), 'count' => $count];
+        })->all();
+    }
+
     public function getSummaryStats(): array
     {
         $totalRevenue = (float) Order::where('payment_status', PaymentStatus::PAID)->sum('total');

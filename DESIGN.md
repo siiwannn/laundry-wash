@@ -59,11 +59,11 @@ Clean
 
 Primary
 
-#3B82F6
+#F4512A
 
 Secondary
 
-#F8FAFC
+#FFF7F2
 
 Success
 
@@ -83,7 +83,7 @@ Info
 
 Dark
 
-#1E293B
+#202020
 
 Border
 
@@ -91,7 +91,7 @@ Border
 
 Background
 
-#F8FAFC
+#F5F3EF
 
 White
 
@@ -208,6 +208,29 @@ Notification
 Profile
 
 Avatar
+
+---
+
+# Implementasi Visual Terkini
+
+## Tema
+
+- Gunakan palet oranye Laundry Wash sebagai aksen utama pada tombol primer, ikon aktif, CTA, dan halaman katalog.
+- Pertahankan teks gelap dengan kontras tinggi serta latar netral hangat agar informasi operasional tetap mudah dibaca.
+- Jangan memakai warna status sebagai warna primer tombol. Warna hijau, kuning, dan biru hanya untuk status atau informasi yang relevan.
+
+## Katalog Publik
+
+- Navbar desktop: logo di kiri, tautan navigasi di tengah, serta Masuk dan Daftar Pelanggan di kanan.
+- Hero katalog memakai CTA pemesanan yang jelas, ilustrasi bertema laundry, dan latar oranye.
+- Footer ringkas: identitas merek di kiri, copyright di tengah, dan tautan navigasi di kanan.
+
+## Workspace Mobile
+
+- Tombol sidebar harus membuka drawer dari sisi kiri dengan backdrop dan tombol tutup yang selalu dapat ditekan.
+- Drawer memakai tinggi viewport penuh dan lebar yang konsisten pada seluruh role.
+- Kartu dashboard menggunakan grid dua kolom bila ruang cukup; konten pendapatan dan grafik tidak boleh meluber atau terpotong.
+- Banner pembayaran menata deskripsi dan seluruh aksi secara sejajar di desktop, lalu bertumpuk rapi di mobile.
 
 ---
 
