@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="mb-4">
-    <h3 class="fw-bold mb-1" style="letter-spacing:-.5px">Selamat Datang</h3>
+    <h3 class="fw-bold mb-1" style="letter-spacing:-.5px">Selamat Datang 👋</h3>
     <p class="text-muted small mb-0">Masuk untuk mengelola laundry kamu dengan mudah.</p>
 </div>
 

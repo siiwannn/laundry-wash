@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const courierElement = document.createElement('div');
     courierElement.style.width = '58px';
     courierElement.style.height = '58px';
-    courierElement.innerHTML = '<img src="{{ asset('images/tracking/motorcycle-navigation.svg') }}" alt="Motor kurir" style="width:100%;height:100%;filter:drop-shadow(0 5px 5px rgba(15,23,42,.2))">';
+    courierElement.innerHTML = '<img src="{{ asset('images/tracking/delivery-bike.png') }}" alt="Motor kurir" style="width:100%;height:100%;filter:drop-shadow(0 5px 5px rgba(15,23,42,.2))">';
     const courierMarker = new maplibregl.Marker({ element: courierElement, rotationAlignment: 'map' });
     let latestPosition = null;
     let watchId = null;

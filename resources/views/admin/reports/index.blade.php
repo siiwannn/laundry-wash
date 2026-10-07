@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Laporan & Analitik - Admin')
+@section('title', 'Laporan Dan Analitik - Admin')
 
 @section('content')
 <div class="workspace-page-heading row align-items-center mb-4">

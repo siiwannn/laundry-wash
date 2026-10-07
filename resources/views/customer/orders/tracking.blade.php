@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const driverElement = document.createElement('div');
     driverElement.className = 'driver-marker';
-    driverElement.innerHTML = '<img src="{{ asset('images/tracking/motorcycle.svg') }}" alt="">';
+    driverElement.innerHTML = '<img src="{{ asset('images/tracking/delivery-bike.png') }}" alt="Posisi motor kurir">';
     const driverMarker = new maplibregl.Marker({ element: driverElement, rotationAlignment: 'map' });
 
     const destinationElement = document.createElement('div');
