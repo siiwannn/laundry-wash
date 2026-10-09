@@ -1,6 +1,20 @@
 *.log
 .DS_Store
 .env
+
+# Dokumen proyek 01-12 disimpan lokal, tidak dikirim ke GitHub.
+/01-prd.md
+/02-requirements.md
+/03-user-stories.md
+/04-usecase.md
+/05-workflow.md
+/06-database-design.md
+/07-api-spec.md
+/08-ui-flow.md
+/09-role-permission.md
+/10-development-plan.md
+/11-testing-plan.md
+/12-deployment.md
 .env.backup
 .env.production
 .phpactor.json
