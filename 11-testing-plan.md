@@ -1,604 +1,141 @@
-# Testing Plan
+# Panduan QA Laundry Wash
 
-Brand : Laundry Wash
+Dokumen ini membantu tim memeriksa alur Laundry Wash sebelum perubahan dipakai atau aplikasi didemokan. Ikuti langkahnya, catat hasil sebenarnya, lalu laporkan jika hasilnya berbeda dari yang diharapkan.
 
-Version : 1.0
+## Yang diperiksa
 
----
+- Login, daftar, dan pembatasan akses berdasarkan peran.
+- Pesanan, proses laundry, penugasan kurir, pembayaran, dan tracking.
+- Data pelanggan, alamat, harga layanan, serta tampilan dashboard.
+- Tampilan desktop dan ponsel.
+- Keamanan dasar, seperti akses data milik pengguna lain.
 
-# Testing Objective
+Peran pengguna: Admin, Customer, dan Kurir.
 
-Memastikan seluruh fitur Laundry Wash berjalan sesuai PRD, User Story, Use Case, dan Business Rules.
+## Cara menjalankan tes otomatis
 
----
+Jalankan dari folder utama proyek. Perintah pertama membersihkan cache konfigurasi agar tes memakai pengaturan terbaru.
 
-# Testing Scope
+```powershell
+php artisan optimize:clear
+php artisan test
+node --test tests/js/workspace-navigation.test.mjs
+```
 
-- Authentication
-- Customer Module
-- Admin Module
-- Courier Module
-- Order
-- Tracking
-- GPS
-- Payment
-- Reports
-- Authorization
-- Responsive UI
-- Security
+Tes Laravel memeriksa proses backend dan halaman. Tes JavaScript memeriksa navigasi workspace, termasuk drawer pada ponsel. Jika salah satu perintah gagal, salin pesan error lengkap dan catat perintah yang gagal.
 
----
+## Hasil cek terakhir
 
-# Testing Types
+Diperiksa pada 9 Oktober 2026 di lingkungan lokal.
 
-✅ Unit Testing
+| Bagian | Hasil | Catatan |
+|---|---|---|
+| Tes Laravel | LULUS — 57 tes, 365 pemeriksaan | Mencakup login, akun, katalog, dashboard, alur pesanan, pembayaran, GPS, pengaturan, dan hak akses. |
+| Tes navigasi JavaScript | LULUS — 7 tes | Mencakup sidebar desktop, drawer ponsel, tombol tutup, tombol Escape, dan pencarian halaman. |
+| Pembayaran langsung Midtrans Sandbox | BELUM DIPERIKSA | Tes otomatis memakai simulasi; hasilnya tidak membuktikan koneksi atau kredensial Midtrans berfungsi. |
+| Tampilan di perangkat dan browser nyata | BELUM DIPERIKSA | Jalankan pemeriksaan manual di bagian berikut sebelum demo. |
 
-✅ Feature Testing
+Status “lulus” hanya berlaku untuk tes yang benar-benar dijalankan di atas. Jangan tandai pemeriksaan manual sebagai lulus sebelum mencobanya.
 
-✅ Integration Testing
+## Pemeriksaan manual sebelum demo
 
-✅ Manual Testing
+Gunakan akun uji untuk setiap peran. Jangan memakai data pelanggan sungguhan. Untuk pembayaran, gunakan Sandbox dan jangan memasukkan kredensial ke laporan atau Git.
 
-✅ Authorization Testing
+### Login dan hak akses
 
-✅ Responsive Testing
+1. Login sebagai Admin, Customer, dan Kurir dengan akun masing-masing.
+2. Pastikan setiap akun masuk ke dashboard yang sesuai.
+3. Coba buka halaman peran lain dengan mengganti alamat halaman di browser.
+4. Coba buka pesanan atau alamat milik akun Customer lain.
 
-✅ Security Testing
+Hasil yang diharapkan: pengguna hanya dapat membuka halaman dan data yang menjadi haknya. Login dengan kata sandi salah atau akun nonaktif harus ditolak dengan pesan yang jelas.
 
-✅ User Acceptance Testing (UAT)
+### Pesanan sampai selesai
 
----
+1. Sebagai Customer, buat pesanan memakai alamat yang memiliki titik peta.
+2. Sebagai Admin, konfirmasi pesanan dan tugaskan kurir untuk pickup.
+3. Sebagai Kurir, mulai perjalanan, kirim lokasi, lalu konfirmasi pickup.
+4. Sebagai Admin, tandai pakaian sudah diterima, masukkan berat aktual, lalu jalankan tahap laundry sesuai urutan.
+5. Setelah pesanan siap, lakukan pembayaran di Sandbox.
+6. Setelah pembayaran terkonfirmasi, tugaskan kurir delivery. Sebagai Kurir, mulai perjalanan dan selesaikan pengantaran.
+7. Buka kembali detail pesanan dan riwayatnya.
 
-# AUTHENTICATION
+Hasil yang diharapkan: status berubah sesuai urutan, jumlah tagihan mengikuti berat aktual dan tarif, riwayat perubahan tersimpan, dan pesanan berakhir sebagai selesai setelah pengantaran dikonfirmasi.
 
-## TC-AUTH-001
+### Pembayaran
 
-### Login Valid
+1. Coba QRIS dan Virtual Account di lingkungan Sandbox.
+2. Tutup lalu buka kembali proses pembayaran yang masih menunggu.
+3. Jika transaksi lama dibatalkan atau kedaluwarsa, pilih metode lain dan mulai pembayaran baru.
+4. Periksa status pembayaran pada halaman Customer dan Admin setelah notifikasi Sandbox diterima.
 
-Precondition
+Hasil yang diharapkan: metode yang dipilih tampil dengan benar, transaksi lama tidak mengunci pilihan selamanya, dan status pesanan hanya berubah setelah pembayaran terkonfirmasi. Jika Sandbox tidak dapat dijangkau, catat pesan koneksi dan waktu kejadian; jangan menyimpulkan tes otomatis membuktikan gateway normal.
 
-User sudah terdaftar.
+### Peta, rute, dan GPS
 
-Steps
+1. Mulai tugas pickup atau delivery sebagai Kurir dan izinkan akses lokasi di browser.
+2. Pastikan posisi kurir muncul di peta Customer dan bergerak setelah lokasi baru dikirim.
+3. Muat ulang halaman tracking Customer.
+4. Pastikan garis rute, perkiraan waktu tiba (ETA), dan jarak tersisa tampil jika layanan rute dapat dijangkau.
+5. Coba akses halaman tracking setelah tugas selesai dan coba kirim lokasi lagi sebagai Kurir.
+6. Ulangi dengan izin lokasi ditolak atau koneksi internet dimatikan sementara.
 
-1. Buka Login.
-2. Masukkan Email.
-3. Masukkan Password.
-4. Klik Login.
+Hasil yang diharapkan: tracking hanya aktif saat pickup atau delivery berlangsung; setelah tugas selesai, lokasi baru ditolak. Jika jaringan peta atau layanan rute bermasalah, halaman tetap dapat dipakai dan menjelaskan bahwa data rute belum tersedia—bukan menampilkan garis atau ETA yang menyesatkan.
 
-Expected
+### Tampilan ponsel dan desktop
 
-- Login berhasil.
-- Redirect ke Dashboard sesuai Role.
-- Session dibuat.
+Periksa minimal lebar 360 px dan 390 px untuk ponsel, serta 1366 px untuk desktop. Gunakan browser yang tersedia: Chrome, Edge, Firefox, atau Safari.
 
-Priority
+- Buka dashboard, daftar pesanan, detail pesanan, halaman pembayaran, dan tugas kurir.
+- Pastikan teks, tombol, kartu, tabel, dan peta tidak terpotong atau menimpa elemen lain.
+- Buka dan tutup sidebar ponsel; coba tombol tutup, backdrop, dan tombol Escape.
+- Pastikan tombol penting dapat ditekan dan status masih terbaca saat halaman digulir.
+- Periksa cuaca pada dashboard Customer: ikon, suhu, keterangan, dan tanggal tidak bertumpuk atau keluar layar.
 
-P0
+Catat ukuran layar dan browser. Tampilan yang hanya benar di satu ukuran belum cukup untuk dinyatakan lulus.
 
----
+## Ringkasan cakupan otomatis
 
-## TC-AUTH-002
-
-Login Invalid
-
-Expected
-
-- Pesan Error.
-- Tetap di halaman Login.
-
-Priority
-
-P0
-
----
-
-## TC-AUTH-003
-
-Unauthorized Access
-
-Customer membuka
-
-/admin/dashboard
-
-Expected
-
-403
-
-atau Redirect.
-
-Priority
-
-P0
-
----
-
-# CUSTOMER
-
-## TC-CUS-001
-
-Create Order
-
-Expected
-
-- Order tersimpan.
-- Nomor Order dibuat.
-- Status = Pending.
-- Status History dibuat.
-
-Priority
-
-P0
-
----
-
-## TC-CUS-002
-
-Create Order tanpa alamat
-
-Expected
-
-Validation Error.
-
----
-
-## TC-CUS-003
-
-Melihat Order Orang Lain
-
-Expected
-
-403 Forbidden.
-
----
-
-## TC-CUS-004
-
-Melihat Tracking
-
-Expected
-
-- Map tampil.
-- Marker tampil.
-- Status tampil.
-
----
-
-## TC-CUS-005
-
-Melakukan Pembayaran
-
-Expected
-
-Payment dibuat.
-
-Status Pending.
-
----
-
-# ADMIN
-
-## TC-ADM-001
-
-Konfirmasi Order
-
-Expected
-
-Status menjadi
-
-Confirmed.
-
----
-
-## TC-ADM-002
-
-Assign Courier
-
-Expected
-
-Assignment dibuat.
-
-Status berubah.
-
----
-
-## TC-ADM-003
-
-Input Berat
-
-Expected
-
-Berat tersimpan.
-
-Harga dihitung otomatis.
-
----
-
-## TC-ADM-004
-
-Update Status Laundry
-
-Expected
-
-Status berubah.
-
-History dibuat.
-
----
-
-## TC-ADM-005
-
-Webhook Pembayaran Paid
-
-Expected
-
-Payment menjadi Paid.
-
-Order siap Delivery.
-
----
-
-# COURIER
-
-## TC-COU-001
-
-Melihat Tugas
-
-Expected
-
-Hanya Assignment miliknya.
-
----
-
-## TC-COU-002
-
-Start Pickup
-
-Expected
-
-Status
-
-On The Way.
-
-GPS aktif.
-
----
-
-## TC-COU-003
-
-Update GPS
-
-Expected
-
-Latitude tersimpan.
-
-Longitude tersimpan.
-
-Timestamp berubah.
-
----
-
-## TC-COU-004
-
-Complete Pickup
-
-Expected
-
-Status Picked Up.
-
-GPS berhenti.
-
----
-
-## TC-COU-005
-
-Start Delivery
-
-Expected
-
-GPS aktif.
-
----
-
-## TC-COU-006
-
-Complete Delivery
-
-Expected
-
-Status Completed.
-
-GPS berhenti.
-
----
-
-# GPS
-
-## TC-GPS-001
-
-GPS Permission Allowed
-
-Expected
-
-Lokasi berhasil dikirim.
-
----
-
-## TC-GPS-002
-
-GPS Permission Denied
-
-Expected
-
-Pesan Error.
-
----
-
-## TC-GPS-003
-
-Internet Putus
-
-Expected
-
-Lokasi terakhir tetap tampil.
-
----
-
-## TC-GPS-004
-
-Pickup dan Delivery berstatus On The Way
-
-Expected
-
-Tracking aktif, payload berisi status perjalanan, route jalan, ETA, remaining distance, dan bearing.
-
----
-
-## TC-GPS-005
-
-Assignment selesai
-
-Expected
-
-Tracking tidak aktif dan Courier tidak dapat mengirim lokasi baru.
-
----
-
-## TC-GPS-006
-
-Customer atau Courier mengakses assignment milik pengguna lain
-
-Expected
-
-Request ditolak oleh Policy atau validasi ownership.
-
----
-
-# PAYMENT
-
-## TC-PAY-001
-
-Midtrans QRIS
-
-Expected
-
-Payment dibuat.
-
----
-
-## TC-PAY-002
-
-Midtrans Virtual Account
-
-Expected
-
-Payment dibuat.
-
----
-
-## TC-PAY-003
-
-Webhook settlement/capture dengan signature dan nominal valid
-
-Expected
-
-Payment dan Order menjadi Paid secara idempotent.
-
----
-
-## TC-PAY-004
-
-Webhook gagal atau kedaluwarsa
-
-Expected
-
-Payment menjadi Failed, Order kembali Ready, dan Activity Log mencatat Payment Failed atau Payment Expired.
-
----
-
-## TC-PAY-005
-
-Webhook dengan signature atau nominal tidak valid
-
-Expected
-
-Request ditolak dan status tidak berubah.
-
----
-
-# REPORT
-
-## TC-REP-001
-
-Filter Tanggal
-
-Expected
-
-Data sesuai tanggal.
-
----
-
-## TC-REP-002
-
-Revenue
-
-Expected
-
-Total benar.
-
----
-
-# AUTHORIZATION
-
-Customer
-
-Tidak dapat membuka
-
-/admin/*
-
-Courier
-
-Tidak dapat membuka
-
-/customer/*
-
-Admin
-
-Dapat membuka seluruh halaman Admin.
-
----
-
-# RESPONSIVE
-
-Desktop
-
-Sidebar tampil.
-
-Tablet
-
-Sidebar collapse.
-
-Mobile
-
-Bottom Navigation tampil.
-
-Semua halaman responsive.
-
----
-
-# PERFORMANCE
-
-Target
-
-Halaman
-
-< 3 detik.
-
-GPS
-
-10 detik/update.
-
-Pagination
-
-Aktif.
-
----
-
-# SECURITY CHECKLIST
-
-- Password Hash
-- CSRF Protection
-- XSS Escape
-- SQL Injection Prevention
-- Form Request Validation
-- Middleware
-- Policy
-- Authentication
-- Authorization
-- .env tidak masuk Git
-
----
-
-# DATABASE VALIDATION
-
-Pastikan:
-
-Order dibuat.
-
-Payment dibuat.
-
-Assignment dibuat.
-
-Status History dibuat.
-
-GPS tersimpan.
-
-Activity Log dibuat.
-
----
-
-# BUG SEVERITY
-
-Critical
-
-Aplikasi tidak dapat digunakan.
-
-High
-
-Fitur utama gagal.
-
-Medium
-
-Fitur berjalan sebagian.
-
-Low
-
-UI.
-
----
-
-# ACCEPTANCE CRITERIA
-
-Semua Test Case P0
-
-PASS
-
-Semua Business Rule
-
-PASS
-
-Semua Role
-
-PASS
-
-Semua Dashboard
-
-PASS
-
-Tracking GPS
-
-PASS
-
-Payment
-
-PASS
-
-Order
-
-PASS
-
-Deployment
-
-PASS
-
----
-
-# Definition of Testing Done
-
-Testing dianggap selesai apabila:
-
-- Tidak ada Bug Critical.
-- Tidak ada Bug High.
-- Seluruh Test Case P0 PASS.
-- Minimal 95% Test Case berhasil.
-- Sistem siap Demo.
+| Area | Yang sudah diperiksa otomatis |
+|---|---|
+| Login dan akun | Login/logout, akun nonaktif, pendaftaran, reset kata sandi, login Google. |
+| Customer | Profil, alamat, katalog layanan, ringkasan dashboard, akses data milik sendiri, cuaca. |
+| Admin | Pengelolaan pelanggan dan pengaturan harga. |
+| Pesanan | Penolakan alamat milik orang lain, penolakan alur yang tidak didukung, urutan tahap laundry, syarat pembayaran sebelum delivery. |
+| Pembayaran | Pembuatan dan pembukaan ulang transaksi, pergantian metode, simulasi sukses, signature webhook, status lunas/gagal/kedaluwarsa. |
+| GPS | Pengiriman dan pembacaan lokasi, kepemilikan tugas, tracking pickup/delivery, penghentian tracking setelah tugas selesai. |
+| Tampilan dan navigasi | Dashboard per peran, ringkasan pesanan Customer, menu workspace, sidebar desktop dan drawer ponsel. |
+| Rute | Pengolahan respons layanan rute dan penanganan saat layanan rute gagal. |
+
+Daftar ini menggambarkan tes yang tersedia saat dokumen diperbarui. Tes otomatis tidak menggantikan pemeriksaan langsung di browser, perangkat, atau layanan pihak ketiga.
+
+## Cara mencatat bug
+
+Gunakan format singkat ini saat menemukan masalah:
+
+```text
+Judul:
+Halaman dan peran:
+Perangkat/browser:
+Langkah untuk mengulang:
+Hasil yang diharapkan:
+Hasil yang terjadi:
+Seberapa mengganggu: Kritis / Tinggi / Sedang / Rendah
+Bukti: tangkapan layar atau pesan error (hapus data pribadi dan rahasia)
+```
+
+Tingkat gangguan:
+
+- **Kritis:** aplikasi atau alur utama tidak dapat dipakai, atau data pengguna berisiko.
+- **Tinggi:** fitur utama gagal tanpa jalan lain yang aman.
+- **Sedang:** sebagian fungsi terganggu, tetapi pekerjaan masih bisa dilanjutkan.
+- **Rendah:** masalah tampilan atau kemudahan yang tidak menghalangi tugas.
+
+## Syarat siap demo
+
+- Semua tes otomatis di atas lulus.
+- Tidak ada masalah Kritis atau Tinggi yang belum diselesaikan.
+- Alur satu pesanan dari pembuatan sampai selesai sudah diperiksa manual.
+- Pembayaran Sandbox, peta/rute, dan GPS sudah dicoba dengan layanan yang diperlukan aktif.
+- Halaman utama sudah diperiksa di ponsel dan desktop.
+- Bukti dan hasil pemeriksaan disimpan tanpa kata sandi, token, atau data pelanggan sungguhan.
