@@ -1,6 +1,6 @@
 # Laundry Wash
 
-Dokumentasi utama untuk pengembangan Sistem Laundry berbasis web.
+Dokumentasi utama untuk pengembangan Sistem Laundry berbasis web
 
 ## Ringkasan
 Sistem ini mengelola laundry end-to-end: pickup dan delivery oleh kurir, proses laundry, pembayaran otomatis Midtrans, serta tracking GPS.
