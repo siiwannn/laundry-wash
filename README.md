@@ -1,52 +1,119 @@
-# Laundry Wash
+# 🧺 Laundry Wash
 
-Aplikasi manajemen laundry berbasis web yang menghubungkan pelanggan, admin, dan kurir dalam satu alur operasional: pemesanan, penjemputan, pencucian, pembayaran, hingga pengantaran.
+Aplikasi manajemen laundry berbasis web yang menyatukan pelanggan, admin, dan kurir dalam satu alur operasional — dari pemesanan, penjemputan, pencucian, pembayaran, hingga pengantaran.
 
-Laundry Wash menyediakan katalog layanan publik dan dashboard sesuai peran, dengan antarmuka responsif untuk desktop maupun perangkat mobile.
+Dibangun dengan **Laravel 13** dan **MySQL 8**, featuring katalog layanan publik, dashboard per peran, pelacakan kurir secara real-time, dan pembayaran via Midtrans Snap.
 
-## Fitur utama
+![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?style=flat-square&logo=laravel&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4?style=flat-square&logo=php&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?style=flat-square&logo=mysql&logoColor=white)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?style=flat-square&logo=bootstrap&logoColor=white)
+![MapLibre](https://img.shields.io/badge/MapLibre_GL-5-3A3A3A?style=flat-square)
 
-- **Akun dan akses:** registrasi pelanggan, login, pemulihan kata sandi, serta otorisasi berdasarkan peran.
-- **Katalog dan pemesanan:** daftar layanan, pengelolaan alamat, pembuatan pesanan, dan riwayat transaksi.
-- **Operasional laundry:** konfirmasi pesanan, pencatatan berat aktual, serta pembaruan tahap pencucian, pengeringan, dan penyetrikaan.
-- **Manajemen kurir:** penugasan penjemputan dan pengantaran, status ketersediaan, serta riwayat tugas.
-- **Pelacakan:** posisi kurir melalui GPS browser, peta interaktif, rute jalan, estimasi waktu tiba, dan jarak tersisa.
-- **Pembayaran:** integrasi Midtrans Snap Sandbox untuk QRIS dan Virtual Account, dengan pembaruan status melalui webhook.
-- **Administrasi:** pengelolaan pelanggan, kurir, layanan, pengaturan operasional, dashboard, dan laporan.
+---
 
-## Peran pengguna
+## 📋 Daftar Isi
 
-| Peran | Akses utama |
-| --- | --- |
-| Admin | Mengelola layanan, pelanggan, kurir, pesanan, proses laundry, dan laporan. |
-| Pelanggan | Memesan layanan, mengelola alamat, membayar, serta memantau status pesanan dan posisi kurir. |
-| Kurir | Menerima tugas, memperbarui status penjemputan atau pengantaran, dan mengirim lokasi GPS. |
+- [Fitur Utama](#-fitur-utama)
+- [Peran Pengguna](#-peran-pengguna)
+- [Teknologi](#-teknologi)
+- [Menjalankan Secara Lokal](#-menjalankan-secara-lokal)
+- [Integrasi Eksternal](#-integrasi-eksternal)
+- [Pengujian](#-pengujian)
+- [Struktur Proyek](#-struktur-proyek)
+- [Panduan Pengembangan](#-panduan-pengembangan)
 
-## Teknologi
+---
+
+## ✨ Fitur Utama
+
+<table>
+<tr><td width="50%">
+
+**👤 Akun dan Akses**
+- Registrasi pelanggan & login
+- Pemulihan kata sandi
+- Otorisasi berbasis peran
+- Login Google (OAuth)
+
+**🛒 Katalog dan Pemesanan**
+- Daftar layanan dengan harga dinamis
+- Pengelolaan alamat pengiriman
+- Pembuatan pesanan
+- Riwayat transaksi
+
+**🧪 Operasional Laundry**
+- Konfirmasi pesanan
+- Pencatatan berat aktual
+- Tahap pencucian, pengeringan, penyetrikaan
+
+</td><td width="50%">
+
+**🚚 Manajemen Kurir**
+- Penugasan penjemputan & pengantaran
+- Status ketersediaan kurir
+- Riwayat tugas
+
+**📍 Pelacakan**
+- GPS browser (Geolocation API)
+- Peta interaktif (MapLibre GL)
+- Rute jalan + estimasi tiba
+- Sisa jarak ke tujuan
+
+**💳 Pembayaran**
+- Midtrans Snap Sandbox
+- QRIS & Virtual Account
+- Webhook status real-time
+
+**📊 Administrasi**
+- Manajemen pelanggan, kurir, layanan
+- Dashboard operasional
+- Laporan & audit activity log
+
+</td></tr>
+</table>
+
+---
+
+## 👥 Peran Pengguna
+
+| Peran | Akses Utama |
+| :--- | :--- |
+| **Admin** | Mengelola layanan, pelanggan, kurir, pesanan, proses laundry, dan laporan. |
+| **Pelanggan** | Memesan layanan, mengelola alamat, membayar, serta memantau status pesanan dan posisi kurir. |
+| **Kurir** | Menerima tugas, memperbarui status penjemputan/pengantaran, dan mengirim lokasi GPS. |
+
+Setiap peran Routes dan Policy terpisah untuk memastikan akses hanya diberikan kepada pihak yang berhak.
+
+---
+
+## 🛠️ Teknologi
 
 | Komponen | Teknologi |
-| --- | --- |
-| Backend | Laravel 13, PHP 8.3+ |
-| Antarmuka | Blade, Bootstrap 5, JavaScript |
-| Build aset | Vite 8, npm |
-| Database | MySQL 8 untuk target aplikasi; SQLite sebagai konfigurasi awal pengembangan dan database pengujian |
-| Peta dan rute | MapLibre GL JS, OpenFreeMap, OSRM; Leaflet untuk komponen peta lainnya |
-| Lokasi kurir | Browser Geolocation API dan AJAX polling |
-| Pembayaran | Midtrans Snap Sandbox |
-| Pengujian | PHPUnit 12 dan Node.js test runner |
+| :--- | :--- |
+| **Backend** | Laravel 13, PHP 8.3+ |
+| **Antarmuka** | Blade, Bootstrap 5, JavaScript |
+| **Build Aset** | Vite 8, npm |
+| **Database** | MySQL 8 (produksi) · SQLite (dev & test) |
+| **Peta & Rute** | MapLibre GL JS, OpenFreeMap, OSRM; Leaflet untuk peta tambahan |
+| **Lokasi Kurir** | Browser Geolocation API + AJAX polling |
+| **Pembayaran** | Midtrans Snap Sandbox |
+| **Pengujian** | PHPUnit 12, Node.js test runner |
 
-Versi dependensi yang digunakan tercatat di `composer.lock` dan `package-lock.json`.
+Versi dependensi persis terkunci di `composer.lock` dan `package-lock.json`.
 
-## Menjalankan secara lokal
+---
+
+## 🚀 Menjalankan Secara Lokal
 
 ### Prasyarat
 
-- PHP 8.3 atau lebih baru, Composer, dan ekstensi PHP yang diperlukan Laravel serta PHPUnit, termasuk cURL, DOM/XML, Fileinfo, Mbstring, dan PDO.
-- Ekstensi `pdo_sqlite` untuk konfigurasi awal atau `pdo_mysql` jika menggunakan MySQL.
-- Node.js 20.19+ atau 22.12+ sesuai persyaratan Vite 8, beserta npm.
-- Git dan akses internet untuk mengunduh dependensi serta font saat build.
+- **PHP 8.3+** — beserta ekstensi cURL, DOM/XML, Fileinfo, Mbstring, dan PDO
+- **Database driver** — `pdo_sqlite` (default dev) atau `pdo_mysql` (MySQL 8)
+- **Node.js 20.19+** atau **22.12+** (persyaratan Vite 8), beserta npm
+- **Git** dan akses internet untuk dependensi
 
-### 1. Unduh proyek dan instal dependensi
+### 1️⃣ Clone & Instal Dependensi
 
 ```bash
 git clone https://github.com/siiwannn/laundry-wash.git
@@ -55,102 +122,126 @@ composer install --no-interaction --prefer-dist
 npm ci --ignore-scripts
 ```
 
-### 2. Siapkan konfigurasi aplikasi
-
-Untuk instalasi baru:
+### 2️⃣ Konfigurasi Aplikasi
 
 ```bash
 php -r "file_exists('.env') || copy('.env.example', '.env');"
 php artisan key:generate
 ```
 
-Sesuaikan `APP_NAME`, `APP_URL`, dan pengaturan database di `.env`. Jangan menghasilkan ulang `APP_KEY` pada instalasi yang sudah digunakan karena dapat memengaruhi data terenkripsi dan sesi.
+Sesuaikan `APP_NAME`, `APP_URL`, dan pengaturan database di `.env`.
 
-Konfigurasi awal menggunakan SQLite. Buat file database dan jalankan migrasi:
+> ⚠️ **Jangan** menjalankan ulang `php artisan key:generate` pada instalasi yang sudah aktif — ini dapat merusak data terenkripsi dan sesi pengguna.
+
+**Opsi A — SQLite (paling cepat):**
 
 ```bash
 php -r "file_exists('database/database.sqlite') || touch('database/database.sqlite');"
 php artisan migrate
 ```
 
-Untuk MySQL 8, buat database terlebih dahulu, lalu atur `DB_CONNECTION=mysql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD` sebelum menjalankan migrasi. Driver database ini juga didukung oleh konfigurasi Laravel proyek.
+**Opsi B — MySQL 8:**
 
-### 3. Build aset dan jalankan aplikasi
+Buat database, lalu set `DB_CONNECTION=mysql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` sebelum migrate.
+
+### 3️⃣ Build Aset & Jalankan
 
 ```bash
 npm run build
 php artisan serve
 ```
 
-Server pengembangan berjalan pada alamat yang ditampilkan oleh Artisan, secara default `127.0.0.1:8000`. Untuk pembaruan aset otomatis selama pengembangan, jalankan `npm run dev` pada terminal terpisah.
+Buka `http://127.0.0.1:8000`. Untuk hot-reload selama pengembangan, jalankan `npm run dev` di terminal terpisah.
 
-Build aset mengunduh font dari `fonts.bunny.net`. Jika menggunakan proxy dengan pembatasan jaringan, izinkan domain tersebut. Node.js yang mendukung proxy melalui environment dapat menggunakan `NODE_USE_ENV_PROXY=1 npm run build`.
+> **Catatan jaringan:** Build aset mengunduh font dari `fonts.bunny.net`. Di balik proxy, izinkan domain tersebut atau set `NODE_USE_ENV_PROXY=1`.
 
-### Data demo (opsional)
-
-Seeder menyediakan contoh pengguna, layanan, pesanan, dan tugas kurir:
+### 🌱 Data Demo (opsional)
 
 ```bash
 php artisan db:seed
 ```
 
-Akun demo menggunakan email `admin@laundrywash.com`, `customer@laundrywash.com`, dan `courier@laundrywash.com`, dengan kata sandi `password`. Gunakan hanya pada lingkungan pengembangan atau demo yang terisolasi.
+| Peran | Email | Kata Sandi |
+| :--- | :--- | :--- |
+| Admin | `admin@laundrywash.com` | `password` |
+| Pelanggan | `customer@laundrywash.com` | `password` |
+| Kurir | `courier@laundrywash.com` | `password` |
 
-## Integrasi eksternal
+> ⚠️ Akun demo hanya untuk lingkungan pengembangan atau demo yang terisolasi. **Jangan** dipakai di produksi.
 
-Konfigurasi integrasi tersedia di `.env.example` dan `config/services.php`.
+---
 
-| Integrasi | Konfigurasi |
-| --- | --- |
-| Midtrans Sandbox | `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, dan `MIDTRANS_IS_PRODUCTION=false` |
-| Login Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, dan `GOOGLE_REDIRECT_URI` |
-| Style peta | `MAP_STYLE_URL` |
-| Routing jalan | `ROUTING_URL` |
-| Informasi cuaca | `WEATHER_API_URL` — menggunakan Open-Meteo secara default |
+## 🔌 Integrasi Eksternal
 
-Webhook pembayaran berada pada endpoint `POST /api/midtrans/notification`. Untuk menerima notifikasi dari Midtrans, endpoint harus dapat diakses oleh layanan tersebut. Pengujian integrasi pembayaran dan login Google secara langsung memerlukan kredensial masing-masing layanan.
+Seluruh konfigurasi tersedia di `.env.example` dan `config/services.php`.
 
-Pelacakan lokasi memerlukan izin lokasi dari pengguna dan konteks browser yang aman, seperti HTTPS atau localhost. Lokasi dikirim secara berkala selama tugas penjemputan atau pengantaran aktif.
+| Integrasi | Variabel |
+| :--- | :--- |
+| **Midtrans Sandbox** | `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_IS_PRODUCTION=false` |
+| **Login Google** | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` |
+| **Style Peta** | `MAP_STYLE_URL` |
+| **Routing Jalan** | `ROUTING_URL` |
+| **Info Cuaca** | `WEATHER_API_URL` (default: Open-Meteo) |
 
-Simpan kredensial di konfigurasi lingkungan. Jangan memasukkan `.env`, token, atau kunci layanan ke dalam commit.
+**Webhook Pembayaran:** `POST /api/midtrans/notification`
+Endpoint ini wajib dapat diakses langsung oleh layanan Midtrans. Pengujian integrasi pembayaran dan login Google memerlukan kredensial masing-masing layanan.
 
-## Pengujian
+**Pelacakan Lokasi:** Memerlukan izin lokasi pengguna dan konteks browser aman (HTTPS atau localhost). Koordinat dikirim berkala selama penugasan aktif.
 
-Jalankan suite PHP dan pengujian navigasi JavaScript dari direktori proyek:
+> 🔒 Simpan kredensial di environment. **Jangan pernah** commit `.env`, token, atau kunci layanan.
+
+---
+
+## 🧪 Pengujian
 
 ```bash
+# PHP test suite
 composer test
+
+# JavaScript navigation tests
 node --test tests/js/*.test.mjs
-```
 
-Suite PHP mencakup autentikasi, otorisasi, katalog, pengelolaan pelanggan, alur pesanan, GPS, pembayaran, pengaturan, dan tampilan dashboard. Konfigurasi `phpunit.xml` menggunakan SQLite di memori sehingga pengujian tidak memakai database pengembangan.
-
-Untuk memeriksa build frontend:
-
-```bash
+# Verifikasi build frontend
 npm run build
 ```
 
-## Struktur proyek
+Suite PHP mencakup autentikasi, otorisasi, katalog, manajemen pelanggan, alur pesanan, GPS, pembayaran, pengaturan, dan dashboard. `phpunit.xml` memakai SQLite in-memory sehingga test tidak menyentuh database pengembangan.
+
+---
+
+## 📁 Struktur Proyek
 
 ```text
 app/
-├── Enums/           # Peran pengguna serta status pesanan dan pembayaran
-├── Http/            # Controller, middleware, dan validasi request
-├── Models/          # Model Eloquent
-└── Services/        # Logika bisnis dan integrasi
-database/            # Migration, factory, dan seeder
-resources/           # Template Blade serta sumber aset
-public/              # Aset publik
-routes/              # Route web, API, dan console
-tests/               # Pengujian unit, fitur, dan JavaScript
+├── Enums/       # Peran pengguna, status pesanan & pembayaran
+├── Http/        # Controller, middleware, Form Request
+├── Models/      # Model Eloquent
+├── Policies/    # Otorisasi tingkat model
+└── Services/    # Logika bisnis & integrasi eksternal
+database/        # Migration, factory, seeder
+resources/       # Template Blade & sumber aset
+routes/          # Route web, API, console
+tests/           # Unit, Feature, dan JavaScript tests
 ```
 
-## Panduan pengembangan
+Arsitektur mengikuti **MVC + Service Layer**: controller tetap tipis, seluruh logika bisnis berada di Service, dan validasi\input handled oleh Form Request.
 
-- Baca [AGENTS.md](AGENTS.md) untuk aturan arsitektur, alur bisnis, dan kontribusi oleh coding agent.
-- Baca [DESIGN.md](DESIGN.md) untuk acuan desain antarmuka.
-- Gunakan migration untuk perubahan database, Form Request untuk validasi, dan Service untuk logika bisnis.
-- Pertahankan otorisasi pada backend dan jalankan pengujian yang relevan sebelum mengirim perubahan.
+---
 
-Dokumen perencanaan bernomor `01`–`12` disimpan secara lokal dan dikecualikan dari Git. Dokumen tersebut tidak disertakan dalam hasil clone repository.
+## 🧑‍💻 Panduan Pengembangan
+
+Baca dokumen berikut sebelum Contrib:
+
+- **[AGENTS.md](AGENTS.md)** — aturan arsitektur, alur bisnis, dan kontribusi coding agent **(WAJIB)**
+- **[DESIGN.md](DESIGN.md)** — acuan desain antarmuka
+
+Konvensi yang harus dijaga:
+
+- ✅ Gunakan **migration** untuk perubahan database
+- ✅ Gunakan **Form Request** untuk validasi input
+- ✅ Tempatkan logika bisnis di **Service**, bukan Controller
+- ✅ Terapkan **Policy** untuk otorisasi
+- 🚫 Hindari **raw SQL** kecuali benar-benar diperlukan
+- ✅ Jalankan pengujian relevan sebelum mengirim perubahan
+
+Dokumen perencanaan bernomor `01`–`12` disimpan secara lokal dan dikecualikan dari Git.
