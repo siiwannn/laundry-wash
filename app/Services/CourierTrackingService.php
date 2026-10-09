@@ -10,6 +10,7 @@ use App\Models\CourierLocation;
 use App\Models\Order;
 use App\Models\User;
 use Exception;
+use Illuminate\Support\Facades\Cache;
 
 class CourierTrackingService
 {
@@ -89,6 +90,7 @@ class CourierTrackingService
 
         $route = null;
         $movementRoute = null;
+        $routeCacheKey = "courier-assignment-route:{$activeAssignment->id}";
         if ($latestLocation && $targetAddress?->latitude !== null && $targetAddress?->longitude !== null) {
             $route = $this->roadRoute->route(
                 (float) $latestLocation->latitude,
@@ -96,6 +98,10 @@ class CourierTrackingService
                 (float) $targetAddress->latitude,
                 (float) $targetAddress->longitude,
             );
+
+            if ($route !== null) {
+                Cache::put($routeCacheKey, $route, now()->addDay());
+            }
 
             $previousLocation = $activeAssignment->locations()
                 ->whereKeyNot($latestLocation->id)
@@ -110,6 +116,11 @@ class CourierTrackingService
                     (float) $latestLocation->longitude,
                 );
             }
+        }
+
+        if ($route === null) {
+            $cachedRoute = Cache::get($routeCacheKey);
+            $route = is_array($cachedRoute) ? $cachedRoute : null;
         }
 
         $journeyStatus = $this->activeJourneyStatus($activeAssignment->type, $route['distance_meters'] ?? null);

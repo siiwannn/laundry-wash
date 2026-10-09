@@ -105,6 +105,22 @@ class MidtransPaymentTest extends TestCase
         $this->assertDatabaseHas('activity_logs', ['activity' => 'Payment Paid: '.$order->payments()->first()->gateway_order_id]);
     }
 
+    public function test_local_customer_can_simulate_payment_when_snap_creation_failed(): void
+    {
+        config(['app.env' => 'local']);
+        $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
+        $order = $this->createOrder($customer, OrderStatus::READY);
+
+        $this->actingAs($customer)
+            ->post(route('customer.orders.simulate-payment', $order))
+            ->assertRedirect();
+
+        $payment = Payment::firstOrFail();
+        $this->assertSame(PaymentStatus::PAID, $payment->status);
+        $this->assertSame(PaymentMethod::QRIS, $payment->method);
+        $this->assertSame(OrderStatus::PAID, $order->refresh()->status);
+    }
+
     public function test_webhook_rejects_invalid_signature(): void
     {
         $payment = $this->createPendingPayment();

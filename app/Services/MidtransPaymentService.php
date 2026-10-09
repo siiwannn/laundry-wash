@@ -87,5 +87,16 @@ class MidtransPaymentService
         Config::$isProduction = (bool) config('services.midtrans.is_production', false);
         Config::$isSanitized = (bool) config('services.midtrans.is_sanitized', true);
         Config::$is3ds = (bool) config('services.midtrans.is_3ds', true);
+
+        $caBundle = (string) (ini_get('curl.cainfo') ?: ini_get('openssl.cafile'));
+        Config::$curlOptions = [
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_HTTPHEADER => ['X-Integration-Id: laundry-wash'],
+        ];
+
+        if ($caBundle !== '' && is_file($caBundle)) {
+            Config::$curlOptions[CURLOPT_CAINFO] = $caBundle;
+        }
     }
 }

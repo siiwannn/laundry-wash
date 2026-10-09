@@ -13,21 +13,23 @@
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="preload" href="{{ asset('css/laundry-workspace.css') }}?v=20261008-1" as="style">
+    <link href="{{ asset('css/laundry-workspace.css') }}?v=20261008-1" rel="stylesheet">
 
     <style>
         :root {
-            --lw-primary: #3B82F6;
-            --lw-secondary: #0EA5E9;
-            --lw-dark: #1e293b;
-            --lw-light: #f8fafc;
+            --lw-primary: #c63f1f;
+            --lw-secondary: #c63f1f;
+            --lw-dark: #242320;
+            --lw-light: #f5f4f0;
             --lw-surface: #ffffff;
-            --lw-border: #e2e8f0;
+            --lw-border: #e9e7e1;
         }
 
         body {
             font-family: "Poppins", sans-serif;
             background-color: var(--lw-light);
-            color: #334155;
+            color: #34332f;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -38,8 +40,21 @@
             letter-spacing: -0.5px;
         }
 
+        .workspace-navbar {
+            min-height: 76px;
+            background: var(--lw-light) !important;
+            border-bottom: 1px solid var(--lw-border);
+            box-shadow: none !important;
+        }
+
+        .workspace-navbar .navbar-brand,
+        .workspace-navbar .nav-link,
+        .workspace-navbar .text-white {
+            color: var(--lw-dark) !important;
+        }
+
         .navbar-brand i {
-            color: var(--lw-secondary);
+            color: var(--lw-primary);
         }
 
         .card {
@@ -94,11 +109,11 @@
             border-top: 1px solid var(--lw-border);
             background: #ffffff;
         }
-        .app-sidebar { width: 250px; position: fixed; inset: 57px auto 0 0; background: #fff; border-right: 1px solid var(--lw-border); padding: 1.25rem 1rem; overflow-y: auto; z-index: 1010; }
-        .app-sidebar .nav-link { color: #64748b; border-radius: 12px; padding: .75rem .875rem; margin-bottom: .25rem; }
-        .app-sidebar .nav-link:hover, .app-sidebar .nav-link.active { color: var(--lw-primary); background: #eff6ff; font-weight: 600; }
-        .app-content { margin-left: 250px; }
-        :focus-visible { outline: 3px solid rgba(59, 130, 246, .35); outline-offset: 2px; }
+        .app-sidebar { width: 248px; position: fixed; inset: 0 auto 0 0; background: #fff; border-right: 1px solid var(--lw-border); padding: 24px 12px; overflow-y: auto; z-index: 1040; }
+        .app-sidebar .nav-link { color: #605e58; border-radius: 8px; padding: 12px; margin-bottom: 3px; }
+        .app-sidebar .nav-link:hover, .app-sidebar .nav-link.active { color: var(--lw-dark); background: #f0eee8; font-weight: 600; }
+        .app-content { margin-left: 248px; }
+        :focus-visible { outline: 3px solid rgba(198, 63, 31, .35); outline-offset: 2px; }
         @media (min-width: 992px) { #navbarMain .navbar-nav.me-auto { display: none; } }
         @media (max-width: 991.98px) {
             .app-sidebar { display: none; }
@@ -106,7 +121,6 @@
         }
     </style>
     @stack('styles')
-    <link href="{{ asset('css/laundry-workspace.css') }}?v=20261006-4" rel="stylesheet">
     @auth
         @unless(request()->routeIs('catalog'))
             <link href="{{ asset('css/workspace-consistency.css') }}?v=20261006-4" rel="stylesheet">
@@ -285,7 +299,7 @@
     <!-- Footer -->
     <footer class="py-3 text-center text-muted">
         <div class="container">
-            <small>&copy; {{ date('Y') }} <strong>Laundry Wash</strong> &bull; Sistem Manajemen Laundry Terintegrasi &bull; Versi 1.0 (Laravel 12)</small>
+            <small>&copy; {{ date('Y') }} <strong>Laundry Wash</strong> &bull; Sistem Manajemen Laundry Terintegrasi</small>
         </div>
     </footer>
 

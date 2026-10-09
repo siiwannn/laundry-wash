@@ -109,7 +109,7 @@
             box-shadow: 0 0 0 0.25rem rgba(198, 63, 31, 0.15);
         }
 
-        .btn-primary { background-color: #c63f1f; border-color: #c63f1f; font-weight: 600; }
+        .btn-primary { --bs-btn-color: #fff; --bs-btn-bg: #c63f1f; --bs-btn-border-color: #c63f1f; --bs-btn-hover-color: #fff; --bs-btn-hover-bg: #a93015; --bs-btn-hover-border-color: #a93015; --bs-btn-focus-shadow-rgb: 198, 63, 31; --bs-btn-active-color: #fff; --bs-btn-active-bg: #8c2913; --bs-btn-active-border-color: #8c2913; background-color: #c63f1f; border-color: #c63f1f; font-weight: 600; }
         .btn-primary:hover { background-color: #a93015; border-color: #a93015; }
 
         .text-primary { color: #c63f1f !important; }
@@ -118,7 +118,11 @@
         .form-control, .form-select { min-height: 46px; }
         .form-control, .input-group-text { background: #f7f5f1; border: 1px solid transparent; }
         .form-control:focus { background: #fff; }
+        .form-check-input { border-color: #bcb7ae; }
+        .form-check-input:checked { background-color: #c63f1f; border-color: #c63f1f; }
+        .form-check-input:focus { border-color: #c63f1f; box-shadow: 0 0 0 .25rem rgba(198, 63, 31, .18); }
         .btn { min-height: 46px; }
+        .google-brand-icon { width: 20px; height: 20px; flex: 0 0 20px; }
         .auth-header { padding: 0 0 1.5rem; text-align: center; }
         .auth-body { padding: 0; }
 

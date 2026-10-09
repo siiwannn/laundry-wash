@@ -10,6 +10,7 @@ use App\Services\CourierAssignmentService;
 use App\Services\RoadRouteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class CourierTaskController extends Controller
@@ -38,9 +39,7 @@ class CourierTaskController extends Controller
         $profile = $assignment->courier?->courierProfile;
         $latitude = $location?->latitude ?? $profile?->current_latitude;
         $longitude = $location?->longitude ?? $profile?->current_longitude;
-        $trackingRoute = $latitude !== null && $longitude !== null && $targetAddress?->latitude !== null && $targetAddress?->longitude !== null
-            ? $this->roadRoute->route((float) $latitude, (float) $longitude, (float) $targetAddress->latitude, (float) $targetAddress->longitude)
-            : null;
+        $trackingRoute = $this->resolveTrackingRoute($assignment, $latitude, $longitude, $targetAddress?->latitude, $targetAddress?->longitude);
 
         return view('courier.tasks.show', compact('assignment', 'targetAddress', 'trackingRoute'));
     }
@@ -57,9 +56,7 @@ class CourierTaskController extends Controller
         $profile = $assignment->courier?->courierProfile;
         $latitude = $location?->latitude ?? $profile?->current_latitude;
         $longitude = $location?->longitude ?? $profile?->current_longitude;
-        $route = $latitude !== null && $longitude !== null && $targetAddress?->latitude !== null && $targetAddress?->longitude !== null
-            ? $this->roadRoute->route((float) $latitude, (float) $longitude, (float) $targetAddress->latitude, (float) $targetAddress->longitude)
-            : null;
+        $route = $this->resolveTrackingRoute($assignment, $latitude, $longitude, $targetAddress?->latitude, $targetAddress?->longitude);
 
         return response()->json(['success' => true, 'route' => $route]);
     }
@@ -112,5 +109,38 @@ class CourierTaskController extends Controller
         if ($assignment->courier_id !== auth()->id()) {
             abort(403, 'Anda tidak memiliki hak akses untuk tugas ini.');
         }
+    }
+
+    private function resolveTrackingRoute(
+        CourierAssignment $assignment,
+        mixed $latitude,
+        mixed $longitude,
+        mixed $targetLatitude,
+        mixed $targetLongitude
+    ): ?array {
+        $cacheKey = "courier-assignment-route:{$assignment->id}";
+
+        if ($latitude === null || $longitude === null || $targetLatitude === null || $targetLongitude === null) {
+            $cachedRoute = Cache::get($cacheKey);
+
+            return is_array($cachedRoute) ? $cachedRoute : null;
+        }
+
+        $route = $this->roadRoute->route(
+            (float) $latitude,
+            (float) $longitude,
+            (float) $targetLatitude,
+            (float) $targetLongitude
+        );
+
+        if ($route !== null) {
+            Cache::put($cacheKey, $route, now()->addDay());
+
+            return $route;
+        }
+
+        $cachedRoute = Cache::get($cacheKey);
+
+        return is_array($cachedRoute) ? $cachedRoute : null;
     }
 }

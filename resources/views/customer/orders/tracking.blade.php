@@ -104,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const trackingUrl = @json(route('api.orders.tracking', $order));
     const mapStyleUrl = @json(config('services.tracking.map_style_url'));
     const initialData = @json($trackingData);
+    const routeStorageKey = `customer-tracking-route-${initialData.assignment_id ?? @json($order->id)}`;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const defaultCoordinates = [
         initialData.courier_location?.longitude ?? initialData.destination?.longitude ?? 106.8456,
@@ -131,11 +132,28 @@ document.addEventListener('DOMContentLoaded', () => {
     destinationElement.innerHTML = '<img src="{{ asset('images/tracking/destination.svg') }}" alt="">';
     const destinationMarker = new maplibregl.Marker({ element: destinationElement });
 
+    function readStoredRoute() {
+        try {
+            return JSON.parse(sessionStorage.getItem(routeStorageKey) || 'null');
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function storeRoute(route) {
+        try {
+            sessionStorage.setItem(routeStorageKey, JSON.stringify(route));
+        } catch (error) {
+            // Route rendering still works when browser storage is unavailable.
+        }
+    }
+
     let currentCoordinates = null;
     let currentBearing = initialData.courier_location?.heading ?? 0;
     let lastRecordedAt = null;
     let animationFrame = null;
-    let autoFollow = true;
+    let autoFollow = !initialData.route;
+    let followCourierOverride = autoFollow;
     let pollingStopped = false;
     let countdown = 10;
     const traveledCoordinates = [];
@@ -148,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const countdownElement = document.getElementById('countdownText');
     const retryButton = document.getElementById('retryTrackingButton');
     const followButton = document.getElementById('followButton');
+    let currentRoute = initialData.route || readStoredRoute();
 
     function setAutoFollow(enabled) {
         autoFollow = enabled;
@@ -159,10 +178,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateRoute(route) {
-        const emptyRoute = { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } };
-        const feature = route?.geometry
-            ? { type: 'Feature', properties: {}, geometry: route.geometry }
-            : emptyRoute;
+        if (route?.geometry?.coordinates?.length) {
+            currentRoute = route;
+            storeRoute(route);
+        }
+
+        route = currentRoute;
+        if (!route?.geometry?.coordinates?.length) return;
+
+        const feature = { type: 'Feature', properties: {}, geometry: route.geometry };
         const source = map.getSource('active-route');
         if (source) source.setData(feature);
 
@@ -174,6 +198,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!bounds.isEmpty()) {
                 map.fitBounds(bounds, { padding: 42, maxZoom: 15, duration: 600 });
                 routeHasBeenFitted = true;
+                autoFollow = false;
+                followCourierOverride = false;
+                setAutoFollow(false);
             }
         }
     }
@@ -186,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function followCamera(coordinates, bearing, duration = 0) {
-        if (!autoFollow) return;
+        if (!autoFollow || !followCourierOverride) return;
         map.easeTo({
             center: coordinates,
             bearing,
@@ -335,8 +362,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     followButton.addEventListener('click', () => {
         setAutoFollow(!autoFollow);
-        if (autoFollow && currentCoordinates) followCamera(currentCoordinates, currentBearing, reducedMotion ? 0 : 600);
+        followCourierOverride = autoFollow;
+        if (autoFollow && currentCoordinates) {
+            followCamera(currentCoordinates, currentBearing, reducedMotion ? 0 : 600);
+        } else if (currentRoute?.geometry?.coordinates?.length) {
+            const bounds = new maplibregl.LngLatBounds();
+            currentRoute.geometry.coordinates.forEach((coordinate) => bounds.extend(coordinate));
+            if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 42, maxZoom: 15, duration: 600 });
+        }
     });
+
+    setAutoFollow(autoFollow);
 
     map.on('zoom', () => {
         const scale = Math.max(.78, Math.min(1.22, .78 + (map.getZoom() - 12) * .08));

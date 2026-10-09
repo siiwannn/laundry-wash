@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
@@ -156,12 +157,29 @@ class PaymentService
             throw new Exception('Simulasi hanya dapat dilakukan untuk pembayaran yang masih pending.');
         }
 
-        $payment = $order->payments()
-            ->where('status', PaymentStatus::PENDING)
-            ->latest()
-            ->firstOrFail();
+        return DB::transaction(function () use ($order, $customer) {
+            $payment = $order->payments()
+                ->where('status', PaymentStatus::PENDING)
+                ->lockForUpdate()
+                ->latest()
+                ->first();
 
-        return DB::transaction(fn () => $this->markPaid($payment->fresh()));
+            if ($payment === null) {
+                $payment = Payment::create([
+                    'order_id' => $order->id,
+                    'gateway_order_id' => 'SIM-'.$order->id.'-'.Str::uuid(),
+                    'amount' => $order->total,
+                    'method' => PaymentMethod::QRIS,
+                    'status' => PaymentStatus::PENDING,
+                    'gateway_status' => 'simulation_pending',
+                    'expires_at' => now()->addDay(),
+                ]);
+                $this->activityLog->record($customer, "Payment Created: {$payment->gateway_order_id}");
+                $this->activityLog->record($customer, "Payment Pending: {$payment->gateway_order_id}");
+            }
+
+            return $this->markPaid($payment->fresh());
+        });
     }
 
     private function markPaid(Payment $payment): Payment

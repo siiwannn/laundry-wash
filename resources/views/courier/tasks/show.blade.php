@@ -157,6 +157,23 @@ document.addEventListener('DOMContentLoaded', function () {
     const mapStyleUrl = @json(config('services.tracking.map_style_url'));
     const routeUrl = @json(route('courier.tasks.route', $assignment));
     const initialRoute = @json($trackingRoute ?? null);
+    const routeStorageKey = `courier-task-route-${assignmentId}`;
+
+    function readStoredRoute() {
+        try {
+            return JSON.parse(sessionStorage.getItem(routeStorageKey) || 'null');
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function storeRoute(route) {
+        try {
+            sessionStorage.setItem(routeStorageKey, JSON.stringify(route));
+        } catch (error) {
+            // Browser storage is optional; the server-side route cache remains available.
+        }
+    }
 
     const map = new maplibregl.Map({ container: 'courierMap', style: mapStyleUrl, center: [targetLng, targetLat], zoom: 14, pitch: 0, bearing: 0 });
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
@@ -164,7 +181,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const etaElement = document.getElementById('courierEta');
     const distanceElement = document.getElementById('courierDistance');
     let routeRefreshInFlight = false;
+    let routeRefreshTimer = null;
     let routeHasBeenFitted = false;
+    let currentRoute = initialRoute || readStoredRoute();
 
     function fitRoute(route) {
         if (routeHasBeenFitted || !route?.geometry?.coordinates?.length) return;
@@ -177,15 +196,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateRoute(route) {
+        currentRoute = route ?? null;
+        if (currentRoute) storeRoute(currentRoute);
         const source = map.getSource('courier-active-route');
         if (source) {
-            source.setData(route?.geometry
-                ? { type: 'Feature', properties: {}, geometry: route.geometry }
+            source.setData(currentRoute?.geometry
+                ? { type: 'Feature', properties: {}, geometry: currentRoute.geometry }
                 : { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } });
         }
-        etaElement.textContent = route ? `${Math.max(1, Math.ceil(route.duration_seconds / 60))} menit` : '--';
-        distanceElement.textContent = route ? `${(route.distance_meters / 1000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} km` : '--';
-        fitRoute(route);
+        etaElement.textContent = currentRoute ? `${Math.max(1, Math.ceil(currentRoute.duration_seconds / 60))} menit` : '--';
+        distanceElement.textContent = currentRoute ? `${(currentRoute.distance_meters / 1000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} km` : '--';
+        fitRoute(currentRoute);
     }
 
     async function refreshRoute() {
@@ -194,7 +215,9 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const response = await fetch(routeUrl, { headers: { Accept: 'application/json' } });
             const data = await response.json();
-            if (response.ok && data.success) updateRoute(data.route);
+            if (response.ok && data.success && data.route) updateRoute(data.route);
+        } catch (error) {
+            console.warn('Rute perjalanan belum tersedia:', error);
         } finally {
             routeRefreshInFlight = false;
         }
@@ -219,7 +242,11 @@ document.addEventListener('DOMContentLoaded', function () {
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: { 'line-color': '#2563EB', 'line-width': 7, 'line-opacity': .95 },
         });
-        updateRoute(initialRoute);
+        updateRoute(currentRoute);
+        if (isTripActive) {
+            refreshRoute();
+            routeRefreshTimer = window.setInterval(refreshRoute, 10000);
+        }
     });
 
     const destinationElement = document.createElement('div');
@@ -271,6 +298,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (transmissionTimer !== null) {
             clearInterval(transmissionTimer);
             transmissionTimer = null;
+        }
+
+        if (routeRefreshTimer !== null) {
+            clearInterval(routeRefreshTimer);
+            routeRefreshTimer = null;
         }
 
         if (message) {
