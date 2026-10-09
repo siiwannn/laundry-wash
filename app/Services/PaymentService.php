@@ -210,10 +210,6 @@ class PaymentService
 
     private function markFailed(Payment $payment, string $activity): Payment
     {
-        if ($payment->status === PaymentStatus::PAID) {
-            return $payment;
-        }
-
         if ($payment->status === PaymentStatus::FAILED && $payment->order->status === OrderStatus::READY) {
             return $payment;
         }
