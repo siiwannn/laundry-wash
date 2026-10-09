@@ -10,8 +10,11 @@ use App\Enums\UserRole;
 use App\Models\CourierAssignment;
 use App\Models\CustomerAddress;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Service;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -24,7 +27,7 @@ class DashboardPresentationTest extends TestCase
         foreach ([
             [UserRole::ADMIN, 'admin.dashboard', 'admin.orders.index', 'Volume order harian'],
             [UserRole::COURIER, 'courier.dashboard', 'courier.profile.status', 'Pickup hari ini'],
-            [UserRole::CUSTOMER, 'customer.dashboard', 'customer.orders.create', 'Pesanan aktif'],
+            [UserRole::CUSTOMER, 'customer.dashboard', 'customer.orders.create', 'Pesanan saya'],
         ] as [$role, $dashboard, $action, $label]) {
             $this->actingAs(User::factory()->create(['role' => $role]))
                 ->get(route($dashboard))
@@ -48,10 +51,128 @@ class DashboardPresentationTest extends TestCase
             ->get(route('customer.dashboard'))
             ->assertOk()
             ->assertSee('workspace-consistency.css')
+            ->assertSee('customer-welcome-banner')
+            ->assertSee('customer-greeting-emoji')
+            ->assertSee('Pantau cucian yang sedang diproses atau mulai pesanan baru.')
+            ->assertSee('customer-weather')
+            ->assertSee('customer-weather-meta')
+            ->assertSee('bi-plus-lg')
+            ->assertDontSee('operasional antar-jemput')
             ->assertSee('role-summary-grid')
             ->assertSee('metric-icon-orange')
             ->assertDontSee('customer-hero-mark')
             ->assertDontSee('Drop-off langsung');
+    }
+
+    public function test_customer_weather_uses_the_default_address_and_returns_current_conditions(): void
+    {
+        $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
+        $latitude = -6.12345;
+        $longitude = 106.12345;
+        $cacheKey = 'weather.current.'.hash('sha256', sprintf('%.3f,%.3f', $latitude, $longitude));
+        Cache::forget($cacheKey);
+        CustomerAddress::create([
+            'user_id' => $customer->id,
+            'label' => 'Rumah',
+            'address' => 'Jl. Contoh No. 10',
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'is_default' => true,
+        ]);
+
+        $this->actingAs($customer)
+            ->get(route('customer.dashboard'))
+            ->assertOk()
+            ->assertSee('data-weather-location="Rumah"', false)
+            ->assertSee(route('customer.weather'));
+
+        Http::fake([
+            'api.open-meteo.com/*' => Http::response([
+                'current' => [
+                    'temperature_2m' => 31.2,
+                    'relative_humidity_2m' => 70,
+                    'apparent_temperature' => 35.1,
+                    'weather_code' => 3,
+                ],
+            ]),
+        ]);
+
+        $this->actingAs($customer)
+            ->getJson(route('customer.weather'))
+            ->assertOk()
+            ->assertJson([
+                'temperature' => 31.2,
+                'humidity' => 70,
+                'feels_like' => 35.1,
+                'weather_code' => 3,
+            ]);
+
+        Http::assertSent(function ($request) use ($latitude, $longitude): bool {
+            parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+            return str_starts_with($request->url(), 'https://api.open-meteo.com/v1/forecast')
+                && (float) ($query['latitude'] ?? 0) === $latitude
+                && (float) ($query['longitude'] ?? 0) === $longitude;
+        });
+    }
+
+    public function test_customer_weather_requires_a_default_address_with_coordinates(): void
+    {
+        $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
+
+        $this->actingAs($customer)
+            ->getJson(route('customer.weather'))
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Tambahkan titik lokasi pada alamat utama untuk melihat cuaca.');
+    }
+
+    public function test_customer_dashboard_shows_friendly_order_summary_without_order_code(): void
+    {
+        $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
+        $address = CustomerAddress::create([
+            'user_id' => $customer->id,
+            'label' => 'Rumah',
+            'address' => 'Jl. Contoh No. 10',
+            'latitude' => -6.2,
+            'longitude' => 106.8,
+            'is_default' => true,
+        ]);
+        $service = Service::create([
+            'name' => 'Cuci Reguler',
+            'description' => 'Cuci dan lipat',
+            'price_per_kg' => 8000,
+            'estimated_hours' => 24,
+            'is_active' => true,
+        ]);
+        $order = Order::create([
+            'order_number' => 'ORD-DASH-PRIVATE',
+            'customer_id' => $customer->id,
+            'pickup_address_id' => $address->id,
+            'delivery_address_id' => $address->id,
+            'pickup_date' => now()->addDay(),
+            'pickup_time' => '09:00',
+            'status' => OrderStatus::READY,
+            'payment_status' => PaymentStatus::PENDING,
+            'estimated_weight' => 2,
+            'price_per_kg' => 8000,
+            'subtotal' => 16000,
+            'total' => 16000,
+        ]);
+        OrderItem::create([
+            'order_id' => $order->id,
+            'service_id' => $service->id,
+            'quantity' => 2,
+            'unit_price' => 8000,
+            'subtotal' => 16000,
+        ]);
+
+        $this->actingAs($customer)
+            ->get(route('customer.dashboard'))
+            ->assertOk()
+            ->assertSee('Cuci Reguler')
+            ->assertSee('Alamat penjemputan')
+            ->assertSee('Pesanan saya')
+            ->assertDontSee('ORD-DASH-PRIVATE');
     }
 
     public function test_courier_dashboard_has_all_four_metrics_without_example_vehicle_data(): void

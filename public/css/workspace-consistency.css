@@ -59,6 +59,67 @@
     font-size: .85rem;
 }
 .workspace-auth .role-dashboard-toolbar p { margin: 0; }
+.workspace-auth .customer-welcome-banner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "title weather" "description weather" "action weather";
+    align-items: center;
+    gap: 4px 16px;
+    margin-bottom: 24px;
+    padding: 8px 0;
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+.workspace-auth .customer-welcome-copy { display: contents; }
+.workspace-auth .customer-welcome-copy h1 {
+    grid-area: title;
+    margin: 0;
+    color: #26231f;
+    font-size: clamp(1.5rem, 2.5vw, 1.85rem);
+    font-weight: 700;
+    letter-spacing: -.04em;
+    line-height: 1.2;
+}
+.workspace-auth .customer-greeting-emoji { display: inline-block; margin-inline-start: 2px; font-size: .82em; vertical-align: .04em; }
+.workspace-auth .customer-welcome-copy > p {
+    grid-area: description;
+    margin: 6px 0 14px;
+    color: #716d65;
+    font-size: .9rem;
+}
+.workspace-auth .customer-welcome-button {
+    grid-area: action;
+    justify-self: start;
+    width: max-content !important;
+    max-width: 100%;
+    display: inline-flex;
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 11px 18px;
+}
+.workspace-auth .customer-weather {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: start;
+    gap: 2px 6px;
+    min-width: 0;
+    width: max-content;
+    justify-self: end;
+    position: relative;
+    left: clamp(58px, 5vw, 90px);
+    margin-right: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+.workspace-auth .customer-weather-current { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.workspace-auth .customer-weather-icon { color: #f4512a; font-size: 1.5rem; line-height: 1; }
+.workspace-auth .customer-weather-temperature { margin: 0; color: #202020; font-size: 1.35rem; font-weight: 700; letter-spacing: -.04em; line-height: 1; }
+.workspace-auth .customer-weather-meta { flex-basis: 100%; color: #716d65; font-size: .72rem; line-height: 1.2; text-align: left; white-space: nowrap; }
+.workspace-auth .customer-weather-attribution { flex-basis: 100%; color: #827d74; font-size: .58rem; line-height: 1; text-align: left; text-decoration: none; white-space: nowrap; }
 .workspace-auth .role-summary-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -73,8 +134,8 @@
     align-content: start;
     align-items: center;
     gap: 12px;
-    min-height: 190px;
-    padding: 18px;
+    min-height: 150px;
+    padding: 16px;
     border: 1px solid #e8e5df;
     border-radius: 16px;
     background: #fff;
@@ -191,6 +252,16 @@
 
 /* Mobile baseline: shared behavior for all authenticated workspaces. */
 @media (max-width: 575.98px) {
+    .workspace-auth .customer-welcome-banner { grid-template-columns: minmax(0, 1fr) max-content; grid-template-areas: "title weather" "description description" "action action"; align-items: start; gap: 6px 10px; padding: 4px 0; }
+    .workspace-auth .customer-welcome-copy h1 { max-width: 100%; font-size: 1.25rem; }
+    .workspace-auth .customer-welcome-copy > p { margin: 0 0 6px; }
+    .workspace-auth .customer-welcome-button { width: max-content !important; }
+    .workspace-auth .customer-weather { left: 105px; justify-self: end; width: max-content; gap: 1px 6px; margin-right: 0; }
+    .workspace-auth .customer-weather-current { gap: 5px; }
+    .workspace-auth .customer-weather-icon { font-size: 1.45rem; }
+    .workspace-auth .customer-weather-temperature { font-size: 1.1rem; }
+    .workspace-auth .customer-weather-meta { font-size: .7rem; }
+    .workspace-auth .customer-weather-attribution { font-size: .52rem; }
     .workspace-auth { overflow-x: hidden; }
     .workspace-auth .app-content { padding: 16px 14px 28px !important; }
     .workspace-auth .app-content > .container { width: 100%; }
@@ -254,4 +325,9 @@
     .workspace-auth .courier-action-card .btn,
     .workspace-auth .courier-contact-card .btn { width: 100%; }
     .workspace-auth .workspace-page-title { font-size: .88rem; }
+}
+
+@media (max-width: 359.98px) {
+    .workspace-auth .customer-welcome-banner { grid-template-columns: minmax(0, 1fr); grid-template-areas: "title" "weather" "description" "action"; }
+    .workspace-auth .customer-weather { left: 0; justify-self: end; margin-right: 0; }
 }

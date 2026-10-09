@@ -18,11 +18,11 @@
     <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex justify-content-md-end gap-2">
         @if(in_array($order->status->value, ['courier_to_pickup', 'pickup_assigned', 'delivery_assigned', 'courier_to_customer']))
             <a href="{{ route('customer.orders.tracking', $order) }}" class="btn btn-primary btn-sm fw-bold shadow-sm">
-                <i class="bi bi-geo-alt-fill me-1"></i> Live Tracking Kurir
+                Live Tracking Kurir
             </a>
         @endif
         <a href="{{ route('customer.dashboard') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left me-1"></i> Kembali
+            Kembali
         </a>
     </div>
 </div>
@@ -65,13 +65,13 @@
         </div>
         <div class="payment-banner-actions">
             <button type="button" class="btn btn-success fw-bold px-4" id="payWithMidtrans">
-                <i class="bi bi-credit-card me-1"></i> Bayar Sekarang
+                Bayar Sekarang
             </button>
             @if(app()->environment('local'))
                 <form action="{{ route('customer.orders.simulate-payment', $order) }}" method="POST">
                 @csrf
                 <button type="submit" class="btn btn-outline-dark fw-bold px-3">
-                    <i class="bi bi-wrench-adjustable-circle me-1"></i> Simulasikan Pembayaran Berhasil
+                    Simulasikan Pembayaran Berhasil
                 </button>
                 </form>
             @endif
@@ -241,7 +241,7 @@
                 @if($order->canBeCancelled())
                     <div class="pt-3 border-top mt-3 text-center">
                         <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#cancelModal">
-                            <i class="bi bi-x-circle me-1"></i> Batalkan Pesanan Ini
+                            Batalkan Pesanan Ini
                         </button>
                     </div>
                 @endif
@@ -310,10 +310,10 @@ const continueSnapPaymentButton = document.getElementById('continueSnapPaymentBu
 const changeSnapMethodButton = document.getElementById('changeSnapMethodButton');
 let currentSnapToken = null;
 
-const restorePaymentButton = () => {
+const restorePaymentButtons = () => {
     if (!paymentButton) return;
     paymentButton.disabled = false;
-    paymentButton.innerHTML = '<i class="bi bi-credit-card me-1"></i> Bayar Sekarang';
+    paymentButton.textContent = 'Bayar Sekarang';
 };
 
 const showIncompletePaymentDialog = () => {
@@ -325,15 +325,15 @@ const openSnap = (token) => {
     window.snap.pay(token, {
         onSuccess: () => window.location.reload(),
         onPending: () => {
-            restorePaymentButton();
-            alert('Pembayaran masih menunggu penyelesaian.');
+            restorePaymentButtons();
+            showIncompletePaymentDialog();
         },
         onError: () => {
-            restorePaymentButton();
+            restorePaymentButtons();
             showIncompletePaymentDialog();
         },
         onClose: () => {
-            restorePaymentButton();
+            restorePaymentButtons();
             showIncompletePaymentDialog();
         },
     });
@@ -341,9 +341,6 @@ const openSnap = (token) => {
 
 const requestSnapToken = async (refreshToken = false) => {
     if (!paymentButton) return;
-    const restoreButton = () => {
-        restorePaymentButton();
-    };
 
     paymentButton.disabled = true;
     paymentButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyiapkan pembayaran';
@@ -363,7 +360,7 @@ const requestSnapToken = async (refreshToken = false) => {
         openSnap(data.snap_token);
     } catch (error) {
         alert(error.message);
-        restoreButton();
+        restorePaymentButtons();
     }
 };
 

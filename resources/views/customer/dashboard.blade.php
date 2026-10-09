@@ -3,12 +3,32 @@
 @section('title', 'Beranda Customer - Laundry Wash')
 
 @section('content')
-<div class="dashboard-heading">
-    <div>
-        <p class="mb-0">Halo, {{ $customer->name }}. Pantau pesanan aktif dan pilih layanan laundry.</p>
+<section class="customer-welcome-banner" aria-labelledby="customer-welcome-title">
+    <div class="customer-welcome-copy">
+        <h1 id="customer-welcome-title">Hai, {{ \Illuminate\Support\Str::before(trim($customer->name), ' ') }}! <span class="customer-greeting-emoji" aria-hidden="true">&#128075;</span></h1>
+        <p>Pantau cucian yang sedang diproses atau mulai pesanan baru.</p>
+        <a href="{{ route('customer.orders.create') }}" class="btn btn-primary customer-welcome-button">
+            <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Buat pesanan
+        </a>
     </div>
-    <a href="{{ route('customer.orders.create') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Buat pesanan</a>
-</div>
+    <section
+        class="customer-weather"
+        @if($weatherLocation && $weatherLocation->latitude !== null && $weatherLocation->longitude !== null)
+            data-weather-url="{{ route('customer.weather') }}"
+            data-weather-location="{{ $weatherLocation->label }}"
+            data-weather-date="{{ now()->locale('id')->translatedFormat('d M Y') }}"
+        @endif
+        aria-label="{{ $weatherLocation && $weatherLocation->latitude !== null && $weatherLocation->longitude !== null ? 'Cuaca saat ini di alamat utama' : 'Suhu tidak tersedia karena titik lokasi alamat utama belum diatur' }}"
+    >
+        <span class="visually-hidden" id="customer-weather-status" role="status">Memuat cuaca</span>
+        <span class="customer-weather-current">
+            <i class="bi bi-cloud-fill customer-weather-icon" id="customer-weather-icon" aria-hidden="true"></i>
+            <span class="customer-weather-temperature" id="customer-weather-temperature" aria-live="polite">--&#176;</span>
+        </span>
+        <span class="customer-weather-meta" id="customer-weather-meta">{{ now()->locale('id')->translatedFormat('d M Y') }}</span>
+        <a class="customer-weather-attribution" href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>
+    </section>
+</section>
 <section class="dashboard-summary" aria-label="Ringkasan pelanggan">
     <div class="role-summary-grid">
         <x-dashboard-metric label="Pesanan aktif" :value="$activeOrders->count()" icon="basket2" tone="orange" note="Belum selesai" />
@@ -20,7 +40,7 @@
 <!-- Active Orders Section -->
 <div class="mb-5">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="dashboard-section-title mb-0">Pesanan aktif</h2>
+        <h2 class="dashboard-section-title mb-0">Pesanan saya</h2>
         <a href="{{ route('customer.orders.history') }}" class="btn btn-link btn-sm text-decoration-none">Riwayat Pesanan</a>
     </div>
 
@@ -32,8 +52,8 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div>
-                                    <h5 class="fw-bold mb-0 text-dark">{{ $order->order_number }}</h5>
-                                    <small class="text-muted">{{ $order->created_at->format('d M Y, H:i') }} WIB</small>
+                                    <h3 class="h5 fw-bold mb-0 text-dark">{{ $order->items->first()->service->name ?? 'Pesanan Laundry' }}</h3>
+                                    <small class="text-muted">Dipesan {{ $order->created_at->locale('id')->translatedFormat('d M Y, H:i') }} WIB</small>
                                 </div>
                                 <span class="badge badge-status {{ $order->status->badgeClass() }}">
                                     {{ $order->status->label() }}
@@ -42,17 +62,13 @@
 
                             <div class="p-2 bg-light rounded my-3">
                                 <div class="row g-2 small">
-                                    <div class="col-6">
-                                        <span class="text-muted d-block">Layanan:</span>
-                                        <strong class="text-dark">{{ $order->items->first()->service->name ?? 'Laundry' }}</strong>
-                                    </div>
-                                    <div class="col-6 text-end">
-                                        <span class="text-muted d-block">Total Tagihan:</span>
+                                    <div class="col-12 d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">Total pesanan</span>
                                         <strong class="text-primary fs-6">Rp {{ number_format($order->total, 0, ',', '.') }}</strong>
                                     </div>
                                     <div class="col-12 mt-2">
-                                        <span class="text-muted d-block">Alamat:</span>
-                                    <span>{{ $order->pickupAddress->address ?? 'Alamat belum tersedia' }}</span>
+                                        <span class="text-muted d-block">Alamat penjemputan:</span>
+                                        <span>{{ $order->pickupAddress->address ?? 'Alamat belum tersedia' }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -103,6 +119,58 @@
         </div>
     @endif
 </div>
+
+@if($weatherLocation && $weatherLocation->latitude !== null && $weatherLocation->longitude !== null)
+    @push('scripts')
+        <script>
+            (() => {
+                const panel = document.querySelector('.customer-weather[data-weather-url]');
+                if (!panel) return;
+
+                const status = document.getElementById('customer-weather-status');
+                const icon = document.getElementById('customer-weather-icon');
+                const descriptions = new Map([
+                    [0, ['Cerah', 'bi-sun-fill']], [1, ['Cerah berawan', 'bi-cloud-sun-fill']],
+                    [2, ['Berawan sebagian', 'bi-cloud-sun-fill']], [3, ['Mendung', 'bi-cloud-fill']],
+                    [45, ['Berkabut', 'bi-cloud-fog2-fill']], [48, ['Berkabut', 'bi-cloud-fog2-fill']],
+                    [51, ['Gerimis', 'bi-cloud-drizzle-fill']], [53, ['Gerimis', 'bi-cloud-drizzle-fill']],
+                    [55, ['Gerimis lebat', 'bi-cloud-drizzle-fill']], [56, ['Gerimis beku', 'bi-cloud-rain-fill']],
+                    [57, ['Gerimis beku', 'bi-cloud-rain-fill']], [61, ['Hujan ringan', 'bi-cloud-rain-fill']],
+                    [63, ['Hujan', 'bi-cloud-rain-fill']], [65, ['Hujan lebat', 'bi-cloud-rain-heavy-fill']],
+                    [66, ['Hujan beku', 'bi-cloud-rain-fill']], [67, ['Hujan beku lebat', 'bi-cloud-rain-heavy-fill']],
+                    [71, ['Salju ringan', 'bi-cloud-snow-fill']], [73, ['Salju', 'bi-cloud-snow-fill']],
+                    [75, ['Salju lebat', 'bi-cloud-snow-fill']], [77, ['Butiran salju', 'bi-cloud-snow-fill']],
+                    [80, ['Hujan lokal', 'bi-cloud-rain-fill']], [81, ['Hujan lokal', 'bi-cloud-rain-fill']],
+                    [82, ['Hujan lokal lebat', 'bi-cloud-rain-heavy-fill']], [85, ['Hujan salju', 'bi-cloud-snow-fill']],
+                    [86, ['Hujan salju lebat', 'bi-cloud-snow-fill']], [95, ['Badai petir', 'bi-cloud-lightning-rain-fill']],
+                    [96, ['Badai petir dan hujan es', 'bi-cloud-lightning-rain-fill']],
+                    [99, ['Badai petir dan hujan es', 'bi-cloud-lightning-rain-fill']],
+                ]);
+
+                fetch(panel.dataset.weatherUrl, { headers: { Accept: 'application/json' } })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Cuaca belum dapat dimuat. Coba muat ulang halaman.');
+                        return response.json();
+                    })
+                    .then(weather => {
+                        const description = descriptions.get(Number(weather.weather_code)) || ['Kondisi cuaca berubah', 'bi-cloud-fill'];
+                        const temperature = `${Math.round(weather.temperature)}\u00B0`;
+                        document.getElementById('customer-weather-temperature').textContent = temperature;
+                        document.getElementById('customer-weather-meta').textContent = `${description[0]} · ${panel.dataset.weatherDate}`;
+                        icon.className = `bi ${description[1]} customer-weather-icon`;
+                        panel.setAttribute('aria-label', `Cuaca ${description[0]}, ${temperature}, sekitar ${panel.dataset.weatherLocation}`);
+                        status.textContent = `Cuaca diperbarui: ${description[0]}, ${temperature}`;
+                    })
+                    .catch(() => {
+                        icon.className = 'bi bi-cloud-slash-fill customer-weather-icon';
+                        panel.setAttribute('aria-label', 'Data cuaca tidak tersedia');
+                        status.textContent = 'Data cuaca tidak tersedia';
+                    })
+                    .finally(() => { status.classList.add('visually-hidden'); });
+            })();
+        </script>
+    @endpush
+@endif
 
 <!-- Laundry Services Catalog Cards -->
 <div class="mb-4">

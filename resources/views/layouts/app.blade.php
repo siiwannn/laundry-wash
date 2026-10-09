@@ -13,8 +13,8 @@
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="preload" href="{{ asset('css/laundry-workspace.css') }}?v=20261008-1" as="style">
-    <link href="{{ asset('css/laundry-workspace.css') }}?v=20261008-1" rel="stylesheet">
+    <link rel="preload" href="{{ asset('css/laundry-workspace.css') }}?v={{ filemtime(public_path('css/laundry-workspace.css')) }}" as="style">
+    <link href="{{ asset('css/laundry-workspace.css') }}?v={{ filemtime(public_path('css/laundry-workspace.css')) }}" rel="stylesheet">
 
     <style>
         :root {
@@ -123,11 +123,22 @@
     @stack('styles')
     @auth
         @unless(request()->routeIs('catalog'))
-            <link href="{{ asset('css/workspace-consistency.css') }}?v=20261006-4" rel="stylesheet">
+            <link href="{{ asset('css/workspace-consistency.css') }}?v={{ substr(sha1_file(public_path('css/workspace-consistency.css')), 0, 12) }}" rel="stylesheet">
         @endunless
     @endauth
 </head>
 <body class="{{ auth()->check() ? 'workspace-auth' : 'workspace-public' }} {{ request()->routeIs('catalog', 'home') ? 'catalog-page' : '' }} {{ request()->routeIs('*.dashboard') ? 'dashboard-page' : (auth()->check() && !request()->routeIs('catalog', 'home') ? 'workspace-detail-page' : '') }}">
+    @auth
+    <script>
+        try {
+            if (window.matchMedia('(min-width: 992px)').matches && window.localStorage.getItem('laundry-wash-sidebar-collapsed') === 'true') {
+                document.body.classList.add('sidebar-collapsed');
+            }
+        } catch (error) {
+            // The navigation script applies the default expanded state if storage is unavailable.
+        }
+    </script>
+    @endauth
     <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm py-2 workspace-navbar">
         <div class="container">
@@ -135,7 +146,9 @@
                 <span class="workspace-page-title workspace-admin-page-title">
                     @if(request()->routeIs('*.dashboard'))
                         <strong>{{ auth()->user()->isAdmin() ? 'Dashboard Laundry' : (auth()->user()->isCourier() ? 'Dashboard Kurir' : 'Dashboard Pelanggan') }}</strong>
-                        <small>{{ now()->locale('id')->translatedFormat('l, d F Y') }} &middot; operasional antar-jemput</small>
+                        @unless(auth()->user()->isCustomer())
+                            <small>{{ now()->locale('id')->translatedFormat('l, d F Y') }}</small>
+                        @endunless
                     @else
                         <span>{{ \Illuminate\Support\Str::before($__env->yieldContent('title', 'Laundry Wash'), ' - ') }}</span>
                     @endif
@@ -307,7 +320,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     @auth
-    <script src="{{ asset('js/workspace-navigation.js') }}?v=20261006-2" defer></script>
+    <script src="{{ asset('js/workspace-navigation.js') }}?v={{ filemtime(public_path('js/workspace-navigation.js')) }}" defer></script>
     @endauth
     @stack('scripts')
 </body>

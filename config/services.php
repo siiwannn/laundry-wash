@@ -47,11 +47,16 @@ return [
         'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
         'is_sanitized' => env('MIDTRANS_IS_SANITIZED', true),
         'is_3ds' => env('MIDTRANS_IS_3DS', true),
+        'ca_bundle' => env('MIDTRANS_CA_BUNDLE'),
     ],
 
     'tracking' => [
         'map_style_url' => env('MAP_STYLE_URL', 'https://tiles.openfreemap.org/styles/liberty'),
         'routing_url' => env('ROUTING_URL', 'https://router.project-osrm.org'),
+    ],
+
+    'weather' => [
+        'url' => env('WEATHER_API_URL', 'https://api.open-meteo.com/v1/forecast'),
     ],
 
 ];

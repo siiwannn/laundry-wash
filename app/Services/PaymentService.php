@@ -43,6 +43,10 @@ class PaymentService
         }
 
         if ($activePayment?->snap_token && $refreshToken) {
+            if (! $this->midtrans->cancelPendingTransaction($activePayment)) {
+                return $activePayment;
+            }
+
             return DB::transaction(function () use ($activePayment, $order, $customer) {
                 $activePayment->update([
                     'status' => PaymentStatus::FAILED,

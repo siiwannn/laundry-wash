@@ -9,10 +9,48 @@ use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Midtrans\Config;
 use Midtrans\Snap;
+use Midtrans\Transaction;
 use RuntimeException;
 
 class MidtransPaymentService
 {
+    /**
+     * Cancel an existing pending Midtrans transaction before replacing its Snap token.
+     * Returns false when the Snap session has not created a gateway transaction yet.
+     */
+    public function cancelPendingTransaction(Payment $payment): bool
+    {
+        $this->configure();
+
+        try {
+            $transaction = Transaction::status($payment->gateway_order_id);
+        } catch (\Exception $exception) {
+            if ((int) $exception->getCode() === 404) {
+                return false;
+            }
+
+            throw $exception;
+        }
+
+        $status = $transaction->transaction_status ?? null;
+
+        if (in_array($status, ['cancel', 'deny', 'expire', 'failure'], true)) {
+            return true;
+        }
+
+        if ($status !== 'pending') {
+            throw new RuntimeException('Transaksi pembayaran sudah diproses. Muat ulang halaman untuk melihat status terbaru.');
+        }
+
+        $statusCode = Transaction::cancel($payment->gateway_order_id);
+
+        if ((string) $statusCode !== '200') {
+            throw new RuntimeException('Transaksi lama belum berhasil dibatalkan Midtrans. Coba lagi sebentar.');
+        }
+
+        return true;
+    }
+
     public function createSnapToken(Order $order, Payment $payment): string
     {
         $this->configure();
@@ -88,7 +126,20 @@ class MidtransPaymentService
         Config::$isSanitized = (bool) config('services.midtrans.is_sanitized', true);
         Config::$is3ds = (bool) config('services.midtrans.is_3ds', true);
 
-        $caBundle = (string) (ini_get('curl.cainfo') ?: ini_get('openssl.cafile'));
+        $caBundle = trim((string) (
+            config('services.midtrans.ca_bundle')
+            ?: ini_get('curl.cainfo')
+            ?: ini_get('openssl.cafile')
+        ));
+
+        if ($caBundle === '' || ! is_file($caBundle)) {
+            $laragonCaBundle = 'C:\\laragon\\etc\\ssl\\cacert.pem';
+
+            if (is_file($laragonCaBundle)) {
+                $caBundle = $laragonCaBundle;
+            }
+        }
+
         Config::$curlOptions = [
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,

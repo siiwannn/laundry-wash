@@ -68,7 +68,8 @@ class MidtransPaymentTest extends TestCase
         $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
         $order = $this->createOrder($customer, OrderStatus::READY);
         $gateway = Mockery::mock(MidtransPaymentService::class);
-        $gateway->shouldReceive('createSnapToken')->twice()->andReturn('snap-first-token', 'snap-refreshed-token');
+        $gateway->shouldReceive('createSnapToken')->once()->andReturn('snap-first-token');
+        $gateway->shouldReceive('cancelPendingTransaction')->once()->andReturn(false);
         $this->app->instance(MidtransPaymentService::class, $gateway);
 
         $this->actingAs($customer)->postJson(route('customer.orders.pay', $order))
@@ -77,12 +78,63 @@ class MidtransPaymentTest extends TestCase
 
         $this->actingAs($customer)->postJson(route('customer.orders.pay', $order), ['refresh_token' => true])
             ->assertOk()
-            ->assertJsonPath('snap_token', 'snap-refreshed-token');
+            ->assertJsonPath('snap_token', 'snap-first-token');
+
+        $this->assertDatabaseCount('payments', 1);
+        $this->assertSame(PaymentStatus::PENDING, Payment::firstOrFail()->status);
+    }
+
+    public function test_customer_can_change_method_after_old_pending_transaction_is_cancelled(): void
+    {
+        $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
+        $order = $this->createOrder($customer, OrderStatus::READY);
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway_order_id' => 'LW-ACTIVE-'.$order->id,
+            'gateway_transaction_id' => 'midtrans-transaction-'.$order->id,
+            'snap_token' => 'snap-old-token',
+            'method' => PaymentMethod::QRIS,
+            'amount' => $order->total,
+            'status' => PaymentStatus::PENDING,
+            'gateway_status' => 'pending',
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $gateway = Mockery::mock(MidtransPaymentService::class);
+        $gateway->shouldReceive('cancelPendingTransaction')->once()->andReturn(true);
+        $gateway->shouldReceive('createSnapToken')->once()->andReturn('snap-new-token');
+        $this->app->instance(MidtransPaymentService::class, $gateway);
+
+        $this->actingAs($customer)
+            ->postJson(route('customer.orders.pay', $order), ['refresh_token' => true])
+            ->assertOk()
+            ->assertJsonPath('snap_token', 'snap-new-token');
 
         $this->assertDatabaseCount('payments', 2);
-        $this->assertSame('snap-refreshed-token', Payment::latest('id')->firstOrFail()->snap_token);
-        $this->assertSame(PaymentStatus::PENDING, Payment::latest('id')->firstOrFail()->status);
         $this->assertSame(PaymentStatus::FAILED, Payment::oldest('id')->firstOrFail()->status);
+        $this->assertSame(PaymentStatus::PENDING, Payment::latest('id')->firstOrFail()->status);
+    }
+
+    public function test_customer_can_see_change_method_action_for_active_snap_payment(): void
+    {
+        $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
+        $order = $this->createOrder($customer, OrderStatus::READY);
+        Payment::create([
+            'order_id' => $order->id,
+            'gateway_order_id' => 'LW-ACTIVE-'.$order->id,
+            'snap_token' => 'snap-active-token',
+            'method' => PaymentMethod::QRIS,
+            'amount' => $order->total,
+            'status' => PaymentStatus::PENDING,
+            'gateway_status' => 'pending',
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $this->actingAs($customer)
+            ->get(route('customer.orders.show', $order))
+            ->assertOk()
+            ->assertSee('changeSnapMethodButton')
+            ->assertDontSee('changeSnapMethodBannerButton');
     }
 
     public function test_local_customer_can_simulate_successful_payment(): void
