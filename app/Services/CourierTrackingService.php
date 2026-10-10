@@ -72,8 +72,28 @@ class CourierTrackingService
             ->first();
 
         if (! $activeAssignment) {
+            $waitingAssignment = $order->assignments()
+                ->where('status', AssignmentStatus::ASSIGNED)
+                ->with(['courier.courierProfile'])
+                ->latest('assigned_at')
+                ->first();
+
+            if ($waitingAssignment) {
+                $journey = $waitingAssignment->type === AssignmentType::DELIVERY
+                    ? 'Pengantaran'
+                    : 'Penjemputan';
+
+                return [
+                    'is_active' => false,
+                    'is_waiting_for_trip' => true,
+                    'journey_status' => "Kurir {$journey} sudah ditugaskan, menunggu perjalanan dimulai.",
+                    'message' => 'Halaman ini akan diperbarui otomatis saat kurir memulai perjalanan.',
+                ];
+            }
+
             return [
                 'is_active' => false,
+                'is_waiting_for_trip' => false,
                 'journey_status' => $this->inactiveJourneyStatus($order),
                 'message' => 'Tidak ada kurir yang sedang aktif melakukan perjalanan untuk pesanan ini.',
             ];
@@ -127,6 +147,7 @@ class CourierTrackingService
 
         return [
             'is_active' => true,
+            'is_waiting_for_trip' => false,
             'assignment_id' => $activeAssignment->id,
             'type' => $activeAssignment->type->value,
             'type_label' => $activeAssignment->type->label(),

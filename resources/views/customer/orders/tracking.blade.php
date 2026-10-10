@@ -22,7 +22,7 @@
     <div class="col-md-7">
         <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
             <h4 class="fw-bold mb-0">Live Tracking Posisi Kurir</h4>
-            <span class="badge bg-danger animate-pulse" id="liveBadge"><i class="bi bi-broadcast me-1" aria-hidden="true"></i> LIVE GPS</span>
+            <span class="badge {{ ($trackingData['is_waiting_for_trip'] ?? false) ? 'bg-warning text-dark' : 'bg-danger animate-pulse' }}" id="liveBadge"><i class="bi {{ ($trackingData['is_waiting_for_trip'] ?? false) ? 'bi-hourglass-split' : 'bi-broadcast' }} me-1" aria-hidden="true"></i>{{ ($trackingData['is_waiting_for_trip'] ?? false) ? 'MENUNGGU KURIR' : 'LIVE GPS' }}</span>
         </div>
         <p class="text-muted small mb-0">Pesanan <strong>{{ $order->order_number }}</strong> diperbarui setiap 10 detik.</p>
     </div>
@@ -300,6 +300,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyTrackingData(data) {
+        if (data.is_waiting_for_trip) {
+            statusElement.textContent = data.journey_status;
+            updatedElement.textContent = data.message;
+            const liveBadge = document.getElementById('liveBadge');
+            liveBadge.classList.remove('bg-danger', 'bg-secondary', 'animate-pulse');
+            liveBadge.classList.add('bg-warning', 'text-dark');
+            liveBadge.innerHTML = '<i class="bi bi-hourglass-split me-1" aria-hidden="true"></i> MENUNGGU KURIR';
+            return;
+        }
+
+        const liveBadge = document.getElementById('liveBadge');
+        liveBadge.classList.remove('bg-secondary', 'bg-warning', 'text-dark');
+        liveBadge.classList.add('bg-danger', 'animate-pulse');
+        liveBadge.innerHTML = '<i class="bi bi-broadcast me-1" aria-hidden="true"></i> LIVE GPS';
         statusElement.textContent = data.journey_status ?? data.order_status_label ?? 'Perjalanan aktif';
         updateRoute(data.route);
 
@@ -387,10 +401,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (!response.ok || !result.success) throw new Error(result.message || 'Server gagal memuat posisi kurir.');
             if (!result.data.is_active) {
+                if (result.data.is_waiting_for_trip) {
+                    statusElement.textContent = result.data.journey_status;
+                    updatedElement.textContent = result.data.message;
+                    const liveBadge = document.getElementById('liveBadge');
+                    liveBadge.classList.remove('bg-danger', 'bg-secondary', 'animate-pulse');
+                    liveBadge.classList.add('bg-warning', 'text-dark');
+                    liveBadge.innerHTML = '<i class="bi bi-hourglass-split me-1" aria-hidden="true"></i> MENUNGGU KURIR';
+                    return;
+                }
                 pollingStopped = true;
                 statusElement.textContent = result.data.journey_status ?? result.data.message;
                 countdownElement.textContent = 'Selesai';
-                document.getElementById('liveBadge').classList.replace('bg-danger', 'bg-secondary');
+                const liveBadge = document.getElementById('liveBadge');
+                liveBadge.classList.remove('bg-danger', 'bg-warning', 'text-dark', 'animate-pulse');
+                liveBadge.classList.add('bg-secondary');
+                liveBadge.innerHTML = '<i class="bi bi-check2-circle me-1" aria-hidden="true"></i> SELESAI';
                 return;
             }
             applyTrackingData(result.data);

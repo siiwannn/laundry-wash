@@ -8,6 +8,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Models\CourierAssignment;
+use App\Models\CourierProfile;
 use App\Models\CustomerAddress;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -264,6 +265,12 @@ class DashboardPresentationTest extends TestCase
             'type' => AssignmentType::PICKUP, 'status' => AssignmentStatus::ASSIGNED,
             'assigned_at' => now(),
         ]);
+        CourierProfile::create([
+            'user_id' => $courier->id,
+            'status' => 'available',
+            'current_latitude' => -6.2,
+            'current_longitude' => 106.8,
+        ]);
 
         $this->actingAs($customer)->get(route('customer.orders.show', $order))
             ->assertOk()->assertSee('workspace-page-heading')->assertSee(route('customer.orders.tracking', $order));
@@ -272,6 +279,12 @@ class DashboardPresentationTest extends TestCase
         $this->actingAs($courier)->get(route('courier.tasks.show', $assignment))
             ->assertOk()->assertSee('workspace-page-heading')->assertSee('courierMap')
             ->assertSee('courierEta')->assertSee('courierDistance')
+            ->assertViewHas('courierStartCoordinates', [106.8, -6.2])
+            ->assertSee("const isPickupAssignment = true", false)
+            ->assertSee('function bearingBetween(from, to)', false)
+            ->assertSee('function markerRotationForBearing(bearing)', false)
+            ->assertSee('courierMarker.setLngLat(markerCoordinates)', false)
+            ->assertSee('ensureCourierMarker(currentRoute)', false)
             ->assertSee(route('courier.tasks.start', $assignment));
     }
 }

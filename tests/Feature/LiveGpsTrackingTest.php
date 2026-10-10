@@ -140,6 +140,39 @@ class LiveGpsTrackingTest extends TestCase
             ->assertJsonPath('data.courier_location.heading', 135);
     }
 
+    public function test_customer_sees_waiting_status_until_assigned_delivery_starts(): void
+    {
+        [$customer, $courier, $order, $assignment] = $this->createPickupTrip(
+            AssignmentStatus::ASSIGNED,
+            OrderStatus::DELIVERY_ASSIGNED
+        );
+        $assignment->update(['type' => AssignmentType::DELIVERY]);
+
+        $this->actingAs($customer)->getJson(route('api.orders.tracking', $order))
+            ->assertOk()
+            ->assertJsonPath('data.is_active', false)
+            ->assertJsonPath('data.is_waiting_for_trip', true)
+            ->assertJsonPath('data.journey_status', 'Kurir Pengantaran sudah ditugaskan, menunggu perjalanan dimulai.')
+            ->assertJsonPath('data.message', 'Halaman ini akan diperbarui otomatis saat kurir memulai perjalanan.');
+
+        $assignment->update([
+            'status' => AssignmentStatus::ON_THE_WAY,
+            'started_at' => now(),
+        ]);
+        $order->update(['status' => OrderStatus::COURIER_TO_CUSTOMER]);
+        $this->actingAs($courier)->postJson(route('api.courier.location'), [
+            'assignment_id' => $assignment->id,
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+        ])->assertOk();
+
+        $this->actingAs($customer)->getJson(route('api.orders.tracking', $order))
+            ->assertOk()
+            ->assertJsonPath('data.is_active', true)
+            ->assertJsonPath('data.is_waiting_for_trip', false)
+            ->assertJsonPath('data.journey_status', 'Menuju customer');
+    }
+
     public function test_customer_cannot_poll_another_customers_order(): void
     {
         [$customer, $courier, $order] = $this->createPickupTrip();

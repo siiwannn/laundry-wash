@@ -151,12 +151,14 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const assignmentId = {{ $assignment->id }};
+    const isPickupAssignment = {{ $assignment->type->value === 'pickup' ? 'true' : 'false' }};
     const isTripActive = {{ $assignment->status->value === 'on_the_way' ? 'true' : 'false' }};
     const targetLat = {{ $targetAddress->latitude ?? -6.2088 }};
     const targetLng = {{ $targetAddress->longitude ?? 106.8456 }};
     const mapStyleUrl = @json(config('services.tracking.map_style_url'));
     const routeUrl = @json(route('courier.tasks.route', $assignment));
     const initialRoute = @json($trackingRoute ?? null);
+    const initialCourierCoordinates = @json($courierStartCoordinates);
     const routeStorageKey = `courier-task-route-${assignmentId}`;
 
     function readStoredRoute() {
@@ -183,6 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let routeRefreshInFlight = false;
     let routeRefreshTimer = null;
     let routeHasBeenFitted = false;
+    let courierMarkerInitialized = false;
     let currentRoute = initialRoute || readStoredRoute();
 
     function fitRoute(route) {
@@ -193,6 +196,36 @@ document.addEventListener('DOMContentLoaded', function () {
             map.fitBounds(bounds, { padding: 42, maxZoom: 15, duration: 600 });
             routeHasBeenFitted = true;
         }
+    }
+
+    function bearingBetween(from, to) {
+        const startLat = from[1] * Math.PI / 180;
+        const endLat = to[1] * Math.PI / 180;
+        const deltaLng = (to[0] - from[0]) * Math.PI / 180;
+        const y = Math.sin(deltaLng) * Math.cos(endLat);
+        const x = Math.cos(startLat) * Math.sin(endLat)
+            - Math.sin(startLat) * Math.cos(endLat) * Math.cos(deltaLng);
+
+        return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+    }
+
+    function markerRotationForBearing(bearing) {
+        // Delivery already uses the working GPS/route bearing; compensate the pickup marker only.
+        return isPickupAssignment ? (bearing + 180) % 360 : bearing;
+    }
+
+    function ensureCourierMarker(route) {
+        if (courierMarkerInitialized) return;
+
+        const routeCoordinates = route?.geometry?.coordinates ?? [];
+        const markerCoordinates = initialCourierCoordinates ?? routeCoordinates[0] ?? null;
+        if (!markerCoordinates) return;
+
+        const initialBearing = routeCoordinates.length > 1
+            ? bearingBetween(routeCoordinates[0], routeCoordinates[1])
+            : 0;
+        courierMarker.setLngLat(markerCoordinates).setRotation(markerRotationForBearing(initialBearing)).addTo(map);
+        courierMarkerInitialized = true;
     }
 
     function updateRoute(route) {
@@ -207,6 +240,7 @@ document.addEventListener('DOMContentLoaded', function () {
         etaElement.textContent = currentRoute ? `${Math.max(1, Math.ceil(currentRoute.duration_seconds / 60))} menit` : '--';
         distanceElement.textContent = currentRoute ? `${(currentRoute.distance_meters / 1000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} km` : '--';
         fitRoute(currentRoute);
+        ensureCourierMarker(currentRoute);
     }
 
     async function refreshRoute() {
@@ -222,6 +256,21 @@ document.addEventListener('DOMContentLoaded', function () {
             routeRefreshInFlight = false;
         }
     }
+
+    const destinationElement = document.createElement('div');
+    destinationElement.style.width = '44px';
+    destinationElement.style.height = '44px';
+    destinationElement.innerHTML = '<img src="{{ asset('images/tracking/destination.svg') }}" alt="" style="width:100%;height:100%">';
+    new maplibregl.Marker({ element: destinationElement })
+        .setLngLat([targetLng, targetLat])
+        .setPopup(new maplibregl.Popup({ offset: 22 }).setText(@json($targetAddress->address ?? 'Alamat')))
+        .addTo(map);
+
+    const courierElement = document.createElement('div');
+    courierElement.style.width = '58px';
+    courierElement.style.height = '58px';
+    courierElement.innerHTML = '<img src="{{ asset('images/tracking/delivery-bike.png') }}" alt="Motor kurir" style="width:100%;height:100%;filter:drop-shadow(0 5px 5px rgba(15,23,42,.2))">';
+    const courierMarker = new maplibregl.Marker({ element: courierElement, rotationAlignment: 'map' });
 
     map.on('load', () => {
         map.addSource('courier-active-route', {
@@ -242,27 +291,17 @@ document.addEventListener('DOMContentLoaded', function () {
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: { 'line-color': '#2563EB', 'line-width': 7, 'line-opacity': .95 },
         });
+
         updateRoute(currentRoute);
+
+        ensureCourierMarker(currentRoute);
+
         if (isTripActive) {
             refreshRoute();
             routeRefreshTimer = window.setInterval(refreshRoute, 10000);
         }
     });
 
-    const destinationElement = document.createElement('div');
-    destinationElement.style.width = '44px';
-    destinationElement.style.height = '44px';
-    destinationElement.innerHTML = '<img src="{{ asset('images/tracking/destination.svg') }}" alt="" style="width:100%;height:100%">';
-    new maplibregl.Marker({ element: destinationElement })
-        .setLngLat([targetLng, targetLat])
-        .setPopup(new maplibregl.Popup({ offset: 22 }).setText(@json($targetAddress->address ?? 'Alamat')))
-        .addTo(map);
-
-    const courierElement = document.createElement('div');
-    courierElement.style.width = '58px';
-    courierElement.style.height = '58px';
-    courierElement.innerHTML = '<img src="{{ asset('images/tracking/delivery-bike.png') }}" alt="Motor kurir" style="width:100%;height:100%;filter:drop-shadow(0 5px 5px rgba(15,23,42,.2))">';
-    const courierMarker = new maplibregl.Marker({ element: courierElement, rotationAlignment: 'map' });
     let latestPosition = null;
     let watchId = null;
     let transmissionTimer = null;
@@ -393,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             courierMarker
                 .setLngLat([latestPosition.longitude, latestPosition.latitude])
-                .setRotation(latestPosition.heading ?? 0)
+                .setRotation(markerRotationForBearing(latestPosition.heading ?? 0))
                 .addTo(map);
             map.easeTo({
                 center: [latestPosition.longitude, latestPosition.latitude],

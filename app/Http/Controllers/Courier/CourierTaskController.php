@@ -39,9 +39,12 @@ class CourierTaskController extends Controller
         $profile = $assignment->courier?->courierProfile;
         $latitude = $location?->latitude ?? $profile?->current_latitude;
         $longitude = $location?->longitude ?? $profile?->current_longitude;
+        $courierStartCoordinates = $latitude !== null && $longitude !== null
+            ? [(float) $longitude, (float) $latitude]
+            : null;
         $trackingRoute = $this->resolveTrackingRoute($assignment, $latitude, $longitude, $targetAddress?->latitude, $targetAddress?->longitude);
 
-        return view('courier.tasks.show', compact('assignment', 'targetAddress', 'trackingRoute'));
+        return view('courier.tasks.show', compact('assignment', 'targetAddress', 'trackingRoute', 'courierStartCoordinates'));
     }
 
     public function route(CourierAssignment $assignment): JsonResponse
