@@ -14,7 +14,6 @@ class UpdateSettingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'laundry_price_per_kg' => ['required', 'numeric', 'min:1', 'max:1000000'],
             'pickup_fee' => ['required', 'numeric', 'min:0', 'max:1000000'],
             'delivery_fee' => ['required', 'numeric', 'min:0', 'max:1000000'],
         ];

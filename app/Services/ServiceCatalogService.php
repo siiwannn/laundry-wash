@@ -10,6 +10,6 @@ class ServiceCatalogService
     /** @return Collection<int, Service> */
     public function activeServices(): Collection
     {
-        return Service::query()->where('is_active', true)->orderBy('price_per_kg')->orderBy('name')->get();
+        return Service::query()->where('is_active', true)->orderBy('price_per_unit')->orderBy('name')->get();
     }
 }

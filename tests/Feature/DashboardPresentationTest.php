@@ -141,7 +141,8 @@ class DashboardPresentationTest extends TestCase
         $service = Service::create([
             'name' => 'Cuci Reguler',
             'description' => 'Cuci dan lipat',
-            'price_per_kg' => 8000,
+            'unit' => 'kg',
+            'price_per_unit' => 8000,
             'estimated_hours' => 24,
             'is_active' => true,
         ]);
@@ -162,7 +163,10 @@ class DashboardPresentationTest extends TestCase
         OrderItem::create([
             'order_id' => $order->id,
             'service_id' => $service->id,
+            'service_name_snapshot' => $service->name,
+            'unit' => 'kg',
             'quantity' => 2,
+            'estimated_quantity' => 2,
             'unit_price' => 8000,
             'subtotal' => 16000,
         ]);
@@ -213,7 +217,7 @@ class DashboardPresentationTest extends TestCase
     public function test_internal_pages_render_the_shared_navigation_for_each_role(): void
     {
         foreach ([
-            [UserRole::ADMIN, ['admin.orders.index', 'admin.payments.index', 'admin.customers.index', 'admin.couriers.index', 'admin.couriers.create', 'admin.services.index', 'admin.services.create', 'admin.reports.index', 'admin.settings.edit']],
+            [UserRole::ADMIN, ['admin.orders.index', 'admin.payments.index', 'admin.customers.index', 'admin.couriers.index', 'admin.couriers.create', 'admin.services.index', 'admin.services.create', 'admin.reports.index']],
             [UserRole::CUSTOMER, ['customer.orders.history', 'customer.orders.create', 'customer.addresses.index', 'customer.addresses.create', 'customer.profile.edit']],
             [UserRole::COURIER, ['courier.history']],
         ] as [$role, $pages]) {
@@ -228,7 +232,7 @@ class DashboardPresentationTest extends TestCase
                     ->assertSee('id="sidebar-backdrop"', false);
                 if ($role !== UserRole::ADMIN) {
                     $response->assertSee('workspace-page-search')
-                        ->assertDontSee(route('admin.settings.edit'))
+                        ->assertDontSee('/admin/settings')
                         ->assertDontSee(route('admin.orders.index'));
                 }
             }

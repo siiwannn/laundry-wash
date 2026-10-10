@@ -16,6 +16,8 @@ class Order extends Model
 {
     use HasFactory;
 
+    public const SHIPPING_FEE = 10000;
+
     protected $fillable = [
         'order_number',
         'customer_id',
@@ -31,6 +33,7 @@ class Order extends Model
         'subtotal',
         'pickup_fee',
         'delivery_fee',
+        'shipping_fee',
         'additional_fee',
         'total',
         'notes',
@@ -48,6 +51,7 @@ class Order extends Model
             'subtotal' => 'decimal:2',
             'pickup_fee' => 'decimal:2',
             'delivery_fee' => 'decimal:2',
+            'shipping_fee' => 'decimal:2',
             'additional_fee' => 'decimal:2',
             'total' => 'decimal:2',
         ];
@@ -71,6 +75,11 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function serviceItem(): HasOne
+    {
+        return $this->hasOne(OrderItem::class);
     }
 
     public function assignments(): HasMany

@@ -31,7 +31,7 @@ class OrderWorkflowTest extends TestCase
         $response = $this->actingAs($customer)->post(route('customer.orders.store'), [
             'service_type' => 'self_drop_off',
             'service_id' => $service->id,
-            'estimated_weight' => 3,
+            'estimated_quantity' => 3,
             'pickup_address_id' => $otherAddress->id,
         ]);
 
@@ -49,7 +49,7 @@ class OrderWorkflowTest extends TestCase
             'service_type' => 'self_drop_off',
             'delivery_method' => 'self_pickup',
             'service_id' => $service->id,
-            'estimated_weight' => 3,
+            'estimated_quantity' => 3,
             'pickup_address_id' => $address->id,
             'pickup_date' => now()->addDay()->toDateString(),
             'pickup_time' => '10:00',
@@ -142,7 +142,8 @@ class OrderWorkflowTest extends TestCase
     {
         return Service::create([
             'name' => 'Cuci Reguler',
-            'price_per_kg' => 8000,
+            'unit' => 'kg',
+            'price_per_unit' => 8000,
             'estimated_hours' => 48,
             'is_active' => true,
         ]);

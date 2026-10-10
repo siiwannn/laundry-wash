@@ -87,53 +87,59 @@
                 <h5 class="fw-bold mb-0"><i class="bi bi-receipt me-2 text-primary"></i> Rincian Tagihan Laundry</h5>
             </div>
             <div class="table-responsive">
-                <table class="table mb-0">
+                <table class="table mb-0 order-invoice-table">
+                    <colgroup><col><col><col><col></colgroup>
                     <thead class="table-light small text-muted text-uppercase">
                         <tr>
                             <th>Paket Layanan</th>
-                            <th class="text-center">Tarif/Kg</th>
-                            <th class="text-center">Berat Cucian</th>
+                            <th class="text-center">Tarif / Satuan</th>
+                            <th class="text-center">Jumlah / Berat</th>
                             <th class="text-end">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($order->items as $item)
-                            <tr>
-                                <td>
-                                    <div class="fw-bold text-dark">{{ $item->service->name ?? 'Layanan' }}</div>
-                                    <small class="text-muted">{{ $item->service->description }}</small>
+                        @if($item = $order->serviceItem)
+                            <tr class="order-invoice-item">
+                                <td class="order-invoice-service">
+                                    <div class="fw-bold text-dark">{{ $item->service_name_snapshot ?: ($item->service->name ?? 'Layanan') }}</div>
+                                    <small class="text-muted">{{ $item->service?->description ?? '-' }}</small>
                                 </td>
-                                <td class="text-center">Rp {{ number_format($item->unit_price, 0, ',', '.') }}</td>
-                                <td class="text-center fw-semibold">
-                                    {{ $order->actual_weight ?: $item->quantity }} kg
-                                    @if($order->actual_weight)
-                                        <small class="text-success d-block" style="font-size: 0.72rem;">(Berat Real Ditimbang)</small>
+                                <td class="order-invoice-rate text-center" data-label="Tarif per satuan">Rp {{ number_format($item->unit_price, 0, ',', '.') }} / {{ $item->unit }}</td>
+                                <td class="order-invoice-quantity text-center fw-semibold" data-label="Jumlah / berat">
+                                    {{ $item->unit === 'pcs' ? number_format($item->actual_quantity ?? $item->estimated_quantity, 0, ',', '.') : ($item->actual_quantity ?? $item->estimated_quantity) }} {{ $item->unit }}
+                                    @if($item->actual_quantity !== null)
+                                        <small class="order-invoice-quantity-note text-success d-block">{{ $item->unit === 'pcs' ? 'Jumlah aktual' : 'Berat aktual' }}</small>
                                     @else
-                                        <small class="text-muted d-block" style="font-size: 0.72rem;">(Perkiraan Awal)</small>
+                                        <small class="order-invoice-quantity-note text-muted d-block">Perkiraan awal</small>
                                     @endif
                                 </td>
-                                <td class="text-end fw-bold">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                                <td class="order-invoice-line-total text-end fw-bold" data-label="Subtotal">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
                             </tr>
-                        @endforeach
+                        @endif
                     </tbody>
                     <tfoot class="table-light">
                         <tr>
-                            <td colspan="3" class="text-end text-muted">Subtotal Cucian:</td>
-                            <td class="text-end fw-bold">Rp {{ number_format($order->subtotal, 0, ',', '.') }}</td>
+                            <td colspan="4"><div class="order-invoice-summary-row"><span>Subtotal cucian</span><strong>Rp {{ number_format($order->subtotal, 0, ',', '.') }}</strong></div></td>
                         </tr>
-                        <tr>
-                            <td colspan="3" class="text-end text-muted">Ongkos Antar Jemput:</td>
-                            <td class="text-end fw-bold">Rp {{ number_format($order->delivery_fee, 0, ',', '.') }}</td>
-                        </tr>
+                        @if($order->shipping_fee !== null)
+                            <tr>
+                                <td colspan="4"><div class="order-invoice-summary-row"><span>Ongkir (pickup &amp; delivery)</span><strong>Rp {{ number_format($order->shipping_fee, 0, ',', '.') }}</strong></div></td>
+                            </tr>
+                        @else
+                            <tr>
+                                <td colspan="4"><div class="order-invoice-summary-row"><span>Biaya pickup</span><strong>Rp {{ number_format($order->pickup_fee, 0, ',', '.') }}</strong></div></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4"><div class="order-invoice-summary-row"><span>Biaya delivery</span><strong>Rp {{ number_format($order->delivery_fee, 0, ',', '.') }}</strong></div></td>
+                            </tr>
+                        @endif
                         @if($order->additional_fee > 0)
                             <tr>
-                                <td colspan="3" class="text-end text-muted">Biaya Tambahan:</td>
-                                <td class="text-end fw-bold">Rp {{ number_format($order->additional_fee, 0, ',', '.') }}</td>
+                                <td colspan="4"><div class="order-invoice-summary-row"><span>Biaya tambahan</span><strong>Rp {{ number_format($order->additional_fee, 0, ',', '.') }}</strong></div></td>
                             </tr>
                         @endif
                         <tr class="table-primary border-top border-primary">
-                            <td colspan="3" class="text-end fw-bold fs-6">TOTAL PEMBAYARAN:</td>
-                            <td class="text-end fw-bold fs-5 text-primary">Rp {{ number_format($order->total, 0, ',', '.') }}</td>
+                            <td colspan="4"><div class="order-invoice-summary-row order-invoice-grand-total"><span>Total pembayaran</span><strong>Rp {{ number_format($order->total, 0, ',', '.') }}</strong></div></td>
                         </tr>
                     </tfoot>
                 </table>

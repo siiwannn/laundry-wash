@@ -38,6 +38,10 @@ class PaymentService
             ->latest()
             ->first();
 
+        if ($activePayment && abs((float) $activePayment->amount - (float) $order->total) > 0.01) {
+            throw new Exception('Nominal pesanan berbeda dari transaksi Midtrans yang masih aktif. Hubungi Admin sebelum mencoba lagi.');
+        }
+
         if ($activePayment?->snap_token && ! $refreshToken) {
             return $activePayment;
         }
@@ -111,7 +115,10 @@ class PaymentService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if (abs((float) $payment->amount - (float) $notification['gross_amount']) > 0.01) {
+            $orderTotal = (float) Order::query()->whereKey($payment->order_id)->lockForUpdate()->value('total');
+
+            if (abs((float) $payment->amount - (float) $notification['gross_amount']) > 0.01
+                || abs((float) $payment->amount - $orderTotal) > 0.01) {
                 throw new UnprocessableEntityHttpException('Nominal webhook tidak sesuai dengan tagihan.');
             }
 

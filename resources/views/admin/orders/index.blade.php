@@ -88,11 +88,11 @@
                             </span>
                         </td>
                         <td>
-                            @if($order->actual_weight)
-                                <span class="fw-bold text-success">{{ $order->actual_weight }} kg</span>
+                            @if($order->serviceItem?->actual_quantity !== null)
+                                <span class="fw-bold text-success">{{ $order->serviceItem->unit === 'pcs' ? number_format($order->serviceItem->actual_quantity, 0, ',', '.') : $order->serviceItem->actual_quantity }} {{ $order->serviceItem->unit }}</span>
                                 <small class="text-muted d-block" style="font-size: 0.7rem;">(Aktual)</small>
-                            @elseif($order->estimated_weight)
-                                <span class="text-muted">{{ $order->estimated_weight }} kg</span>
+                            @elseif($order->serviceItem?->estimated_quantity)
+                                <span class="text-muted">{{ $order->serviceItem->unit === 'pcs' ? number_format($order->serviceItem->estimated_quantity, 0, ',', '.') : $order->serviceItem->estimated_quantity }} {{ $order->serviceItem->unit }}</span>
                                 <small class="text-muted d-block" style="font-size: 0.7rem;">(Perkiraan)</small>
                             @else
                                 <span class="text-muted small">-</span>

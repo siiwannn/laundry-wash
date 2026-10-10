@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
-use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -12,24 +11,20 @@ class AdminSettingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_update_pricing_settings(): void
+    public function test_legacy_admin_settings_routes_are_disabled(): void
     {
         $admin = User::factory()->create(['role' => UserRole::ADMIN]);
 
-        $this->actingAs($admin)->put(route('admin.settings.update'), [
-            'laundry_price_per_kg' => 9000,
+        $this->actingAs($admin)->get('/admin/settings')->assertNotFound();
+        $this->actingAs($admin)->put('/admin/settings', [
             'pickup_fee' => 6000,
             'delivery_fee' => 7000,
-        ])->assertRedirect();
-
-        $setting = Setting::firstOrFail();
-        $this->assertSame('9000.00', $setting->laundry_price_per_kg);
-        $this->assertSame($admin->id, $setting->updated_by);
+        ])->assertNotFound();
     }
 
     public function test_customer_cannot_access_admin_settings(): void
     {
         $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
-        $this->actingAs($customer)->get(route('admin.settings.edit'))->assertForbidden();
+        $this->actingAs($customer)->get('/admin/settings')->assertNotFound();
     }
 }

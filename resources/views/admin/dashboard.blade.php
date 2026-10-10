@@ -71,7 +71,7 @@
                     @forelse($recentOrders->take(7) as $order)
                         <a href="{{ route('admin.orders.show', $order) }}" class="queue-order-item">
                             <span class="queue-order-avatar">{{ collect(explode(' ', $order->customer->name ?? 'Laundry Wash'))->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->join('') }}</span>
-                            <span class="queue-order-details"><strong>{{ $order->customer->name ?? 'Customer' }}</strong><small>{{ $order->order_number }} &middot; {{ $order->items->first()?->service?->name ?? 'Laundry' }}</small></span>
+                            <span class="queue-order-details"><strong>{{ $order->customer->name ?? 'Customer' }}</strong><small>{{ $order->order_number }} &middot; {{ $order->serviceItem?->service_name_snapshot ?? $order->items->first()?->service?->name ?? 'Laundry' }}</small></span>
                             <span class="queue-order-price"><strong>Rp {{ number_format($order->total, 0, ',', '.') }}</strong><span class="badge badge-status {{ $order->status->badgeClass() }}">{{ $order->status->label() }}</span></span>
                         </a>
                     @empty

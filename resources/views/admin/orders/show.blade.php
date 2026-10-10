@@ -36,7 +36,7 @@
                     @elseif($order->status->value === 'picked_up')
                         Pakaian telah dijemput kurir. Konfirmasi kedatangan pakaian di outlet workshop.
                     @elseif($order->status->value === 'received_at_laundry')
-                        Pakaian telah tiba. Masukkan <strong>berat aktual (kg)</strong> untuk menghitung total tagihan akhir.
+                        Pakaian telah tiba. Masukkan <strong>{{ $order->serviceItem?->unit === 'pcs' ? 'jumlah aktual (pcs)' : 'berat aktual (kg)' }}</strong> untuk menghitung total tagihan akhir.
                     @elseif(in_array($order->status->value, ['washing', 'drying', 'ironing']))
                         Laundry sedang dalam proses pengerjaan. Perbarui tahapan cuci saat selesai satu siklus.
                     @elseif($order->status->value === 'ready')
@@ -85,7 +85,7 @@
                 <!-- Action 4: Input / Update Weight Modal -->
                 @if($order->status->value === 'received_at_laundry')
                     <button type="button" class="btn btn-success btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#weightModal">
-                        <i class="bi bi-speedometer2 me-1"></i> {{ $order->actual_weight ? 'Perbarui Berat / Biaya' : 'Timbang Berat Aktual' }}
+                        <i class="bi bi-speedometer2 me-1"></i> {{ $order->serviceItem?->actual_quantity !== null ? 'Perbarui Kuantitas / Biaya' : 'Catat Kuantitas Aktual' }}
                     </button>
                 @endif
 
@@ -116,51 +116,59 @@
                 <h5 class="fw-bold mb-0"><i class="bi bi-receipt-cutoff me-2 text-primary"></i> Rincian Paket Layanan & Biaya</h5>
             </div>
             <div class="table-responsive">
-                <table class="table mb-0">
+                <table class="table mb-0 order-invoice-table">
+                    <colgroup><col><col><col><col></colgroup>
                     <thead class="table-light small text-muted text-uppercase">
                         <tr>
                             <th>Layanan Laundry</th>
-                            <th class="text-center">Tarif / Kg</th>
-                            <th class="text-center">Kuantitas / Berat</th>
+                            <th class="text-center">Tarif / Satuan</th>
+                            <th class="text-center">Kuantitas</th>
                             <th class="text-end">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($order->items as $item)
-                            <tr>
-                                <td>
-                                    <div class="fw-bold text-dark">{{ $item->service->name ?? 'Layanan' }}</div>
-                                    <small class="text-muted">{{ $item->service->description }}</small>
+                        @if($item = $order->serviceItem)
+                            <tr class="order-invoice-item">
+                                <td class="order-invoice-service">
+                                    <div class="fw-bold text-dark">{{ $item->service_name_snapshot ?: ($item->service->name ?? 'Layanan') }}</div>
+                                    <small class="text-muted">{{ $item->service?->description ?? '-' }}</small>
                                 </td>
-                                <td class="text-center">Rp {{ number_format($item->unit_price, 0, ',', '.') }}</td>
-                                <td class="text-center fw-semibold">
-                                    {{ $order->actual_weight ?: $item->quantity }} kg
-                                    @if(!$order->actual_weight)
-                                        <small class="text-muted d-block" style="font-size: 0.7rem;">(Estimasi)</small>
+                                <td class="order-invoice-rate text-center" data-label="Tarif per satuan">Rp {{ number_format($item->unit_price, 0, ',', '.') }} / {{ $item->unit }}</td>
+                                <td class="order-invoice-quantity text-center fw-semibold" data-label="Jumlah / berat">
+                                    {{ $item->unit === 'pcs' ? number_format($item->actual_quantity ?? $item->estimated_quantity, 0, ',', '.') : ($item->actual_quantity ?? $item->estimated_quantity) }} {{ $item->unit }}
+                                    @if($item->actual_quantity === null)
+                                        <small class="order-invoice-quantity-note text-muted d-block">Perkiraan awal</small>
+                                    @else
+                                        <small class="order-invoice-quantity-note text-success d-block">{{ $item->unit === 'pcs' ? 'Jumlah aktual' : 'Berat aktual' }}</small>
                                     @endif
                                 </td>
-                                <td class="text-end fw-bold">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                                <td class="order-invoice-line-total text-end fw-bold" data-label="Subtotal">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
                             </tr>
-                        @endforeach
+                        @endif
                     </tbody>
                     <tfoot class="table-light">
                         <tr>
-                            <td colspan="3" class="text-end text-muted">Subtotal Cucian:</td>
-                            <td class="text-end fw-bold">Rp {{ number_format($order->subtotal, 0, ',', '.') }}</td>
+                            <td colspan="4"><div class="order-invoice-summary-row"><span>Subtotal cucian</span><strong>Rp {{ number_format($order->subtotal, 0, ',', '.') }}</strong></div></td>
                         </tr>
-                        <tr>
-                            <td colspan="3" class="text-end text-muted">Ongkos Antar Jemput:</td>
-                            <td class="text-end fw-bold">Rp {{ number_format($order->delivery_fee, 0, ',', '.') }}</td>
-                        </tr>
+                        @if($order->shipping_fee !== null)
+                            <tr>
+                                <td colspan="4"><div class="order-invoice-summary-row"><span>Ongkir (pickup &amp; delivery)</span><strong>Rp {{ number_format($order->shipping_fee, 0, ',', '.') }}</strong></div></td>
+                            </tr>
+                        @else
+                            <tr>
+                                <td colspan="4"><div class="order-invoice-summary-row"><span>Biaya pickup</span><strong>Rp {{ number_format($order->pickup_fee, 0, ',', '.') }}</strong></div></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4"><div class="order-invoice-summary-row"><span>Biaya delivery</span><strong>Rp {{ number_format($order->delivery_fee, 0, ',', '.') }}</strong></div></td>
+                            </tr>
+                        @endif
                         @if($order->additional_fee > 0)
                             <tr>
-                                <td colspan="3" class="text-end text-muted">Biaya Tambahan (Parfum/Kotor Tebal):</td>
-                                <td class="text-end fw-bold">Rp {{ number_format($order->additional_fee, 0, ',', '.') }}</td>
+                                <td colspan="4"><div class="order-invoice-summary-row"><span>Biaya tambahan (parfum/kotor tebal)</span><strong>Rp {{ number_format($order->additional_fee, 0, ',', '.') }}</strong></div></td>
                             </tr>
                         @endif
                         <tr class="table-primary border-top border-primary">
-                            <td colspan="3" class="text-end fw-bold fs-6">TOTAL TAGIHAN:</td>
-                            <td class="text-end fw-bold fs-5 text-primary">Rp {{ number_format($order->total, 0, ',', '.') }}</td>
+                            <td colspan="4"><div class="order-invoice-summary-row order-invoice-grand-total"><span>Total tagihan</span><strong>Rp {{ number_format($order->total, 0, ',', '.') }}</strong></div></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -351,27 +359,28 @@
     </div>
 </div>
 
-<!-- Modal 2: Input / Update Weight Modal -->
+<!-- Modal 2: Input / Update Actual Quantity Modal -->
 <div class="modal fade" id="weightModal" tabindex="-1">
     <div class="modal-dialog">
         <form action="{{ route('admin.orders.weight', $order) }}" method="POST" class="modal-content">
             @csrf
             @method('PATCH')
             <div class="modal-header">
-                <h5 class="modal-title fw-bold">Penimbangan Berat Aktual</h5>
+                <h5 class="modal-title fw-bold">Catat Kuantitas Aktual</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p class="small text-muted">Total biaya cucian akan dihitung ulang secara otomatis berdasarkan berat aktual.</p>
+                <p class="small text-muted">Tagihan dihitung ulang berdasarkan jumlah atau berat aktual dan tarif snapshot pesanan.</p>
                 
                 <div class="mb-3">
-                    <label for="actual_weight" class="form-label fw-semibold small">Berat Aktual (Kg):</label>
+                    <label for="actual_quantity" class="form-label fw-semibold small">{{ $order->serviceItem?->unit === 'pcs' ? 'Jumlah Aktual' : 'Berat Aktual' }} ({{ $order->serviceItem?->unit ?? 'kg' }}):</label>
                     <div class="input-group">
-                        <input type="number" step="0.01" min="0.1" name="actual_weight" id="actual_weight" class="form-control" value="{{ old('actual_weight', $order->actual_weight ?: $order->estimated_weight) }}" required>
-                        <span class="input-group-text">Kg</span>
+                        <input type="number" step="{{ $order->serviceItem?->unit === 'pcs' ? '1' : '0.01' }}" min="{{ $order->serviceItem?->unit === 'pcs' ? '1' : '0.1' }}" name="actual_quantity" id="actual_quantity" class="form-control" value="{{ old('actual_quantity', $order->serviceItem?->unit === 'pcs' ? (int) ($order->serviceItem?->actual_quantity ?? $order->serviceItem?->estimated_quantity ?? 1) : ($order->serviceItem?->actual_quantity ?? $order->serviceItem?->estimated_quantity)) }}" required>
+                        <span class="input-group-text">{{ $order->serviceItem?->unit ?? 'kg' }}</span>
                     </div>
                 </div>
 
+                @if($order->shipping_fee === null)
                 <div class="mb-3">
                     <label for="additional_fee" class="form-label fw-semibold small">Biaya Tambahan (Opsional):</label>
                     <div class="input-group">
@@ -380,6 +389,7 @@
                     </div>
                     <small class="text-muted">Misal untuk deterjen noda membandel atau pewangi ekstra.</small>
                 </div>
+                @endif
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>

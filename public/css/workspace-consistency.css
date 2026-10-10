@@ -18,6 +18,43 @@
 .workspace-detail-page .table-responsive { border-radius: 16px; }
 .workspace-detail-page .table :is(td, th) { white-space: nowrap; }
 .workspace-detail-page .table td .small { white-space: normal; min-width: 120px; overflow-wrap: anywhere; }
+.workspace-detail-page .order-invoice-table { width: 100%; table-layout: fixed; }
+.workspace-detail-page .order-invoice-table col:first-child { width: 38%; }
+.workspace-detail-page .order-invoice-table col:nth-child(2) { width: 20%; }
+.workspace-detail-page .order-invoice-table col:nth-child(3) { width: 20%; }
+.workspace-detail-page .order-invoice-table col:last-child { width: 22%; }
+.workspace-detail-page .order-invoice-table :is(td, th) { white-space: normal; overflow-wrap: anywhere; }
+.workspace-detail-page .order-invoice-table td .small { min-width: 0; }
+.workspace-detail-page .order-invoice-table .order-invoice-service { text-align: left; }
+.workspace-detail-page .order-invoice-table .order-invoice-quantity-note { white-space: nowrap; }
+.workspace-detail-page .order-invoice-summary-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; color: #5f5a51; }
+.workspace-detail-page .order-invoice-summary-row > span { min-width: 0; text-align: left; }
+.workspace-detail-page .order-invoice-summary-row > strong { min-width: 112px; color: #1f1e1b; text-align: right; white-space: nowrap; }
+.workspace-detail-page .order-invoice-grand-total { align-items: center; color: #171613; font-size: 1rem; font-weight: 700; text-transform: uppercase; }
+.workspace-detail-page .order-invoice-grand-total > strong { color: var(--lw-primary); font-size: 1.35rem; }
+.workspace-detail-page .order-invoice-quantity-note { font-size: .68rem; line-height: 1.35; }
+@media (max-width: 575.98px) {
+    .workspace-detail-page .order-invoice-table { display: block; }
+    .workspace-detail-page .order-invoice-table thead { display: none; }
+    .workspace-detail-page .order-invoice-table tbody,
+    .workspace-detail-page .order-invoice-table tfoot { display: block; }
+    .workspace-detail-page .order-invoice-table .order-invoice-item { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 12px; overflow: hidden; border: 1px solid var(--lw-border); border-radius: 12px; background: #fff; }
+    .workspace-detail-page .order-invoice-table .order-invoice-item > td { min-width: 0; padding: 12px; border: 0; text-align: left !important; }
+    .workspace-detail-page .order-invoice-table .order-invoice-service { grid-column: 1 / -1; border-bottom: 1px solid var(--lw-border) !important; }
+    .workspace-detail-page .order-invoice-table .order-invoice-service > div { font-size: .92rem; }
+    .workspace-detail-page .order-invoice-table .order-invoice-service > small { display: block; margin-top: 3px; }
+    .workspace-detail-page .order-invoice-table .order-invoice-rate::before,
+    .workspace-detail-page .order-invoice-table .order-invoice-quantity::before { display: block; margin-bottom: 5px; color: #716d65; content: attr(data-label); font-size: .68rem; font-weight: 500; text-align: left; }
+    .workspace-detail-page .order-invoice-table .order-invoice-line-total { display: flex; grid-column: 1 / -1; justify-content: space-between; align-items: center; border-top: 1px solid var(--lw-border) !important; background: #f8f7f4; }
+    .workspace-detail-page .order-invoice-table .order-invoice-line-total::before { color: #716d65; content: attr(data-label); font-size: .75rem; font-weight: 500; }
+    .workspace-detail-page .order-invoice-table tfoot tr { display: block; }
+    .workspace-detail-page .order-invoice-table tfoot td { display: block; padding: 10px 14px; }
+    .workspace-detail-page .order-invoice-summary-row { gap: 12px; }
+    .workspace-detail-page .order-invoice-summary-row > span { min-width: 0; flex: 1; text-align: left; }
+    .workspace-detail-page .order-invoice-summary-row > strong { min-width: 96px; }
+    .workspace-detail-page .order-invoice-grand-total { font-size: .85rem; }
+    .workspace-detail-page .order-invoice-grand-total > strong { font-size: 1.1rem; }
+}
 .workspace-auth .app-sidebar { overflow-y: auto; overflow-x: hidden; }
 .workspace-auth .app-sidebar .nav-link { white-space: nowrap; gap: 10px; }
 .workspace-auth .app-sidebar .nav-link i { margin: 0 !important; width: 20px; text-align: center; flex-shrink: 0; }

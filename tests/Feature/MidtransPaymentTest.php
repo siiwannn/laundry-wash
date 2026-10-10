@@ -183,6 +183,17 @@ class MidtransPaymentTest extends TestCase
         $this->assertSame(PaymentStatus::PENDING, $payment->fresh()->status);
     }
 
+    public function test_webhook_rejects_a_payment_snapshot_that_no_longer_matches_the_order_total(): void
+    {
+        $payment = $this->createPendingPayment();
+        $payment->order->update(['total' => 50001]);
+
+        $this->postJson(route('midtrans.notification'), $this->signedNotification($payment, 'settlement', 'qris'))
+            ->assertUnprocessable();
+
+        $this->assertSame(PaymentStatus::PENDING, $payment->fresh()->status);
+    }
+
     public function test_settlement_webhook_marks_payment_and_order_paid_idempotently(): void
     {
         $payment = $this->createPendingPayment();

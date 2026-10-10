@@ -3,7 +3,9 @@
 namespace App\Http\Requests\Order;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 use Illuminate\Validation\Rule;
+use App\Models\Service;
 
 class StoreOrderRequest extends FormRequest
 {
@@ -17,11 +19,14 @@ class StoreOrderRequest extends FormRequest
         return [
             'service_type' => ['prohibited'],
             'delivery_method' => ['prohibited'],
+            'items' => ['prohibited'],
+            'service_ids' => ['prohibited'],
+            'estimated_weight' => ['prohibited'],
             'service_id' => [
                 'required',
                 Rule::exists('services', 'id')->where('is_active', true),
             ],
-            'estimated_weight' => ['nullable', 'numeric', 'min:0.5', 'max:500'],
+            'estimated_quantity' => ['required', 'numeric', 'min:0.01', 'max:500'],
             'pickup_address_id' => [
                 'required',
                 Rule::exists('customer_addresses', 'id')->where(
@@ -34,6 +39,26 @@ class StoreOrderRequest extends FormRequest
         ];
     }
 
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $service = Service::query()->whereKey($this->input('service_id'))->first();
+            $quantity = $this->input('estimated_quantity');
+
+            if (! $service || $quantity === null) {
+                return;
+            }
+
+            if ($service->unit === 'pcs' && abs((float) $quantity - round((float) $quantity)) > 0.0000001) {
+                $validator->errors()->add('estimated_quantity', 'Jumlah barang harus berupa bilangan bulat.');
+            }
+
+            if ($service->unit === 'kg' && (float) $quantity < 0.5) {
+                $validator->errors()->add('estimated_quantity', 'Perkiraan berat minimal adalah 0.5 kg.');
+            }
+        });
+    }
+
     public function messages(): array
     {
         return [
@@ -43,7 +68,7 @@ class StoreOrderRequest extends FormRequest
             'service_id.exists' => 'Paket layanan laundry tidak valid atau sedang tidak aktif.',
             'pickup_address_id.required' => 'Alamat penjemputan wajib dipilih.',
             'pickup_address_id.exists' => 'Alamat penjemputan tidak valid atau bukan milik Anda.',
-            'estimated_weight.min' => 'Perkiraan berat minimal adalah 0.5 kg.',
+            'estimated_quantity.required' => 'Perkiraan jumlah atau berat wajib diisi.',
         ];
     }
 }

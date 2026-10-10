@@ -52,7 +52,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div>
-                                    <h3 class="h5 fw-bold mb-0 text-dark">{{ $order->items->first()->service->name ?? 'Pesanan Laundry' }}</h3>
+                                    <h3 class="h5 fw-bold mb-0 text-dark">{{ $order->serviceItem?->service_name_snapshot ?? $order->items->first()?->service?->name ?? 'Pesanan Laundry' }}</h3>
                                     <small class="text-muted">Dipesan {{ $order->created_at->locale('id')->translatedFormat('d M Y, H:i') }} WIB</small>
                                 </div>
                                 <span class="badge badge-status {{ $order->status->badgeClass() }}">
@@ -182,7 +182,7 @@
                     <h6 class="fw-bold text-dark mb-1">{{ $svc->name }}</h6>
                     <p class="small text-muted mb-3 flex-grow-1">{{ $svc->description }}</p>
                     <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                        <span class="fw-bold text-primary">Rp {{ number_format($svc->price_per_kg, 0, ',', '.') }} <small class="text-muted">/kg</small></span>
+                        <span class="fw-bold text-primary">Rp {{ number_format($svc->price_per_unit, 0, ',', '.') }} <small class="text-muted">/{{ $svc->unit }}</small></span>
                         <small class="badge bg-light text-dark border"><i class="bi bi-clock me-1"></i>{{ $svc->estimated_hours }} Jam</small>
                     </div>
                 </div>

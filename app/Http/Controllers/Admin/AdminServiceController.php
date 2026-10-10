@@ -13,7 +13,7 @@ class AdminServiceController extends Controller
 {
     public function index(): View
     {
-        $services = Service::latest()->paginate(10);
+        $services = Service::query()->orderBy('name')->paginate(10);
 
         return view('admin.services.index', compact('services'));
     }
@@ -28,9 +28,10 @@ class AdminServiceController extends Controller
         Service::create([
             'name' => $request->validated('name'),
             'description' => $request->validated('description'),
-            'price_per_kg' => $request->validated('price_per_kg'),
+            'unit' => $request->validated('unit'),
+            'price_per_unit' => $request->validated('price_per_unit'),
             'estimated_hours' => $request->validated('estimated_hours'),
-            'is_active' => $request->boolean('is_active', true),
+            'is_active' => true,
         ]);
 
         return redirect()->route('admin.services.index')
@@ -47,9 +48,9 @@ class AdminServiceController extends Controller
         $service->update([
             'name' => $request->validated('name'),
             'description' => $request->validated('description'),
-            'price_per_kg' => $request->validated('price_per_kg'),
+            'unit' => $request->validated('unit'),
+            'price_per_unit' => $request->validated('price_per_unit'),
             'estimated_hours' => $request->validated('estimated_hours'),
-            'is_active' => $request->boolean('is_active'),
         ]);
 
         return redirect()->route('admin.services.index')
@@ -58,16 +59,8 @@ class AdminServiceController extends Controller
 
     public function destroy(Service $service): RedirectResponse
     {
-        // Toggle active status instead of hard delete if it has existing order items
-        if ($service->orderItems()->exists()) {
-            $service->update(['is_active' => ! $service->is_active]);
-            $statusStr = $service->is_active ? 'diaktifkan kembali' : 'dinonaktifkan';
-
-            return back()->with('info', "Layanan {$service->name} {$statusStr} (karena memiliki riwayat pesanan).");
-        }
-
         $service->delete();
 
-        return back()->with('success', 'Paket layanan berhasil dihapus.');
+        return back()->with('success', 'Layanan dihapus dari katalog. Data order lama tetap tersimpan.');
     }
 }

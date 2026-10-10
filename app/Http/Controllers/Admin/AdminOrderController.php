@@ -26,7 +26,7 @@ class AdminOrderController extends Controller
 
     public function index(Request $request): View
     {
-        $query = Order::with(['customer', 'items.service', 'activeAssignment.courier'])
+        $query = Order::with(['customer', 'serviceItem', 'activeAssignment.courier'])
             ->latest();
 
         if ($request->filled('status')) {
@@ -60,7 +60,7 @@ class AdminOrderController extends Controller
             'customer',
             'pickupAddress',
             'deliveryAddress',
-            'items.service',
+            'serviceItem.service',
             'assignments.courier.courierProfile',
             'assignments.latestLocation',
             'statusHistories.user',
@@ -93,12 +93,12 @@ class AdminOrderController extends Controller
         try {
             $this->orderService->recordWeight(
                 $order,
-                (float) $request->validated('actual_weight'),
+                (float) $request->validated('actual_quantity'),
                 $request->validated('additional_fee') !== null ? (float) $request->validated('additional_fee') : null,
                 auth()->user()
             );
 
-            return back()->with('success', 'Berat aktual dan rincian harga berhasil disimpan.');
+            return back()->with('success', 'Kuantitas aktual dan rincian harga berhasil disimpan.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }

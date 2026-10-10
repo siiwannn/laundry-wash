@@ -29,7 +29,9 @@ class CustomerOrderController extends Controller
         $services = Service::where('is_active', true)->get();
         $addresses = auth()->user()->addresses()->latest()->get();
 
-        return view('customer.orders.create', compact('services', 'addresses'));
+        $shippingFee = Order::SHIPPING_FEE;
+
+        return view('customer.orders.create', compact('services', 'addresses', 'shippingFee'));
     }
 
     public function store(StoreOrderRequest $request): RedirectResponse
@@ -49,7 +51,7 @@ class CustomerOrderController extends Controller
         Gate::authorize('view', $order);
 
         $order->load([
-            'items.service',
+            'serviceItem.service',
             'pickupAddress',
             'deliveryAddress',
             'statusHistories.user',
@@ -73,7 +75,7 @@ class CustomerOrderController extends Controller
     public function history(): View
     {
         $orders = Order::forCustomer(auth()->id())
-            ->with(['items.service', 'latestPayment'])
+            ->with(['serviceItem.service', 'latestPayment'])
             ->latest()
             ->paginate(10);
 

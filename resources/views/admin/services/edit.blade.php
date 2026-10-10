@@ -26,10 +26,17 @@
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label for="price_per_kg" class="form-label fw-semibold small">Harga per Kg (Rp)</label>
+                            <label for="unit" class="form-label fw-semibold small">Satuan</label>
+                            <select name="unit" id="unit" class="form-select" required>
+                                <option value="kg" @selected(old('unit', $service->unit) === 'kg')>Kilogram (kg)</option>
+                                <option value="pcs" @selected(old('unit', $service->unit) === 'pcs')>Barang (pcs)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="price_per_unit" class="form-label fw-semibold small">Harga per satuan (Rp)</label>
                             <div class="input-group">
                                 <span class="input-group-text">Rp</span>
-                                <input type="number" step="500" min="500" name="price_per_kg" id="price_per_kg" class="form-control" value="{{ old('price_per_kg', (int) $service->price_per_kg) }}" required>
+                                <input type="number" step="1" min="1" name="price_per_unit" id="price_per_unit" class="form-control" value="{{ old('price_per_unit', (int) $service->price_per_unit) }}" required>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -39,13 +46,6 @@
                                 <span class="input-group-text">Jam</span>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="form-check mb-4">
-                        <input class="form-check-input" type="checkbox" name="is_active" id="is_active" value="1" {{ old('is_active', $service->is_active) ? 'checked' : '' }}>
-                        <label class="form-check-label small" for="is_active">
-                            Layanan aktif dan dapat dipilih oleh pelanggan
-                        </label>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2">

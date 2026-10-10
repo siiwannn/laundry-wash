@@ -70,7 +70,7 @@ class ReportService
         $start = $startDate ? Carbon::parse($startDate)->startOfDay() : now()->subDays(30)->startOfDay();
         $end = $endDate ? Carbon::parse($endDate)->endOfDay() : now()->endOfDay();
 
-        $orders = Order::with(['customer', 'items.service'])
+        $orders = Order::with(['customer', 'serviceItem.service'])
             ->where('payment_status', PaymentStatus::PAID)
             ->whereBetween('updated_at', [$start, $end])
             ->orderBy('updated_at', 'desc')

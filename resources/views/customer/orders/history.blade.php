@@ -21,7 +21,7 @@
                 <tr>
                     <th>No. Order</th>
                     <th>Layanan</th>
-                    <th>Berat</th>
+                    <th>Kuantitas</th>
                     <th>Total Tagihan</th>
                     <th>Status Cucian</th>
                     <th>Status Bayar</th>
@@ -37,12 +37,8 @@
                             </a>
                             <div class="text-muted" style="font-size: 0.75rem;">{{ $order->created_at->format('d/m/Y H:i') }} WIB</div>
                         </td>
-                        <td>
-                            @foreach($order->items as $it)
-                                <span class="badge bg-light text-dark border">{{ $it->service->name ?? 'Layanan' }}</span>
-                            @endforeach
-                        </td>
-                        <td>{{ $order->actual_weight ?: $order->estimated_weight ?: '-' }} kg</td>
+                        <td>{{ $order->serviceItem?->service_name_snapshot ?? $order->serviceItem?->service?->name ?? 'Layanan' }}</td>
+                        <td>{{ $order->serviceItem?->unit === 'pcs' ? number_format($order->serviceItem?->actual_quantity ?? $order->serviceItem?->estimated_quantity, 0, ',', '.') : ($order->serviceItem?->actual_quantity ?? $order->serviceItem?->estimated_quantity ?? '-') }} {{ $order->serviceItem?->unit }}</td>
                         <td class="fw-bold">Rp {{ number_format($order->total, 0, ',', '.') }}</td>
                         <td>
                             <span class="badge badge-status {{ $order->status->badgeClass() }}">

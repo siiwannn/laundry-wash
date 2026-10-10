@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Service;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateServiceRequest extends FormRequest
 {
@@ -14,11 +15,11 @@ class UpdateServiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('services', 'name')->whereNull('deleted_at')->ignore($this->route('service')?->id)],
             'description' => ['nullable', 'string', 'max:1000'],
-            'price_per_kg' => ['required', 'numeric', 'min:500'],
+            'unit' => ['required', 'in:kg,pcs'],
+            'price_per_unit' => ['required', 'numeric', 'min:1', 'max:1000000'],
             'estimated_hours' => ['nullable', 'integer', 'min:1'],
-            'is_active' => ['nullable', 'boolean'],
         ];
     }
 }

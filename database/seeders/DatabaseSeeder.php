@@ -123,29 +123,32 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Cuci Komplit Reguler'],
             [
                 'description' => 'Cuci bersih, pengeringan higienis, setrika rapi, dan kemasan wangi.',
-                'price_per_kg' => 8000,
+                'unit' => 'kg',
+                'price_per_unit' => 9000,
                 'estimated_hours' => 48,
-                'is_active' => true,
+                'is_active' => false,
             ]
         );
 
         $svcExpress = Service::firstOrCreate(
-            ['name' => 'Cuci Kilat Express (1 Hari)'],
+            ['name' => 'Cuci Kilat Express'],
             [
                 'description' => 'Layanan kilat selesai dalam 12–24 jam. Prioritas mesin cuci dan setrika uap.',
-                'price_per_kg' => 15000,
+                'unit' => 'kg',
+                'price_per_unit' => 15000,
                 'estimated_hours' => 24,
-                'is_active' => true,
+                'is_active' => false,
             ]
         );
 
         $svcSetrika = Service::firstOrCreate(
-            ['name' => 'Setrika Saja (Lipat Rapi)'],
+            ['name' => 'Setrika Saja'],
             [
                 'description' => 'Setrika uap profesional dan packing rapi.',
-                'price_per_kg' => 5000,
+                'unit' => 'kg',
+                'price_per_unit' => 5000,
                 'estimated_hours' => 24,
-                'is_active' => true,
+                'is_active' => false,
             ]
         );
 
@@ -153,9 +156,10 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Bed Cover & Selimut Tebal'],
             [
                 'description' => 'Pencucian khusus selimut besar dan bed cover menggunakan deterjen antibakteri.',
-                'price_per_kg' => 20000,
+                'unit' => 'pcs',
+                'price_per_unit' => 20000,
                 'estimated_hours' => 48,
-                'is_active' => true,
+                'is_active' => false,
             ]
         );
 
@@ -181,8 +185,11 @@ class DatabaseSeeder extends Seeder
         OrderItem::firstOrCreate(
             ['order_id' => $orderPending->id, 'service_id' => $svcKomplit->id],
             [
+                'service_name_snapshot' => $svcKomplit->name,
+                'unit' => 'kg',
                 'quantity' => 5.0,
-                'unit_price' => $svcKomplit->price_per_kg,
+                'estimated_quantity' => 5.0,
+                'unit_price' => $svcKomplit->price_per_unit,
                 'subtotal' => 40000,
             ]
         );
@@ -216,8 +223,11 @@ class DatabaseSeeder extends Seeder
         OrderItem::firstOrCreate(
             ['order_id' => $orderPickup->id, 'service_id' => $svcExpress->id],
             [
+                'service_name_snapshot' => $svcExpress->name,
+                'unit' => 'kg',
                 'quantity' => 4.0,
-                'unit_price' => $svcExpress->price_per_kg,
+                'estimated_quantity' => 4.0,
+                'unit_price' => $svcExpress->price_per_unit,
                 'subtotal' => 60000,
             ]
         );
@@ -277,7 +287,11 @@ class DatabaseSeeder extends Seeder
         OrderItem::firstOrCreate(
             ['order_id' => $orderReady->id, 'service_id' => $svcKomplit->id],
             [
+                'service_name_snapshot' => $svcKomplit->name,
+                'unit' => 'kg',
                 'quantity' => 5.5,
+                'estimated_quantity' => 6.0,
+                'actual_quantity' => 5.5,
                 'unit_price' => 8000,
                 'subtotal' => 44000,
             ]
@@ -312,7 +326,11 @@ class DatabaseSeeder extends Seeder
         OrderItem::firstOrCreate(
             ['order_id' => $orderCompleted->id, 'service_id' => $svcExpress->id],
             [
+                'service_name_snapshot' => $svcExpress->name,
+                'unit' => 'kg',
                 'quantity' => 3.2,
+                'estimated_quantity' => 3.0,
+                'actual_quantity' => 3.2,
                 'unit_price' => 15000,
                 'subtotal' => 48000,
             ]

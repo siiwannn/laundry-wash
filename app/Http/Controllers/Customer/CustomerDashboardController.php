@@ -18,14 +18,14 @@ class CustomerDashboardController extends Controller
 
         // Active orders that are in progress
         $activeOrders = Order::forCustomer($customer->id)
-            ->with(['items.service', 'pickupAddress', 'activeAssignment.courier'])
+            ->with(['serviceItem.service', 'items.service', 'pickupAddress', 'activeAssignment.courier'])
             ->whereNotIn('status', [OrderStatus::COMPLETED, OrderStatus::CANCELLED])
             ->latest()
             ->get();
 
         // Completed history preview
         $recentCompleted = Order::forCustomer($customer->id)
-            ->with(['items.service'])
+            ->with(['serviceItem.service', 'items.service'])
             ->where('status', OrderStatus::COMPLETED)
             ->latest()
             ->take(5)

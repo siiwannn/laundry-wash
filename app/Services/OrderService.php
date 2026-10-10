@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    public function __construct(private readonly SettingService $settings, private readonly ActivityLogService $activityLog) {}
+    public function __construct(private readonly ActivityLogService $activityLog) {}
 
     /**
      * Create a new laundry order for a customer.
@@ -23,15 +23,9 @@ class OrderService
     {
         return DB::transaction(function () use ($customer, $data) {
             $orderNumber = $this->generateOrderNumber();
-            $estimatedWeight = isset($data['estimated_weight']) ? (float) $data['estimated_weight'] : null;
-
-            $setting = $this->settings->current();
-            $pickupFee = (float) $setting->pickup_fee;
-            $deliveryFee = (float) $setting->delivery_fee;
             $additionalFee = 0.00;
+            $shippingFee = Order::SHIPPING_FEE;
 
-            // Compute estimated subtotal
-            $subtotal = 0.00;
             $serviceId = (int) $data['service_id'];
             $service = Service::whereKey($serviceId)->where('is_active', true)->first();
 
@@ -39,19 +33,18 @@ class OrderService
                 throw new Exception('Layanan laundry tidak ditemukan atau sedang tidak aktif.');
             }
 
+            $estimatedQuantity = $service->unit === 'pcs'
+                ? (int) $data['estimated_quantity']
+                : (float) $data['estimated_quantity'];
+
             $pickupAddressId = $data['pickup_address_id'] ?? null;
 
             if (! $customer->addresses()->whereKey($pickupAddressId)->exists()) {
                 throw new Exception('Alamat penjemputan tidak valid atau bukan milik customer.');
             }
 
-            if ($estimatedWeight && $estimatedWeight > 0) {
-                $subtotal = $estimatedWeight * (float) $service->price_per_kg;
-            }
-
-            $pricePerKg = (float) $setting->laundry_price_per_kg;
-            $subtotal = $estimatedWeight ? $estimatedWeight * $pricePerKg : 0.00;
-            $total = $subtotal + $pickupFee + $deliveryFee + $additionalFee;
+            $subtotal = round($estimatedQuantity * (float) $service->price_per_unit);
+            $total = $subtotal + $shippingFee;
 
             $order = Order::create([
                 'order_number' => $orderNumber,
@@ -62,12 +55,13 @@ class OrderService
                 'pickup_time' => $data['pickup_time'] ?? null,
                 'status' => OrderStatus::PENDING,
                 'payment_status' => PaymentStatus::PENDING,
-                'estimated_weight' => $estimatedWeight,
+                'estimated_weight' => $service->unit === 'kg' ? $estimatedQuantity : null,
                 'actual_weight' => null,
-                'price_per_kg' => $pricePerKg,
+                'price_per_kg' => $service->unit === 'kg' ? $service->price_per_unit : 0,
                 'subtotal' => $subtotal,
-                'pickup_fee' => $pickupFee,
-                'delivery_fee' => $deliveryFee,
+                'pickup_fee' => 0,
+                'delivery_fee' => 0,
+                'shipping_fee' => $shippingFee,
                 'additional_fee' => $additionalFee,
                 'total' => $total,
                 'notes' => $data['notes'] ?? null,
@@ -76,8 +70,12 @@ class OrderService
             OrderItem::create([
                 'order_id' => $order->id,
                 'service_id' => $service->id,
-                'quantity' => $estimatedWeight ?: 1.0,
-                'unit_price' => $pricePerKg,
+                'service_name_snapshot' => $service->name,
+                'unit' => $service->unit,
+                'quantity' => $estimatedQuantity,
+                'estimated_quantity' => $estimatedQuantity,
+                'actual_quantity' => null,
+                'unit_price' => $service->price_per_unit,
                 'subtotal' => $subtotal,
             ]);
 
@@ -122,42 +120,46 @@ class OrderService
     /**
      * Admin records actual weight upon arrival at laundry facility and calculates final bill.
      */
-    public function recordWeight(Order $order, float $actualWeight, ?float $additionalFee, User $admin): Order
+    public function recordWeight(Order $order, float $actualQuantity, ?float $additionalFee, User $admin): Order
     {
         if ($order->status !== OrderStatus::RECEIVED_AT_LAUNDRY) {
-            throw new Exception('Berat aktual hanya dapat diinput setelah laundry diterima di outlet.');
+            throw new Exception('Kuantitas aktual hanya dapat dicatat setelah cucian diterima di outlet.');
         }
 
-        return DB::transaction(function () use ($order, $actualWeight, $additionalFee, $admin) {
-            $orderItem = $order->items()->first();
-            $unitPrice = (float) $order->price_per_kg;
+        return DB::transaction(function () use ($order, $actualQuantity, $additionalFee, $admin) {
+            $orderItem = $order->serviceItem()->firstOrFail();
+            $actualQuantity = $orderItem->unit === 'pcs' ? (int) $actualQuantity : (float) $actualQuantity;
+            $unitPrice = (float) $orderItem->unit_price;
 
-            $subtotal = round($actualWeight * $unitPrice, 2);
-            $addFee = $additionalFee !== null ? (float) $additionalFee : (float) $order->additional_fee;
-            $total = $subtotal + (float) $order->pickup_fee + (float) $order->delivery_fee + $addFee;
+            $subtotal = round($actualQuantity * $unitPrice);
+            $addFee = $order->shipping_fee === null
+                ? ($additionalFee !== null ? (float) $additionalFee : (float) $order->additional_fee)
+                : 0.0;
+            $shippingFee = $order->shipping_fee ?? ((float) $order->pickup_fee + (float) $order->delivery_fee);
+            $total = $subtotal + $shippingFee + $addFee;
 
-            if ($orderItem) {
-                $orderItem->update([
-                    'quantity' => $actualWeight,
-                    'subtotal' => $subtotal,
-                ]);
-            }
+            $orderItem->update([
+                'quantity' => $actualQuantity,
+                'actual_quantity' => $actualQuantity,
+                'subtotal' => $subtotal,
+            ]);
 
             $order->update([
-                'actual_weight' => $actualWeight,
+                'actual_weight' => $orderItem->unit === 'kg' ? $actualQuantity : null,
                 'subtotal' => $subtotal,
                 'additional_fee' => $addFee,
+                'shipping_fee' => $order->shipping_fee,
                 'total' => $total,
             ]);
 
             OrderStatusHistory::create([
                 'order_id' => $order->id,
                 'status' => $order->status,
-                'note' => "Penimbangan selesai: berat aktual {$actualWeight} kg. Total tagihan: Rp ".number_format($total, 0, ',', '.'),
+                'note' => "Kuantitas aktual {$actualQuantity} {$orderItem->unit} selesai dicatat. Total tagihan: Rp ".number_format($total, 0, ',', '.'),
                 'changed_by' => $admin->id,
                 'created_at' => now(),
             ]);
-            $this->activityLog->record($admin, "Input berat aktual order {$order->order_number}: {$actualWeight} kg");
+            $this->activityLog->record($admin, "Input kuantitas aktual order {$order->order_number}: {$actualQuantity} {$orderItem->unit}");
 
             return $order;
         });

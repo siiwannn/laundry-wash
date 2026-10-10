@@ -27,7 +27,7 @@ class AdminDashboardController extends Controller
         $dailyVolume = $this->reportService->getDailyOrderVolume($request->validated('range') === 'month' ? 30 : 7);
 
         // Recent orders
-        $recentOrders = Order::with(['customer', 'items.service'])
+        $recentOrders = Order::with(['customer', 'serviceItem', 'items.service'])
             ->latest()
             ->take(8)
             ->get();

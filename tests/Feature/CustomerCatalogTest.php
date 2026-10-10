@@ -14,19 +14,21 @@ class CustomerCatalogTest extends TestCase
 
     public function test_customer_sees_only_active_services_with_prices_and_duration(): void
     {
-        Service::create(['name' => 'Cuci Reguler', 'description' => 'Cuci dan setrika.', 'price_per_kg' => 8000, 'estimated_hours' => 48, 'is_active' => true]);
-        Service::create(['name' => 'Layanan Nonaktif', 'price_per_kg' => 5000, 'estimated_hours' => 24, 'is_active' => false]);
+        Service::create(['name' => 'Cuci Setrika', 'description' => 'Cuci dan setrika.', 'unit' => 'kg', 'price_per_unit' => 8000, 'estimated_hours' => 48, 'is_active' => true]);
+        Service::create(['name' => 'Layanan Nonaktif', 'unit' => 'kg', 'price_per_unit' => 5000, 'estimated_hours' => 24, 'is_active' => false]);
 
         $this->actingAs(User::factory()->create(['role' => UserRole::CUSTOMER]))
             ->get(route('catalog'))->assertOk()
-            ->assertSee('Cuci Reguler')->assertSee('Cuci dan setrika.')
-            ->assertSee('Rp 8.000')->assertSee('Estimasi 48 jam')
+            ->assertSee('Cuci Setrika')->assertSee('Cuci dan setrika.')
+            ->assertSee('Rp 8.000')->assertSee('/kg')->assertSee('Estimasi 48 jam')
             ->assertDontSee('Layanan Nonaktif')
             ->assertSee(route('customer.orders.create'));
     }
 
     public function test_empty_catalog_has_an_honest_empty_state(): void
     {
+        Service::query()->delete();
+
         $this->actingAs(User::factory()->create(['role' => UserRole::CUSTOMER]))
             ->get(route('catalog'))->assertOk()->assertSee('Layanan belum tersedia');
     }
@@ -44,11 +46,11 @@ class CustomerCatalogTest extends TestCase
 
     public function test_home_page_is_the_public_catalog_but_keeps_dashboard_redirects_for_signed_in_users(): void
     {
-        Service::create(['name' => 'Cuci Reguler', 'price_per_kg' => 8000, 'estimated_hours' => 48, 'is_active' => true]);
+        Service::create(['name' => 'Cuci Kering', 'unit' => 'kg', 'price_per_unit' => 8000, 'estimated_hours' => 48, 'is_active' => true]);
 
         $this->get(route('home'))->assertOk()
             ->assertSee('Cucian bersih')
-            ->assertSee('Cuci Reguler')
+            ->assertSee('Cuci Kering')
             ->assertSee('Cara kerja')
             ->assertSee('Layanan');
 

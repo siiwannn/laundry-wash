@@ -83,7 +83,7 @@
                                     </a>
                                 </td>
                                 <td>{{ $order->customer->name ?? '-' }}</td>
-                                <td>{{ $order->actual_weight ?: $order->estimated_weight ?: '-' }} kg</td>
+                                <td>{{ $order->serviceItem?->actual_quantity ?? $order->serviceItem?->estimated_quantity ?? '-' }} {{ $order->serviceItem?->unit }}</td>
                                 <td class="fw-bold text-success">Rp {{ number_format($order->total, 0, ',', '.') }}</td>
                                 <td><small class="text-muted">{{ $order->updated_at->format('d/m/Y H:i') }}</small></td>
                             </tr>

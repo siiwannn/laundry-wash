@@ -13,7 +13,11 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'service_id',
+        'service_name_snapshot',
+        'unit',
         'quantity',
+        'estimated_quantity',
+        'actual_quantity',
         'unit_price',
         'subtotal',
     ];
@@ -22,6 +26,8 @@ class OrderItem extends Model
     {
         return [
             'quantity' => 'decimal:2',
+            'estimated_quantity' => 'decimal:2',
+            'actual_quantity' => 'decimal:2',
             'unit_price' => 'decimal:2',
             'subtotal' => 'decimal:2',
         ];
