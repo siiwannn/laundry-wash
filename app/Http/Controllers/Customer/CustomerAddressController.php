@@ -61,9 +61,15 @@ class CustomerAddressController extends Controller
     {
         Gate::authorize('update', $address);
 
-        if ($request->validated('address') !== $address->address && ! $request->boolean('location_confirmed')) {
+        $latitude = $request->validated('latitude');
+        $longitude = $request->validated('longitude');
+        $coordinatesChanged = ($latitude !== null && (float) $latitude !== (float) $address->latitude)
+            || ($longitude !== null && (float) $longitude !== (float) $address->longitude);
+        $addressChanged = $request->validated('address') !== $address->address;
+
+        if (($addressChanged || $coordinatesChanged) && ! $request->boolean('location_confirmed')) {
             return back()->withInput()->withErrors([
-                'address' => 'Alamat berubah. Periksa dan konfirmasi pin peta agar kurir menuju lokasi yang benar.',
+                'address' => 'Alamat atau pin berubah. Tunggu alamat peta diperbarui atau pastikan alamat sesuai dengan pin.',
             ]);
         }
 
@@ -71,9 +77,6 @@ class CustomerAddressController extends Controller
         if ($isDefault) {
             auth()->user()->addresses()->where('id', '!=', $address->id)->update(['is_default' => false]);
         }
-
-        $latitude = $request->validated('latitude');
-        $longitude = $request->validated('longitude');
 
         $address->update([
             'label' => $request->validated('label'),

@@ -58,8 +58,8 @@
                         <i class="bi bi-geo-alt-fill text-danger me-1"></i>
                         {{ $addr->latitude ? "{$addr->latitude}, {$addr->longitude}" : 'Titik peta belum di-set' }}
                     </span>
-                    <a href="{{ route('customer.addresses.edit', $addr) }}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size: 0.75rem;">
-                        Ubah Pin
+                    <a href="{{ route('customer.addresses.edit', $addr) }}" class="btn btn-outline-secondary btn-sm px-3 text-nowrap">
+                        Ubah Lokasi
                     </a>
                 </div>
             </div>

@@ -158,6 +158,79 @@ class CustomerAccountTest extends TestCase
         $this->assertSame('Alamat Lama No. 1', $address->fresh()->address);
     }
 
+    public function test_address_pin_cannot_change_without_a_synced_address(): void
+    {
+        $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
+        $address = CustomerAddress::create([
+            'user_id' => $customer->id,
+            'label' => 'Rumah',
+            'recipient_name' => 'Nama Penerima',
+            'recipient_phone' => '081200000000',
+            'address' => 'Alamat Lama No. 1',
+            'latitude' => -6.2,
+            'longitude' => 106.8,
+            'is_default' => true,
+        ]);
+
+        $this->actingAs($customer)->put(route('customer.addresses.update', $address), [
+            'label' => 'Rumah',
+            'recipient_name' => 'Nama Penerima',
+            'recipient_phone' => '081200000000',
+            'address' => 'Alamat Lama No. 1',
+            'latitude' => '-6.3',
+            'longitude' => '106.9',
+            'location_confirmed' => '0',
+            'is_default' => '1',
+        ])->assertSessionHasErrors('address');
+
+        $this->assertSame(-6.2, $address->fresh()->latitude);
+        $this->assertSame(106.8, $address->fresh()->longitude);
+    }
+
+    public function test_edit_address_page_loads_the_configured_photon_picker(): void
+    {
+        $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
+        $address = CustomerAddress::create([
+            'user_id' => $customer->id,
+            'label' => 'Rumah',
+            'recipient_name' => 'Nama Penerima',
+            'recipient_phone' => '081200000000',
+            'address' => 'Jl. Mawar No. 5, Jakarta',
+            'latitude' => -6.2,
+            'longitude' => 106.8,
+            'is_default' => true,
+        ]);
+
+        $this->actingAs($customer)
+            ->get(route('customer.addresses.edit', $address))
+            ->assertOk()
+            ->assertSee(route('customer.addresses.geocode', [], false), false)
+            ->assertSee(route('customer.addresses.reverse-geocode', [], false), false)
+            ->assertSee('customer-address-picker.js', false)
+            ->assertSee('Alamat dan koordinat dikirim ke layanan publik tersebut.', false);
+    }
+
+    public function test_customer_address_list_uses_clear_location_action_label(): void
+    {
+        $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
+        CustomerAddress::create([
+            'user_id' => $customer->id,
+            'label' => 'Rumah',
+            'recipient_name' => 'Nama Penerima',
+            'recipient_phone' => '081200000000',
+            'address' => 'Jl. Mawar No. 5, Jakarta',
+            'latitude' => -6.2,
+            'longitude' => 106.8,
+            'is_default' => true,
+        ]);
+
+        $this->actingAs($customer)
+            ->get(route('customer.addresses.index'))
+            ->assertOk()
+            ->assertSee('Ubah Lokasi')
+            ->assertDontSee('Ubah Pin');
+    }
+
     public function test_address_used_by_an_order_cannot_be_deleted(): void
     {
         $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);

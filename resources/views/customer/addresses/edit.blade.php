@@ -40,14 +40,20 @@
                     <!-- Leaflet Coordinates Picker -->
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label class="form-label fw-semibold small mb-0">Pin Lokasi Peta (GPS Kurir):</label>
+                            <label class="form-label fw-semibold small mb-0">Lokasi Saya:</label>
                             <button type="button" class="btn btn-link btn-sm p-0 text-primary" onclick="getCurrentLocation()">
                                 <i class="bi bi-crosshair me-1"></i> Deteksi Lokasi Saya
                             </button>
                         </div>
-                        <div id="addressPickerMap" style="height: 240px; border-radius: 8px; border: 1px solid #cbd5e1;" class="mb-2"></div>
+                        <div id="addressPickerMap"
+                             data-forward-url="{{ route('customer.addresses.geocode', [], false) }}"
+                             data-reverse-url="{{ route('customer.addresses.reverse-geocode', [], false) }}"
+                             data-initial-address="{{ $address->address }}"
+                             style="height: 240px; border-radius: 8px; border: 1px solid #cbd5e1;" class="mb-2"></div>
+                        <div class="form-text mb-2">Pencarian alamat memakai Photon; posisi pin memakai Nominatim/OpenStreetMap. Alamat dan koordinat dikirim ke layanan publik tersebut.</div>
+                        <div id="addressLookupStatus" class="alert alert-info py-2 small d-none" role="status" aria-live="polite"></div>
                         <div id="addressPinWarning" class="alert alert-warning py-2 small d-none" role="status" aria-live="polite">
-                            Alamat berubah. Klik peta, geser pin, atau deteksi lokasi untuk memastikan titik kurir sesuai.
+                            Alamat atau pin berubah. Pastikan alamat lengkap sesuai dengan titik peta sebelum menyimpan.
                         </div>
                         <div class="row g-2">
                             <div class="col-6">
@@ -77,67 +83,6 @@
 </div>
 
 @push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const addressInput = document.getElementById('address');
-    const latitudeInput = document.getElementById('latitude');
-    const longitudeInput = document.getElementById('longitude');
-    const locationConfirmedInput = document.getElementById('location_confirmed');
-    const pinWarning = document.getElementById('addressPinWarning');
-    const initialAddress = @json($address->address);
-    const lat = Number.parseFloat(latitudeInput.value);
-    const lng = Number.parseFloat(longitudeInput.value);
-    const mapLat = Number.isFinite(lat) ? lat : -6.2088;
-    const mapLng = Number.isFinite(lng) ? lng : 106.8456;
-    let confirmedAddress = locationConfirmedInput.value === '1' ? addressInput.value.trim() : initialAddress.trim();
-
-    const map = L.map('addressPickerMap').setView([mapLat, mapLng], 14);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
-
-    let marker = L.marker([mapLat, mapLng], { draggable: true }).addTo(map);
-
-    function setCoords(posLat, posLng) {
-        latitudeInput.value = posLat.toFixed(7);
-        longitudeInput.value = posLng.toFixed(7);
-        confirmedAddress = addressInput.value.trim();
-        locationConfirmedInput.value = '1';
-        pinWarning.classList.add('d-none');
-    }
-
-    addressInput.addEventListener('input', function () {
-        const addressIsConfirmed = addressInput.value.trim() === confirmedAddress;
-        locationConfirmedInput.value = addressIsConfirmed ? '1' : '0';
-        pinWarning.classList.toggle('d-none', addressIsConfirmed);
-    });
-
-    marker.on('dragend', function () {
-        const pos = marker.getLatLng();
-        setCoords(pos.lat, pos.lng);
-    });
-
-    map.on('click', function (e) {
-        marker.setLatLng(e.latlng);
-        setCoords(e.latlng.lat, e.latlng.lng);
-    });
-
-    window.getCurrentLocation = function () {
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(function (pos) {
-                const cLat = pos.coords.latitude;
-                const cLng = pos.coords.longitude;
-                marker.setLatLng([cLat, cLng]);
-                map.setView([cLat, cLng], 16);
-                setCoords(cLat, cLng);
-            }, function (err) {
-                alert('Gagal mendeteksi lokasi: ' + err.message);
-            });
-        }
-    };
-});
-</script>
+<script src="{{ asset('js/customer-address-picker.js') }}?v={{ filemtime(public_path('js/customer-address-picker.js')) }}"></script>
 @endpush
 @endsection

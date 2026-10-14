@@ -55,6 +55,11 @@ return [
         'routing_url' => env('ROUTING_URL', 'https://router.project-osrm.org'),
     ],
 
+    'geocoding' => [
+        'forward_url' => env('GEOCODING_URL', 'https://photon.komoot.io/api/'),
+        'reverse_url' => env('REVERSE_GEOCODING_URL', 'https://nominatim.openstreetmap.org/reverse'),
+    ],
+
     'weather' => [
         'url' => env('WEATHER_API_URL', 'https://api.open-meteo.com/v1/forecast'),
     ],

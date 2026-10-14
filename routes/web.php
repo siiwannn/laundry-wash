@@ -15,6 +15,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Courier\CourierDashboardController;
 use App\Http\Controllers\Courier\CourierTaskController;
 use App\Http\Controllers\Customer\CustomerAddressController;
+use App\Http\Controllers\Customer\CustomerAddressGeocodingController;
 use App\Http\Controllers\Customer\CustomerCatalogController;
 use App\Http\Controllers\Customer\CustomerDashboardController;
 use App\Http\Controllers\Customer\CustomerOrderController;
@@ -75,6 +76,12 @@ Route::middleware(['auth', 'role:customer'])->prefix('customer')->name('customer
     Route::put('/profile/password', [CustomerProfileController::class, 'updatePassword'])->name('profile.password');
 
     // Customer Address Book
+    Route::get('/addresses/geocode/search', [CustomerAddressGeocodingController::class, 'search'])
+        ->middleware('throttle:30,1')
+        ->name('addresses.geocode');
+    Route::get('/addresses/geocode/reverse', [CustomerAddressGeocodingController::class, 'reverse'])
+        ->middleware('throttle:30,1')
+        ->name('addresses.reverse-geocode');
     Route::resource('addresses', CustomerAddressController::class);
     Route::patch('/addresses/{address}/default', [CustomerAddressController::class, 'setDefault'])->name('addresses.default');
 });
