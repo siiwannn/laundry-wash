@@ -10,9 +10,10 @@
                 <h5 class="fw-bold mb-0">Ubah Alamat: {{ $address->label }}</h5>
             </div>
             <div class="card-body p-4">
-                <form action="{{ route('customer.addresses.update', $address) }}" method="POST">
+                <form id="addressEditForm" action="{{ route('customer.addresses.update', $address) }}" method="POST">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="location_confirmed" id="location_confirmed" value="{{ old('location_confirmed', '0') }}">
 
                     <div class="mb-3">
                         <label for="label" class="form-label fw-semibold small">Label Alamat</label>
@@ -32,7 +33,8 @@
 
                     <div class="mb-3">
                         <label for="address" class="form-label fw-semibold small">Alamat Lengkap</label>
-                        <textarea name="address" id="address" class="form-control" rows="2" required>{{ old('address', $address->address) }}</textarea>
+                        <textarea name="address" id="address" class="form-control @error('address') is-invalid @enderror" rows="2" required>{{ old('address', $address->address) }}</textarea>
+                        @error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 
                     <!-- Leaflet Coordinates Picker -->
@@ -44,12 +46,15 @@
                             </button>
                         </div>
                         <div id="addressPickerMap" style="height: 240px; border-radius: 8px; border: 1px solid #cbd5e1;" class="mb-2"></div>
+                        <div id="addressPinWarning" class="alert alert-warning py-2 small d-none" role="status" aria-live="polite">
+                            Alamat berubah. Klik peta, geser pin, atau deteksi lokasi untuk memastikan titik kurir sesuai.
+                        </div>
                         <div class="row g-2">
                             <div class="col-6">
-                                <input type="text" name="latitude" id="latitude" class="form-control form-control-sm bg-light" value="{{ old('latitude', $address->latitude ?: -6.2088) }}" readonly placeholder="Latitude">
+                                <input type="text" name="latitude" id="latitude" class="form-control form-control-sm bg-light" value="{{ old('latitude', $address->latitude ?? '') }}" readonly placeholder="Latitude">
                             </div>
                             <div class="col-6">
-                                <input type="text" name="longitude" id="longitude" class="form-control form-control-sm bg-light" value="{{ old('longitude', $address->longitude ?: 106.8456) }}" readonly placeholder="Longitude">
+                                <input type="text" name="longitude" id="longitude" class="form-control form-control-sm bg-light" value="{{ old('longitude', $address->longitude ?? '') }}" readonly placeholder="Longitude">
                             </div>
                         </div>
                     </div>
@@ -74,22 +79,40 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const lat = parseFloat(document.getElementById('latitude').value) || -6.2088;
-    const lng = parseFloat(document.getElementById('longitude').value) || 106.8456;
+    const addressInput = document.getElementById('address');
+    const latitudeInput = document.getElementById('latitude');
+    const longitudeInput = document.getElementById('longitude');
+    const locationConfirmedInput = document.getElementById('location_confirmed');
+    const pinWarning = document.getElementById('addressPinWarning');
+    const initialAddress = @json($address->address);
+    const lat = Number.parseFloat(latitudeInput.value);
+    const lng = Number.parseFloat(longitudeInput.value);
+    const mapLat = Number.isFinite(lat) ? lat : -6.2088;
+    const mapLng = Number.isFinite(lng) ? lng : 106.8456;
+    let confirmedAddress = locationConfirmedInput.value === '1' ? addressInput.value.trim() : initialAddress.trim();
 
-    const map = L.map('addressPickerMap').setView([lat, lng], 14);
+    const map = L.map('addressPickerMap').setView([mapLat, mapLng], 14);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    let marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    let marker = L.marker([mapLat, mapLng], { draggable: true }).addTo(map);
 
     function setCoords(posLat, posLng) {
-        document.getElementById('latitude').value = posLat.toFixed(7);
-        document.getElementById('longitude').value = posLng.toFixed(7);
+        latitudeInput.value = posLat.toFixed(7);
+        longitudeInput.value = posLng.toFixed(7);
+        confirmedAddress = addressInput.value.trim();
+        locationConfirmedInput.value = '1';
+        pinWarning.classList.add('d-none');
     }
+
+    addressInput.addEventListener('input', function () {
+        const addressIsConfirmed = addressInput.value.trim() === confirmedAddress;
+        locationConfirmedInput.value = addressIsConfirmed ? '1' : '0';
+        pinWarning.classList.toggle('d-none', addressIsConfirmed);
+    });
 
     marker.on('dragend', function () {
         const pos = marker.getLatLng();

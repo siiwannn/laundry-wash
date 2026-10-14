@@ -200,10 +200,12 @@
                             <span class="workspace-icon-button workspace-icon-muted" role="img" aria-label="Notifikasi belum tersedia" title="Notifikasi belum tersedia"><i class="bi bi-bell" aria-hidden="true"></i></span>
                         </li>
                         @if(auth()->user()->isAdmin())
+                            <li class="nav-item d-none d-lg-block"><a class="workspace-icon-button" href="{{ route('admin.profile.show') }}" aria-label="Profil akun" title="Profil akun"><i class="bi bi-person" aria-hidden="true"></i></a></li>
                         @elseif(auth()->user()->isCustomer())
-                            <li class="nav-item d-none d-lg-block"><a class="workspace-icon-button" href="{{ route('customer.profile.edit') }}" aria-label="Pengaturan profil" title="Pengaturan profil"><i class="bi bi-gear" aria-hidden="true"></i></a></li>
+                            <li class="nav-item d-none d-lg-block"><a class="workspace-icon-button" href="{{ route('customer.profile.show') }}" aria-label="Profil" title="Profil"><i class="bi bi-person" aria-hidden="true"></i></a></li>
                         @else
                             <li class="nav-item d-none d-lg-block"><a class="workspace-icon-button" href="{{ route('courier.dashboard') }}#courier-availability" aria-label="Status kerja" title="Status kerja"><i class="bi bi-sliders" aria-hidden="true"></i></a></li>
+                            <li class="nav-item d-none d-lg-block"><a class="workspace-icon-button" href="{{ route('courier.profile.show') }}" aria-label="Profil akun" title="Profil akun"><i class="bi bi-person" aria-hidden="true"></i></a></li>
                         @endif
                     @else
                         <li class="nav-item">
@@ -234,15 +236,17 @@
             <a class="nav-link {{ request()->routeIs('admin.services.*') ? 'active' : '' }}" href="{{ route('admin.services.index') }}" title="Layanan" aria-label="Layanan"><i class="bi bi-tags me-2" aria-hidden="true"></i><span class="sidebar-link-label">Layanan</span></a>
             <a class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" href="{{ route('admin.payments.index') }}" title="Pembayaran" aria-label="Pembayaran"><i class="bi bi-credit-card me-2" aria-hidden="true"></i><span class="sidebar-link-label">Pembayaran</span></a>
             <a class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}" title="Laporan" aria-label="Laporan"><i class="bi bi-bar-chart me-2" aria-hidden="true"></i><span class="sidebar-link-label">Laporan</span></a>
+            <a class="nav-link {{ request()->routeIs('admin.profile.*') ? 'active' : '' }}" href="{{ route('admin.profile.show') }}" title="Profil akun" aria-label="Profil akun"><i class="bi bi-person me-2" aria-hidden="true"></i><span class="sidebar-link-label">Profil akun</span></a>
         @elseif(auth()->user()->isCourier())
             <a class="nav-link {{ request()->routeIs('courier.dashboard') ? 'active' : '' }}" href="{{ route('courier.dashboard') }}" title="Dashboard" aria-label="Dashboard"><i class="bi bi-grid me-2" aria-hidden="true"></i><span class="sidebar-link-label">Dashboard</span></a>
             <a class="nav-link {{ request()->routeIs('courier.history') ? 'active' : '' }}" href="{{ route('courier.history') }}" title="Riwayat" aria-label="Riwayat"><i class="bi bi-clock-history me-2" aria-hidden="true"></i><span class="sidebar-link-label">Riwayat</span></a>
+            <a class="nav-link {{ request()->routeIs('courier.profile.*') ? 'active' : '' }}" href="{{ route('courier.profile.show') }}" title="Profil" aria-label="Profil"><i class="bi bi-person me-2" aria-hidden="true"></i><span class="sidebar-link-label">Profil</span></a>
         @else
             <a class="nav-link {{ request()->routeIs('customer.dashboard') ? 'active' : '' }}" href="{{ route('customer.dashboard') }}" title="Dashboard" aria-label="Dashboard"><i class="bi bi-house me-2" aria-hidden="true"></i><span class="sidebar-link-label">Dashboard</span></a>
             <a class="nav-link {{ request()->routeIs('customer.orders.create') ? 'active' : '' }}" href="{{ route('customer.orders.create') }}" title="Pesanan baru" aria-label="Pesanan baru"><i class="bi bi-plus-circle me-2" aria-hidden="true"></i><span class="sidebar-link-label">Pesanan baru</span></a>
             <a class="nav-link {{ request()->routeIs('customer.orders.history') ? 'active' : '' }}" href="{{ route('customer.orders.history') }}" title="Riwayat" aria-label="Riwayat"><i class="bi bi-receipt me-2" aria-hidden="true"></i><span class="sidebar-link-label">Riwayat</span></a>
             <a class="nav-link {{ request()->routeIs('customer.addresses.*') ? 'active' : '' }}" href="{{ route('customer.addresses.index') }}" title="Alamat" aria-label="Alamat"><i class="bi bi-geo-alt me-2" aria-hidden="true"></i><span class="sidebar-link-label">Alamat</span></a>
-            <a class="nav-link {{ request()->routeIs('customer.profile.*') ? 'active' : '' }}" href="{{ route('customer.profile.edit') }}" title="Profil" aria-label="Profil"><i class="bi bi-person me-2" aria-hidden="true"></i><span class="sidebar-link-label">Profil</span></a>
+            <a class="nav-link {{ request()->routeIs('customer.profile.*') ? 'active' : '' }}" href="{{ route('customer.profile.show') }}" title="Profil" aria-label="Profil"><i class="bi bi-person me-2" aria-hidden="true"></i><span class="sidebar-link-label">Profil</span></a>
         @endif
     </nav>
     <div class="sidebar-user-footer">

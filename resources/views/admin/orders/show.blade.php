@@ -269,6 +269,9 @@
                 <div class="mb-3">
                     <span class="small text-muted d-block">Alamat Penjemputan / Pengantaran:</span>
                     <p class="small fw-semibold mb-1">{{ $order->pickupAddress->address ?? 'Drop-off langsung di workshop' }}</p>
+                    @if($order->pickupAddress?->recipient_name)
+                        <small class="text-muted d-block">Penerima: {{ $order->pickupAddress->recipient_name }}@if($order->pickupAddress->recipient_phone) &bull; {{ $order->pickupAddress->recipient_phone }}@endif</small>
+                    @endif
                     @if($order->pickupAddress && $order->pickupAddress->latitude)
                         <small class="text-muted">
                             <i class="bi bi-geo-alt-fill text-danger me-1"></i>

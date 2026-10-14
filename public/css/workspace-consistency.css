@@ -9,6 +9,69 @@
 .workspace-auth .workspace-page-heading p { font-size: .82rem; color: #716d65; }
 .workspace-auth .workspace-page-heading .d-flex { flex-wrap: wrap; }
 .workspace-auth .workspace-page-heading .badge { font-size: .75rem !important; }
+.workspace-profile { max-width: 1120px; margin-inline: auto; }
+.workspace-auth .profile-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 22px; }
+.workspace-auth .profile-identity { display: flex; align-items: center; gap: 16px; min-width: 0; padding: 0 2px 18px; border-bottom: 1px solid #e5e2dc; }
+.workspace-auth .profile-avatar { width: 58px; height: 58px; flex: 0 0 58px; display: grid; place-items: center; border-radius: 50%; background: #c63f1f; color: #fff; font-size: 1.1rem; font-weight: 700; letter-spacing: -.03em; }
+.workspace-auth .profile-identity-copy { min-width: 0; }
+.workspace-auth .profile-identity-label { margin: 0 0 3px; color: #9e3217; font-size: .74rem; font-weight: 650; }
+.workspace-auth .profile-identity-copy h2 { margin: 0; color: #242320; font-size: 1.3rem; font-weight: 700; letter-spacing: -.035em; line-height: 1.2; overflow-wrap: anywhere; }
+.workspace-auth .profile-identity-copy .profile-identity-email { margin: 4px 0 0; color: #605e58; font-size: .82rem; overflow-wrap: anywhere; }
+.workspace-auth .profile-edit-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-width: 142px; min-height: 44px; margin-left: auto; }
+.workspace-auth .profile-panel { min-width: 0; overflow: hidden; border: 1px solid var(--lw-border); border-radius: 14px; background: #fff; }
+.workspace-auth .profile-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 19px 22px 15px; border-bottom: 1px solid #efede7; }
+.workspace-auth .profile-panel-heading h2 { margin: 0; color: #242320; font-size: .98rem; font-weight: 650; letter-spacing: -.02em; line-height: 1.3; }
+.workspace-auth .profile-panel-heading p { margin: 4px 0 0; color: #716d65; font-size: .78rem; line-height: 1.45; }
+.workspace-auth .profile-panel-heading > i { flex: 0 0 auto; color: #c63f1f; font-size: 1rem; }
+.workspace-auth .profile-details-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.workspace-auth .profile-detail-section { min-width: 0; padding: 20px 24px 8px; }
+.workspace-auth .profile-detail-section + .profile-detail-section { border-left: 1px solid #efede7; }
+.workspace-auth .profile-detail-section h3 { margin: 0 0 4px; color: #242320; font-size: .9rem; font-weight: 650; }
+.workspace-auth .profile-detail-list { padding: 0; }
+.workspace-auth .profile-detail-row { display: grid; grid-template-columns: minmax(125px, .72fr) minmax(0, 1.28fr); gap: 18px; align-items: baseline; padding: 17px 0; border-bottom: 1px solid #efede7; }
+.workspace-auth .profile-detail-row:last-child { border-bottom: 0; }
+.workspace-auth .profile-detail-row dt { margin: 0; color: #716d65; font-size: .78rem; font-weight: 400; }
+.workspace-auth .profile-detail-row dd { min-width: 0; margin: 0; color: #242320; font-size: .82rem; font-weight: 600; overflow-wrap: anywhere; }
+.workspace-auth .profile-detail-row dd .badge { padding: 6px 9px; font-size: .72rem; font-weight: 600; }
+.workspace-auth .profile-edit-identity { display: flex; align-items: center; gap: 14px; margin: 20px 0 24px; padding: 16px 20px; border: 1px solid #f0ddd4; border-radius: 14px; background: #fff7f2; }
+.workspace-auth .profile-avatar-small { width: 46px; height: 46px; flex: 0 0 46px; font-size: .9rem; }
+.workspace-auth .profile-edit-identity span { display: block; margin-bottom: 2px; color: #9e3217; font-size: .72rem; font-weight: 600; }
+.workspace-auth .profile-edit-identity strong { display: block; color: #242320; font-size: .9rem; overflow-wrap: anywhere; }
+.workspace-auth .profile-edit-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(290px, .75fr); align-items: start; gap: 20px; }
+.workspace-auth .profile-form-fields { padding: 8px 22px 0; }
+.workspace-auth .profile-field-row { display: grid; grid-template-columns: minmax(150px, .65fr) minmax(0, 1.35fr); align-items: start; gap: 20px; padding: 16px 0; border-bottom: 1px solid #efede7; }
+.workspace-auth .profile-field-row > label { padding-top: 11px; color: #393731; font-size: .8rem; font-weight: 550; }
+.workspace-auth .profile-form-divider { height: 1px; margin: 8px 0 0; background: #e9e7e1; }
+.workspace-auth .profile-form-section-title { padding: 18px 0 2px; }
+.workspace-auth .profile-form-section-title h3 { margin: 0; color: #242320; font-size: .9rem; font-weight: 650; }
+.workspace-auth .profile-form-section-title p { margin: 4px 0 0; color: #716d65; font-size: .76rem; }
+.workspace-auth .profile-form-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 22px 22px; }
+.workspace-auth .profile-password-panel .profile-form-fields { display: grid; gap: 18px; padding-bottom: 22px; }
+.workspace-auth .profile-password-panel .form-label { margin-bottom: 7px; color: #393731; font-size: .8rem; font-weight: 550; }
+.workspace-auth .profile-password-panel .btn { justify-self: start; }
+@media (max-width: 991.98px) {
+    .workspace-auth .profile-details-grid,
+    .workspace-auth .profile-edit-layout { grid-template-columns: minmax(0, 1fr); }
+    .workspace-auth .profile-detail-section + .profile-detail-section { border-top: 1px solid #efede7; border-left: 0; }
+}
+@media (max-width: 575.98px) {
+    .workspace-auth .profile-layout { gap: 14px; margin-top: 16px; }
+    .workspace-auth .profile-identity { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 11px; padding: 0 0 15px; }
+    .workspace-auth .profile-identity .profile-avatar { width: 48px; height: 48px; font-size: .9rem; }
+    .workspace-auth .profile-identity-label { margin-bottom: 3px; font-size: .69rem; }
+    .workspace-auth .profile-identity-copy h2 { font-size: 1.05rem; }
+    .workspace-auth .profile-identity-copy .profile-identity-email { margin-top: 3px; font-size: .75rem; }
+    .workspace-auth .profile-edit-button { grid-column: 1 / -1; width: 100%; margin-left: 0; }
+    .workspace-auth .profile-detail-section { padding: 16px 17px 5px; }
+    .workspace-auth .profile-detail-row { grid-template-columns: minmax(0, 1fr); gap: 5px; padding: 13px 0; }
+    .workspace-auth .profile-form-fields { padding-right: 17px; padding-left: 17px; }
+    .workspace-auth .profile-field-row { grid-template-columns: minmax(0, 1fr); gap: 7px; padding: 13px 0; }
+    .workspace-auth .profile-field-row > label { padding-top: 0; }
+    .workspace-auth .profile-form-actions { display: grid; grid-template-columns: minmax(0, 1fr); padding: 16px 17px 18px; }
+    .workspace-auth .profile-form-actions .btn { width: 100%; }
+    .workspace-auth .profile-password-panel .profile-form-fields { padding-bottom: 18px; }
+    .workspace-auth .profile-password-panel .btn { justify-self: stretch; }
+}
 .workspace-detail-page .app-content .card { border-color: var(--lw-border); box-shadow: none !important; }
 .workspace-detail-page .app-content .card-header { background: #fff; }
 .workspace-detail-page .app-content .card-header.bg-primary { background: #fff !important; color: var(--lw-dark) !important; }

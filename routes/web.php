@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminPaymentController;
 use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminServiceController;
+use App\Http\Controllers\AccountProfileController;
 use App\Http\Controllers\Api\TrackingApiController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
@@ -68,7 +69,8 @@ Route::middleware(['auth', 'role:customer'])->prefix('customer')->name('customer
     Route::post('/orders/{order}/pay', [CustomerOrderController::class, 'pay'])->name('orders.pay');
     Route::post('/orders/{order}/simulate-payment', [CustomerOrderController::class, 'simulatePayment'])->name('orders.simulate-payment');
     Route::patch('/orders/{order}/cancel', [CustomerOrderController::class, 'cancel'])->name('orders.cancel');
-    Route::get('/profile', [CustomerProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile', [CustomerProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [CustomerProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [CustomerProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [CustomerProfileController::class, 'updatePassword'])->name('profile.password');
 
@@ -80,6 +82,10 @@ Route::middleware(['auth', 'role:customer'])->prefix('customer')->name('customer
 // Courier Protected Routes
 Route::middleware(['auth', 'role:courier'])->prefix('courier')->name('courier.')->group(function () {
     Route::get('/dashboard', [CourierDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profile', [AccountProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [AccountProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [AccountProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [AccountProfileController::class, 'updatePassword'])->name('profile.password');
     Route::patch('/profile/status', [CourierDashboardController::class, 'updateProfileStatus'])->name('profile.status');
     Route::get('/tasks/{assignment}', [CourierTaskController::class, 'show'])->name('tasks.show');
     Route::get('/tasks/{assignment}/route', [CourierTaskController::class, 'route'])->name('tasks.route');
@@ -91,6 +97,10 @@ Route::middleware(['auth', 'role:courier'])->prefix('courier')->name('courier.')
 // Admin Protected Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profile', [AccountProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [AccountProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [AccountProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [AccountProfileController::class, 'updatePassword'])->name('profile.password');
 
     // Orders Management
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');

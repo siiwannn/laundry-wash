@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\StoreAddressRequest;
 use App\Models\CustomerAddress;
+use App\Models\Order;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
@@ -32,13 +33,16 @@ class CustomerAddressController extends Controller
             $user->addresses()->update(['is_default' => false]);
         }
 
+        $latitude = $request->validated('latitude');
+        $longitude = $request->validated('longitude');
+
         $user->addresses()->create([
             'label' => $request->validated('label'),
             'recipient_name' => $request->validated('recipient_name'),
             'recipient_phone' => $request->validated('recipient_phone'),
             'address' => $request->validated('address'),
-            'latitude' => $request->validated('latitude') ?: -6.2088,
-            'longitude' => $request->validated('longitude') ?: 106.8456,
+            'latitude' => $latitude !== null ? (float) $latitude : -6.2088,
+            'longitude' => $longitude !== null ? (float) $longitude : 106.8456,
             'is_default' => $isDefault,
         ]);
 
@@ -57,18 +61,27 @@ class CustomerAddressController extends Controller
     {
         Gate::authorize('update', $address);
 
+        if ($request->validated('address') !== $address->address && ! $request->boolean('location_confirmed')) {
+            return back()->withInput()->withErrors([
+                'address' => 'Alamat berubah. Periksa dan konfirmasi pin peta agar kurir menuju lokasi yang benar.',
+            ]);
+        }
+
         $isDefault = $request->boolean('is_default');
         if ($isDefault) {
             auth()->user()->addresses()->where('id', '!=', $address->id)->update(['is_default' => false]);
         }
+
+        $latitude = $request->validated('latitude');
+        $longitude = $request->validated('longitude');
 
         $address->update([
             'label' => $request->validated('label'),
             'recipient_name' => $request->validated('recipient_name'),
             'recipient_phone' => $request->validated('recipient_phone'),
             'address' => $request->validated('address'),
-            'latitude' => $request->validated('latitude') ?: $address->latitude,
-            'longitude' => $request->validated('longitude') ?: $address->longitude,
+            'latitude' => $latitude !== null ? (float) $latitude : $address->latitude,
+            'longitude' => $longitude !== null ? (float) $longitude : $address->longitude,
             'is_default' => $isDefault,
         ]);
 
@@ -82,6 +95,15 @@ class CustomerAddressController extends Controller
 
         if ($address->is_default && auth()->user()->addresses()->count() > 1) {
             return back()->with('error', 'Tidak dapat menghapus alamat default. Jadikan alamat lain sebagai default terlebih dahulu.');
+        }
+
+        $isUsedByOrder = Order::query()
+            ->where('pickup_address_id', $address->id)
+            ->orWhere('delivery_address_id', $address->id)
+            ->exists();
+
+        if ($isUsedByOrder) {
+            return back()->with('error', 'Alamat ini masih digunakan pesanan. Alamat tidak dapat dihapus agar detail pesanan dan rute kurir tetap tersedia.');
         }
 
         $address->delete();

@@ -128,6 +128,12 @@
                 <div class="p-3 bg-light rounded border">
                     <span class="small text-muted d-block fw-semibold mb-1">Alamat Tujuan:</span>
                     <p class="small text-dark mb-0">{{ $targetAddress->address ?? 'Alamat Pelanggan' }}</p>
+                    @if($targetAddress?->recipient_name)
+                        <small class="text-muted d-block mt-1">Penerima: {{ $targetAddress->recipient_name }}</small>
+                    @endif
+                    @if($targetAddress?->recipient_phone)
+                        <a class="small d-inline-block mt-1" href="tel:{{ $targetAddress->recipient_phone }}">{{ $targetAddress->recipient_phone }}</a>
+                    @endif
                     @if($targetAddress && $targetAddress->latitude)
                         <small class="text-muted d-block mt-2">
                             <i class="bi bi-pin-map text-danger me-1"></i> Lat: {{ $targetAddress->latitude }}, Lng: {{ $targetAddress->longitude }}

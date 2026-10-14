@@ -1,10 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Profil Saya - Laundry Wash')
+@section('title', 'Edit Profil - Laundry Wash')
 
 @section('content')
 <div class="workspace-page-heading d-flex align-items-center justify-content-between mb-4">
-    <div><p class="text-muted mb-0">Kelola identitas dan keamanan akun.</p></div>
+    <div>
+        <p class="text-muted mb-0">Perbarui informasi akun atau kata sandi Anda.</p>
+    </div>
+    <a href="{{ route('customer.profile.show') }}" class="btn btn-outline-secondary">Kembali ke profil</a>
 </div>
 <div class="row g-4">
     <div class="col-lg-7">

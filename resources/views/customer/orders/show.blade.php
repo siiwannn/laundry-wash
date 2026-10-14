@@ -198,6 +198,9 @@
                     <div class="mb-3">
                         <span class="small text-muted d-block">Alamat Lengkap:</span>
                         <p class="small fw-semibold mb-1">{{ $order->pickupAddress->address }}</p>
+                        @if($order->pickupAddress->recipient_name)
+                            <small class="text-muted d-block">Penerima: {{ $order->pickupAddress->recipient_name }}@if($order->pickupAddress->recipient_phone) &bull; {{ $order->pickupAddress->recipient_phone }}@endif</small>
+                        @endif
                         @if($order->pickupAddress->latitude)
                             <small class="text-muted">
                                 <i class="bi bi-pin-map-fill text-danger me-1"></i> Titik Koordinat Tersimpan (GPS)

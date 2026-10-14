@@ -218,7 +218,7 @@ class DashboardPresentationTest extends TestCase
     {
         foreach ([
             [UserRole::ADMIN, ['admin.orders.index', 'admin.payments.index', 'admin.customers.index', 'admin.couriers.index', 'admin.couriers.create', 'admin.services.index', 'admin.services.create', 'admin.reports.index']],
-            [UserRole::CUSTOMER, ['customer.orders.history', 'customer.orders.create', 'customer.addresses.index', 'customer.addresses.create', 'customer.profile.edit']],
+            [UserRole::CUSTOMER, ['customer.orders.history', 'customer.orders.create', 'customer.addresses.index', 'customer.addresses.create', 'customer.profile.show']],
             [UserRole::COURIER, ['courier.history']],
         ] as [$role, $pages]) {
             $this->actingAs(User::factory()->create(['role' => $role]));
