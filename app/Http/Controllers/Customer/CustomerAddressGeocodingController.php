@@ -5,14 +5,14 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\ForwardGeocodeAddressRequest;
 use App\Http\Requests\Customer\ReverseGeocodeAddressRequest;
-use App\Services\Geocoding\PhotonGeocodingService;
+use App\Services\Geocoding\AddressGeocodingService;
 use Illuminate\Http\JsonResponse;
 
 class CustomerAddressGeocodingController extends Controller
 {
     public function search(
         ForwardGeocodeAddressRequest $request,
-        PhotonGeocodingService $geocoding,
+        AddressGeocodingService $geocoding,
     ): JsonResponse {
         $data = $request->validated();
         $result = $geocoding->searchAddress(
@@ -28,7 +28,7 @@ class CustomerAddressGeocodingController extends Controller
 
     public function reverse(
         ReverseGeocodeAddressRequest $request,
-        PhotonGeocodingService $geocoding,
+        AddressGeocodingService $geocoding,
     ): JsonResponse {
         $data = $request->validated();
         $result = $geocoding->reverseCoordinates((float) $data['latitude'], (float) $data['longitude']);

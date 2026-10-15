@@ -50,7 +50,7 @@
                              data-reverse-url="{{ route('customer.addresses.reverse-geocode', [], false) }}"
                              data-initial-address="{{ $address->address }}"
                              style="height: 240px; border-radius: 8px; border: 1px solid #cbd5e1;" class="mb-2"></div>
-                        <div class="form-text mb-2">Pencarian alamat memakai Photon; posisi pin memakai Nominatim/OpenStreetMap. Alamat dan koordinat dikirim ke layanan publik tersebut.</div>
+                        <div class="form-text mb-2">Pin menyesuaikan otomatis setelah Anda berhenti mengetik sebentar.</div>
                         <div id="addressLookupStatus" class="alert alert-info py-2 small d-none" role="status" aria-live="polite"></div>
                         <div id="addressPinWarning" class="alert alert-warning py-2 small d-none" role="status" aria-live="polite">
                             Alamat atau pin berubah. Pastikan alamat lengkap sesuai dengan titik peta sebelum menyimpan.

@@ -181,7 +181,7 @@ Seluruh konfigurasi tersedia di `.env.example` dan `config/services.php`.
 | **Login Google** | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` |
 | **Style Peta** | `MAP_STYLE_URL` |
 | **Routing Jalan** | `ROUTING_URL` |
-| **Pencarian Alamat & Pin** | `GEOCODING_URL` (Photon) dan `REVERSE_GEOCODING_URL` (Nominatim/OpenStreetMap, gratis tanpa API key) |
+| **Pencarian Alamat & Pin** | `GEOCODING_URL` (Photon, pencarian saat mengetik) dan `REVERSE_GEOCODING_URL` (Nominatim/OpenStreetMap) |
 | **Info Cuaca** | `WEATHER_API_URL` (default: Open-Meteo) |
 
 **Webhook Pembayaran:** `POST /api/midtrans/notification`

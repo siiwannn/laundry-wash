@@ -7,21 +7,21 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
 
 class CustomerAddressGeocodingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_customer_address_search_uses_the_photon_service_and_returns_a_feature(): void
+    public function test_customer_address_search_uses_photon_and_returns_a_feature(): void
     {
+        Cache::forget('geocoding.search.'.hash('sha256', 'jl. mawar no. 5, jakarta|-6.2|106.8'));
         Http::fake([
-            'photon.komoot.io/api/*' => Http::response([
-                'features' => [[
-                    'geometry' => ['coordinates' => [106.8, -6.2]],
-                    'properties' => ['street' => 'Jl. Mawar'],
-                ]],
-            ]),
+            'photon.komoot.io/api/*' => Http::response(['features' => [[
+                'geometry' => ['coordinates' => [106.8, -6.2]],
+                'properties' => ['street' => 'Jl. Mawar'],
+            ]]]),
         ]);
         $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
 
@@ -38,13 +38,15 @@ class CustomerAddressGeocodingTest extends TestCase
             return str_contains($request->url(), 'photon.komoot.io/api/')
                 && data_get($request->data(), 'q') === 'Jl. Mawar No. 5, Jakarta'
                 && data_get($request->data(), 'countrycode') === 'id'
+                && data_get($request->data(), 'lang') === 'id'
                 && str_contains($request->header('User-Agent')[0] ?? '', 'Laundry Wash/1.0');
         });
     }
 
-    public function test_customer_pin_reverse_lookup_uses_nominatim_and_returns_a_photon_compatible_feature(): void
+    public function test_customer_pin_reverse_lookup_uses_nominatim_and_returns_a_geocoding_feature(): void
     {
         Cache::forget('geocoding.reverse.-6.200000.106.800000');
+        RateLimiter::clear('geocoding.nominatim');
         Http::fake([
             'nominatim.openstreetmap.org/reverse*' => Http::response([
                 'lon' => '106.8',
@@ -84,6 +86,7 @@ class CustomerAddressGeocodingTest extends TestCase
 
     public function test_geocoding_proxy_returns_service_unavailable_when_photon_fails(): void
     {
+        Cache::forget('geocoding.search.'.hash('sha256', 'jl. mawar, jakarta||'));
         Http::fake(['photon.komoot.io/api/*' => Http::response([], 503)]);
         $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
 

@@ -17,7 +17,7 @@ function buildPinLookupUrl(endpoint, latitude, longitude) {
     return url.toString();
 }
 
-function getPhotonCoordinates(feature) {
+function getGeocodingCoordinates(feature) {
     const coordinates = feature?.geometry?.coordinates;
     if (!Array.isArray(coordinates) || coordinates.length < 2) return null;
     const [longitude, latitude] = coordinates.map(Number);
@@ -26,7 +26,7 @@ function getPhotonCoordinates(feature) {
     return { latitude, longitude };
 }
 
-function formatPhotonAddress(feature) {
+function formatGeocodingAddress(feature) {
     const properties = feature?.properties ?? {};
     const street = [properties.housenumber, properties.street].filter(Boolean).join(' ');
     const parts = [street || properties.name, properties.suburb, properties.district,
@@ -42,6 +42,7 @@ function initializeAddressPicker() {
     const latitudeInput = document.getElementById('latitude');
     const longitudeInput = document.getElementById('longitude');
     const locationConfirmedInput = document.getElementById('location_confirmed');
+    const addressForm = document.getElementById('addressEditForm');
     const pinWarning = document.getElementById('addressPinWarning');
     const lookupStatus = document.getElementById('addressLookupStatus');
     const initialAddress = mapElement.dataset.initialAddress.trim();
@@ -52,8 +53,10 @@ function initializeAddressPicker() {
 
     let confirmedAddress = initialAddress;
     let lookupRequestId = 0;
-    let pendingLookup = null;
     let activeController = null;
+    let pendingLookup = null;
+    let submitAfterLookup = false;
+    let resubmittingAfterLookup = false;
     const reverseLookupCache = new Map();
 
     if (!window.L) {
@@ -86,6 +89,7 @@ function initializeAddressPicker() {
     function cancelLookup() {
         lookupRequestId++;
         window.clearTimeout(pendingLookup);
+        pendingLookup = null;
         activeController?.abort();
         activeController = null;
     }
@@ -93,7 +97,7 @@ function initializeAddressPicker() {
     async function requestFeature(url, requestId) {
         activeController = new AbortController();
         const controller = activeController;
-        const timeoutId = window.setTimeout(() => controller.abort(), 8000);
+        const timeoutId = window.setTimeout(() => controller.abort(), 5000);
 
         try {
             const response = await fetch(url, {
@@ -117,6 +121,8 @@ function initializeAddressPicker() {
     }
 
     async function lookupAddress() {
+        window.clearTimeout(pendingLookup);
+        pendingLookup = null;
         const query = addressInput.value.trim();
         if (query.length < 5) {
             setStatus('warning', 'Masukkan alamat yang lebih lengkap agar titik peta dapat dicari.');
@@ -136,7 +142,7 @@ function initializeAddressPicker() {
             }), requestId);
             if (!feature || requestId !== lookupRequestId) return;
 
-            const point = getPhotonCoordinates(feature);
+            const point = getGeocodingCoordinates(feature);
             if (!point) throw new Error('Titik dari layanan peta tidak valid. Coba periksa alamat.');
 
             marker.setLatLng([point.latitude, point.longitude]);
@@ -147,8 +153,10 @@ function initializeAddressPicker() {
             locationConfirmedInput.value = '1';
             pinWarning.classList.add('d-none');
             setStatus('success', 'Pin mengikuti hasil pencarian alamat. Periksa posisi pin sebelum menyimpan.');
+            continueSubmitAfterLookup();
         } catch (error) {
             if (requestId !== lookupRequestId) return;
+            submitAfterLookup = false;
             locationConfirmedInput.value = '0';
             setStatus('warning', error.name === 'AbortError'
                 ? 'Pencarian terlalu lama. Periksa koneksi, lalu coba lagi.'
@@ -176,7 +184,7 @@ function initializeAddressPicker() {
                 );
                 if (!feature || requestId !== lookupRequestId) return;
 
-                placeName = formatPhotonAddress(feature);
+                placeName = formatGeocodingAddress(feature);
                 if (!placeName) throw new Error('Alamat tidak ditemukan di posisi pin ini.');
                 reverseLookupCache.set(cacheKey, placeName);
             }
@@ -187,8 +195,10 @@ function initializeAddressPicker() {
             locationConfirmedInput.value = '1';
             pinWarning.classList.add('d-none');
             setStatus('success', 'Alamat sudah disesuaikan dengan posisi pin.');
+            continueSubmitAfterLookup();
         } catch (error) {
             if (requestId !== lookupRequestId) return;
+            submitAfterLookup = false;
             locationConfirmedInput.value = '0';
             setStatus('warning', error.name === 'AbortError'
                 ? 'Pencarian terlalu lama. Coba geser pin lagi.'
@@ -196,7 +206,7 @@ function initializeAddressPicker() {
         }
     }
 
-    function handleAddressInput(delay = 300) {
+    function handleAddressInput() {
         cancelLookup();
         const query = addressInput.value.trim();
         if (query === confirmedAddress) {
@@ -213,13 +223,35 @@ function initializeAddressPicker() {
             return;
         }
 
-        setStatus('info', 'Alamat berubah. Pin akan diperbarui setelah pencarian selesai…');
-        pendingLookup = window.setTimeout(lookupAddress, delay);
+        setStatus('info', 'Pin akan menyesuaikan otomatis setelah Anda berhenti mengetik sebentar.');
+        pendingLookup = window.setTimeout(lookupAddress, 700);
     }
 
     addressInput.addEventListener('input', () => handleAddressInput());
-    addressInput.addEventListener('blur', () => {
-        if (addressInput.value.trim() !== confirmedAddress) handleAddressInput(0);
+
+    function continueSubmitAfterLookup() {
+        if (!submitAfterLookup) return;
+        submitAfterLookup = false;
+        resubmittingAfterLookup = true;
+        addressForm.requestSubmit();
+    }
+
+    addressForm.addEventListener('submit', event => {
+        if (resubmittingAfterLookup) {
+            resubmittingAfterLookup = false;
+            return;
+        }
+
+        if (addressInput.value.trim() !== confirmedAddress) {
+            event.preventDefault();
+            submitAfterLookup = true;
+            if (activeController) {
+                window.clearTimeout(pendingLookup);
+                pendingLookup = null;
+            } else {
+                lookupAddress();
+            }
+        }
     });
 
     marker.on('dragend', () => {

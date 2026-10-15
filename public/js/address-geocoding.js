@@ -18,7 +18,7 @@ export function buildPinLookupUrl(endpoint, latitude, longitude, baseUrl = 'http
     return url.toString();
 }
 
-export function getPhotonCoordinates(feature) {
+export function getGeocodingCoordinates(feature) {
     const coordinates = feature?.geometry?.coordinates;
     if (!Array.isArray(coordinates) || coordinates.length < 2) return null;
     if (coordinates[0] === null || coordinates[1] === null || coordinates[0] === '' || coordinates[1] === '') return null;
@@ -30,7 +30,7 @@ export function getPhotonCoordinates(feature) {
     return { latitude, longitude };
 }
 
-export function formatPhotonAddress(feature) {
+export function formatGeocodingAddress(feature) {
     const properties = feature?.properties ?? {};
     const street = [properties.housenumber, properties.street].filter(Boolean).join(' ');
     const parts = [

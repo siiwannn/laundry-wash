@@ -187,7 +187,7 @@ class CustomerAccountTest extends TestCase
         $this->assertSame(106.8, $address->fresh()->longitude);
     }
 
-    public function test_edit_address_page_loads_the_configured_photon_picker(): void
+    public function test_edit_address_page_loads_the_configured_location_picker(): void
     {
         $customer = User::factory()->create(['role' => UserRole::CUSTOMER]);
         $address = CustomerAddress::create([
@@ -207,7 +207,7 @@ class CustomerAccountTest extends TestCase
             ->assertSee(route('customer.addresses.geocode', [], false), false)
             ->assertSee(route('customer.addresses.reverse-geocode', [], false), false)
             ->assertSee('customer-address-picker.js', false)
-            ->assertSee('Alamat dan koordinat dikirim ke layanan publik tersebut.', false);
+            ->assertSee('Pin menyesuaikan otomatis setelah Anda berhenti mengetik sebentar.', false);
     }
 
     public function test_customer_address_list_uses_clear_location_action_label(): void
